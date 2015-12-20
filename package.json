@@ -1,0 +1,35 @@
+{
+  "name": "tv-show-torrent-downloader",
+  "version": "1.0.0",
+  "description": "Downloads new episodes of TV shows using torrents.",
+  "main": "server.js",
+  "scripts": {
+    "start": "supervisor server.js | node_modules/bunyan/bin/bunyan",
+    "stop": "pkill node",
+    "test": "jasmine-node --verbose spec/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.com:furgerf/tv-show-torrent-downloader.git"
+  },
+  "author": "Fabian Furger",
+  "license": "ISC",
+  "dependencies": {
+    "csprng": "*",
+    "promise": "*",
+    "request": "*",
+    "restify": "*",
+    "sha1": "*",
+    "jszip": "*",
+    "mongodb": "*",
+    "mongoose": "*",
+    "bunyan": "*"
+  },
+  "devDependencies": {
+    "apidoc": "*",
+    "frisby": "*",
+    "istanbul": "*",
+    "jasmine-node": "*",
+    "rewire": "*"
+  }
+}
