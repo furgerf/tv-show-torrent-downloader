@@ -58,7 +58,7 @@ server.listen(config.api.port, function () {
   server.get(/^\/subscription\/?$/, subscription.getSubscriptions);
   server.get(/^\/subscription\/(.+)\/?$/, subscription.getSubscription);
   server.post(/^\/subscription\/?$/, subscription.addSubscription);
-  server.del(/^\/subscription\/?$/, subscription.getSubscriptions);
+  server.del(/^\/subscription\/(.+)\/?$/, subscription.deleteSubscription);
 
   // Shutdown
   server.get(/^\/exit$/, process.exit);
