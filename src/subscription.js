@@ -1,6 +1,6 @@
 var request = require('request'),
     restify = require('restify'),
-    JSZip = require('jszip');
+    JSZip = require('jszip'),
 
     config = require('./config'),
     database = require('./database'),

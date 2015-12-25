@@ -11,6 +11,7 @@ var restify = require('restify'),
 
     // endpoint handlers
     subscription = require('./src/subscription'),
+    updates = require('./src/updates'),
 
     // misc variables
     log = logger.log.child({component: 'server'}),
@@ -59,6 +60,8 @@ server.listen(config.api.port, function () {
   server.get(/^\/subscription\/(.+)\/?$/, subscription.getSubscription);
   server.post(/^\/subscription\/?$/, subscription.addSubscription);
   server.del(/^\/subscription\/(.+)\/?$/, subscription.deleteSubscription);
+
+  server.get(/^\/update\/check\/?$/, updates.checkForUpdates);
 
   // Shutdown
   server.get(/^\/exit$/, process.exit);
