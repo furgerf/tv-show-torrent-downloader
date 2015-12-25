@@ -40,124 +40,46 @@ exports.sendBinaryResponse = function (res, data) {
   res.end();
 };
 
-/*
-exports.getDataFromRequestParams = function (requestParams) {
-    'use strict';
+fileSizeToBytes = function (number, unit) {
+  switch (unit) {
+    case 'KiB':
+      return number * 1024;
+    case 'MiB':
+      return number * Math.pow(1024, 2);
+    case 'GiB':
+      return number * Math.pow(1024, 3);
+    case 'KB':
+      return number * 1000;
+    case 'MB':
+      return number * Math.pow(1000, 2);
+    case 'GB':
+      return number * Math.pow(1000, 3);
+  }
 
-    var property,
-        data = {};
-
-    // test for special cases
-    if (requestParams === null || requestParams === undefined || typeof requestParams !== 'object') {
-        return null;
-    }
-    if (requestParams.length !== undefined) {
-        return null;
-    }
-
-    // iterate over properties but skip "indices" (keys that are integers)
-    for (property in requestParams) {
-        if (requestParams.hasOwnProperty(property)) {
-            if (!/^\d+$/.test(property) && requestParams.hasOwnProperty(property)) {
-                data[property] = requestParams[property];
-            }
-        }
-    }
-
-    // maybe the object comes from cURL...
-    if (Object.keys(data).length === 1 && data[Object.keys(data)] === "") {
-        data = JSON.parse(Object.keys(data)[0]);
-    }
-
-    return data;
-};
-
-
-function doesDocumentExist(dbName, documentId) {
-    'use strict';
-
-    var logging = 0;
-
-    return new promise(function (fulfill, reject) {
-        request.get(couchDbUrl + dbName + '/' + documentId, function (err, response, body) {
-            if (!err && response.statusCode === 200) {
-                logging && console.log('Document "' + documentId + '" exists in database "' + dbName + '"');
-                fulfill(true);
-            } else if (!err && response.statusCode === 404) {
-                logging && console.log('Document "' + documentId + '" does not exist in database "' + dbName + '"');
-                reject(new customError.Error('DocumentNotFound', 404, 'Document "' + documentId + '" does not exist in database "' + dbName + '"'));
-            } else {
-                logging && console.log('Error occured when checking whether document "' + documentId + '" exists in database "' + dbName + '"');
-                reject(new customError.Error('UnexpectedDatabaseResponse', 500, 'Something went wrong when accessing the database.'));
-            }
-        });
-    });
+  return -1;
 }
 
-exports.doesAccountExist = function (accountId) {
-    'use strict';
-    return doesDocumentExist('account', accountId);
-};
+twoDigitNumber = function (num) {
+  return ('0' + num).slice(-2);
+}
 
-exports.doesProductExist = function (productId) {
-    'use strict';
-    return doesDocumentExist('product', productId);
-};
+exports.formatEpisodeNumber = function (season, episode) {
+  return 'S' + twoDigitNumber(season) + 'E' + twoDigitNumber(episode);
+}
 
-exports.doesOfferExist = function (offerId) {
-    'use strict';
-    return doesDocumentExist('offer', offerId);
-};
+exports.parseSize = function (str) {
+  var data = str.match(/(\d+(?:\.\d+)?).*\b(.{2}B).*/);
+  return fileSizeToBytes(parseInt(data[1], 10), data[2]);
+}
 
-exports.checkAccountCredentials = function (authEmail, authPassword) {
-    'use strict';
+exports.parseDate = function (str) {
+  var data = str.match(/(\d{2})-(\d{2}).*;(\d{2}):(\d{2})/),
+      date = new Date(new Date().getFullYear(), parseInt(data[1], 10) - 1, parseInt(data[2], 10), parseInt(data[3], 10), parseInt(data[4], 10));
 
-    var logging = 0,
-        hashedAuthPassword,
-        account;
+  if (date > new Date()) {
+    date.setFullYear(date.getFullYear() - 1);
+  }
 
-    return exports.doesAccountExist(sha1(authEmail)).then(function () {
-        // only continue credential checks if account exists (no error was thrown by previous promise)
-        return new promise(function (fulfill, reject) {
-            request.get(accountUrl + sha1(authEmail), function (err, response, body) {
-                if (!err && response.statusCode === 200) {
-                    account = JSON.parse(body);
-                    hashedAuthPassword = sha1(authPassword + account.passwordSalt);
-
-                    if (hashedAuthPassword !== account.password) {
-                        logging && console.log('Invalid credentials provided for account "' + sha1(authEmail) + '"');
-                        reject(new customError.Error('InvalidUsernameOrPassword', 403, 'Invalid username or password provided.'));
-                    } else {
-                        logging && console.log('Valid credentials provided for account "' + sha1(authEmail) + '"');
-                        fulfill(true);
-                    }
-                } else {
-                    logging && console.log('Error occured when checking whether account credentials were valid for account "' + sha1(authEmail) + '"');
-                    reject(new customError.Error('UnexpectedDatabaseResponse', 500, 'Something went wrong when accessing the database.'));
-                }
-            });
-        });
-    }, function (err) {
-        return new promise(function (fulfill, reject) {
-            // if error is DocumentNotFound return a different error message that makes more sense in the context of this function
-            if (err.restCode === 'DocumentNotFound') {
-                logging && console.log('Credentials provided for account "' + sha1(authEmail) + '" are for a non-existent account');
-                reject(new customError.Error('InvalidUsernameOrPassword', 403, 'Invalid username or password provided.'));
-            }
-            reject(err);
-        });
-    });
-};
-
-exports.checkAccountEndpointCredentials = function (endpoint, authEmail, authPassword) {
-    'use strict';
-
-    return new promise(function (fulfill, reject) {
-        if (endpoint !== sha1(authEmail)) {
-            reject(new customError.Error('UsernameMismatch', 403, 'Authentication username does not match the account you are trying to access.'));
-        }
-        fulfill(exports.checkAccountCredentials(authEmail, authPassword));
-    });
-};
-*/
+  return date;
+}
 
