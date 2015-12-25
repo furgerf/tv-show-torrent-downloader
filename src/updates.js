@@ -34,6 +34,14 @@ function fileSizeToBytes(number, unit) {
   return -1;
 }
 
+function twoDigitNumber(num) {
+  return ('0' + num).slice(-2);
+}
+
+function formatEpisodeNumber(season, episode) {
+  return 'S' + twoDigitNumber(season) + 'E' + twoDigitNumber(episode);
+}
+
 function parseSize(str) {
   var data = str.match(/(\d+(?:\.\d+)?).*\b(.{2}B).*/);
   return fileSizeToBytes(parseInt(data[1], 10), data[2]);
@@ -76,29 +84,56 @@ function parseTorrentSearch(html) {
 }
 
 function startTorrent(torrentLink, log) {
-  log && log.warn('Starting torrent: %s', torrentLink);
-  // TODO
+  var command = config.torrentCommand + ' \'' + torrentLink + '\'';
+
+  log && log.warn('Starting torrent: %s (command: %s)', torrentLink, command);
+
+  exec(command, function (err, stdout, stderr) {
+      if (err) {
+        if (log) log.error(err);
+        else  console.log(err);
+
+        return err;
+      }
+
+      if (stderr) {
+        if (log) log.warn('Torrent command stderr: %s', stderr);
+        else console.log('Torrent command stderr: %s', stderr);
+      }
+
+      if (stdout) {
+        if (log) log.info('Torrent command stdout: %s', stdout);
+        else console.log('Torrent command stdout: %s', stdout);
+      }
+  });
 }
 
 function checkForEpisode(showName, season, episode, log) {
-  log && log.debug('Checking whether %s S%dE%d is available for download', showName, season, episode);
+  // TODO: also add searchparameters
+  var url = encodeURI(torrentUrl + showName + ' ' + formatEpisodeNumber(season, episode));
+  log && log.debug('Checking whether %s %s is available for download with url %s', showName, formatEpisodeNumber(season, episode), url);
   return new Promise(function (resolve, reject) {
-    //exec('wget -O- ' + torrentUrl + encodeURI(showName), function (err, stdout, stderr) {
-
-    require('fs').readFile('fargo', 'utf8', function (err,data) {
+    exec('wget -O- ' + url, function (err, stdout, stderr) {
+    //require('fs').readFile('fargo', 'utf8', function (err,data) {
       if (err) {
-        return console.log(err);
+        if (log) log.error(err);
+        else  console.log(err);
+
+        return err;
       }
-      var torrents = parseTorrentSearch(data),
+      var torrents = parseTorrentSearch(stdout),
 
           // select one (or several?) of the torrents to download
           // at the moment, select the largest one
           maxSize = Math.max.apply(Math, torrents.map(function(torrent){ return torrent.Size; })),
           torrent = torrents.filter(function (t) { return t.Size === maxSize; })[0];
 
-      startTorrent(torrent.Link, log);
+      if (torrent) {
+        startTorrent(torrent.Link, log);
+      }
 
-      resolve(Math.random()<.5 ? torrent : undefined);
+      //resolve(Math.random()<.5 ? torrent : undefined);
+      resolve(torrent);
     });
   });
 }
@@ -152,7 +187,7 @@ exports.checkForUpdates = function (req, res, next) {
       result.forEach(function (torrents) {
         updateCount += torrents.length;
       });
-      utils.sendOkResponse(res, 'Checked ' + subscriptions.length + ' subscriptions for updates, found ' + updateCount + ' new torrent(s) to download', data, 'http://' + req.headers.host + req.url);
+      utils.sendOkResponse(res, 'Checked ' + subscriptions.length + ' subscriptions for updates and started the download of ' + updateCount + ' new torrents', data, 'http://' + req.headers.host + req.url);
       res.end();
       return next();
     });

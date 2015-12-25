@@ -8,3 +8,5 @@ exports.database = {
     'port': 27017
 };
 
+exports.torrentCommand = 'qbittorrent';
+
