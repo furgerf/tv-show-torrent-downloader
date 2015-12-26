@@ -5,8 +5,6 @@ var restify = require('restify'),
 
     // common files
     config = require('./src/config'),
-    utils = require('./src/utils'),
-    database = require('./src/database'),
     logger = require('./src/logger'),
 
     // endpoint handlers
@@ -49,18 +47,13 @@ server.on('uncaughtException', function (req, res, route, error) {
 server.listen(config.api.port, function () {
   log.info('TV show downloader API running on port ' + config.api.port);
 
-  /* NOTE:
-   *var PATH = '/hello/:name';
-   * server.get({path: PATH, version: '1.1.3'}, sendV1);
-   * ->   res.send({hello: req.params.name});
-   */
-
   // subscriptions
   server.get(/^\/subscription\/?$/, subscription.getSubscriptions);
   server.get(/^\/subscription\/(.+)\/?$/, subscription.getSubscription);
   server.post(/^\/subscription\/?$/, subscription.addSubscription);
   server.del(/^\/subscription\/(.+)\/?$/, subscription.deleteSubscription);
 
+  // updates
   server.get(/^\/update\/check\/?$/, updates.checkForUpdates);
 
   // Shutdown
