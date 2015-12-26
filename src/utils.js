@@ -31,23 +31,28 @@ exports.formatEpisodeNumber = function (season, episode) {
  * @param number Number of the file size
  * @param unit Unit of the file size
  */
-exports.fileSizeToBytes = function (number, unit) {
+exports.fileSizeToBytes = function (num, unit) {
+  var n = typeof num === 'number' ? num : parseInt(num, 10);
+
+  if (Number.isNaN(n))
+    return undefined;
+
   switch (unit) {
     case 'KiB':
-      return number * 1024;
+      return n * 1024;
     case 'MiB':
-      return number * Math.pow(1024, 2);
+      return n * Math.pow(1024, 2);
     case 'GiB':
-      return number * Math.pow(1024, 3);
+      return n * Math.pow(1024, 3);
     case 'KB':
-      return number * 1000;
+      return n * 1000;
     case 'MB':
-      return number * Math.pow(1000, 2);
+      return n * Math.pow(1000, 2);
     case 'GB':
-      return number * Math.pow(1000, 3);
+      return n * Math.pow(1000, 3);
   }
 
-  return -1;
+  return undefined;
 };
 
 /**

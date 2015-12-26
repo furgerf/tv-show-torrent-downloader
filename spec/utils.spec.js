@@ -47,10 +47,38 @@ describe('utils - formatEpisodeNumber', function () {
   });
 });
 
+describe('utils - fileSizeToBytes', function () {
+  it('should return the file size if invoked with valid arguments', function () {
+    expect(utils.fileSizeToBytes(0, 'KiB')).toBe(0);
+    expect(utils.fileSizeToBytes(0, 'MiB')).toBe(0);
+    expect(utils.fileSizeToBytes(0, 'GiB')).toBe(0);
+    expect(utils.fileSizeToBytes(0, 'KB')).toBe(0);
+    expect(utils.fileSizeToBytes(0, 'MB')).toBe(0);
+    expect(utils.fileSizeToBytes(0, 'GB')).toBe(0);
 
+    expect(utils.fileSizeToBytes(123, 'KiB')).toBe(123*1024);
+    expect(utils.fileSizeToBytes(456, 'MiB')).toBe(456*1024*1024);
+    expect(utils.fileSizeToBytes(789, 'GiB')).toBe(789*1024*1024*1024);
+    expect(utils.fileSizeToBytes(12.3, 'KB')).toBe(12300);
+    expect(utils.fileSizeToBytes(45.6, 'MB')).toBe(45600000);
+    expect(utils.fileSizeToBytes(78.9, 'GB')).toBe(78900000000);
+  });
 
+  it('should return undefined if the number argument is invalid', function () {
+    expect(utils.fileSizeToBytes(null, 'KiB')).toBe(undefined);
+    expect(utils.fileSizeToBytes(undefined, 'MiB')).toBe(undefined);
+    expect(utils.fileSizeToBytes('', 'GiB')).toBe(undefined);
+    expect(utils.fileSizeToBytes('a', 'KB')).toBe(undefined);
+  });
 
-
+  it('should return undefined if the unit argument is invalid', function () {
+    expect(utils.fileSizeToBytes(12, 'TiB')).toBe(undefined);
+    expect(utils.fileSizeToBytes(34, 'TB')).toBe(undefined);
+    expect(utils.fileSizeToBytes(56, 'abc')).toBe(undefined);
+    expect(utils.fileSizeToBytes(78, '')).toBe(undefined);
+    expect(utils.fileSizeToBytes(90, null)).toBe(undefined);
+  });
+});
 
 describe('utils - sendOkResponse', function () {
   it('should only set the minimum headers when invoked without further data', function () {
