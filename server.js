@@ -8,8 +8,8 @@ var restify = require('restify'),
     logger = require('./src/logger'),
 
     // endpoint handlers
-    subscription = require('./src/subscription'),
-    updates = require('./src/updates'),
+    subscription = require('./src/endpoints/subscription'),
+    updates = require('./src/endpoints/update'),
 
     // misc variables
     log = logger.log.child({component: 'server'}),

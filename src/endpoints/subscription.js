@@ -2,9 +2,9 @@ var request = require('request'),
     restify = require('restify'),
     JSZip = require('jszip'),
 
-    config = require('./config'),
-    database = require('./database'),
-    utils = require('./utils'),
+    config = require('./../config'),
+    database = require('./../database'),
+    utils = require('./../utils'),
 
     Subscription = database.Subscription;
 

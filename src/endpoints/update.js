@@ -2,9 +2,9 @@ var restify = require('restify'),
     exec = require('child_process').exec,
     url = require('url'),
 
-    config = require('./config'),
-    database = require('./database'),
-    utils = require('./utils'),
+    config = require('./../config'),
+    database = require('./../database'),
+    utils = require('./../utils'),
 
     Subscription = database.Subscription;
 
