@@ -5,7 +5,7 @@
  * @param num Number which should be formatted as a two-digit number
  */
 function twoDigitNumber (num) {
-  return ('0' + num).slice(-2);
+  return ('0' + (num || '0')).slice(-2);
 }
 
 

@@ -13,9 +13,11 @@ describe('config - ensure that the expected config values are defined', function
     expect(typeof config.database.port).toBe('number');
   });
 
-  it('should contain a function that returns a shift id', function () {
-    // NOTE: we don't test the function itself as it may (and should!)
-    // be modified for different mines
-    expect(typeof config.getShiftId).toBe('function');
+  it('should contain the torrent site', function () {
+    expect(typeof config.torrentSite).toBe('string');
+  });
+
+  it('should contain the command to start torrents', function () {
+    expect(typeof config.torrentCommand).toBe('string');
   });
 });
