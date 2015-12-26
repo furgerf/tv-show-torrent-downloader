@@ -5,7 +5,8 @@
  * @param num Number which should be formatted as a two-digit number
  */
 function twoDigitNumber (num) {
-  return ('0' + (num || '0')).slice(-2);
+  var n = typeof num === 'number' ? num : parseInt(num, 10);
+  return Number.isNaN(n) ? undefined : ('0' + n).slice(-2);
 }
 
 
@@ -16,7 +17,12 @@ function twoDigitNumber (num) {
  * @param episode Number of the episode
  */
 exports.formatEpisodeNumber = function (season, episode) {
-  return 'S' + twoDigitNumber(season) + 'E' + twoDigitNumber(episode);
+  var formattedSeason = twoDigitNumber(season),
+      formattedEpisode = twoDigitNumber(episode);
+
+  return formattedSeason && formattedEpisode
+    ? 'S' + formattedSeason + 'E' + formattedEpisode
+    : undefined;
 };
 
 /**

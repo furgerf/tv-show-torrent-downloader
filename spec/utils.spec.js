@@ -6,7 +6,7 @@ var rewire = require('rewire'),
 describe('utils - twoDigitNumber', function () {
   var twoDigitNumber = utils.__get__('twoDigitNumber');
 
-  it('should always return two digits when invoked with numbers', function () {
+  it('should return two digits when invoked with (parsable) numbers', function () {
     expect(twoDigitNumber(0)).toBe('00');
     expect(twoDigitNumber(1)).toBe('01');
     expect(twoDigitNumber(-1)).toBe('-1');
@@ -14,15 +14,36 @@ describe('utils - twoDigitNumber', function () {
     expect(twoDigitNumber(-12)).toBe('12'); // hmm...
     expect(twoDigitNumber(123)).toBe('23');
     expect(twoDigitNumber(-123)).toBe('23'); // hmm...
+    expect(twoDigitNumber('123')).toBe('23');
   });
 
-  it('should always return two digits when invoked with numbers', function () {
-    expect(twoDigitNumber(null)).toBe('00');
-    expect(twoDigitNumber(undefined)).toBe('00');
-    expect(twoDigitNumber('123')).toBe('23');
-    expect(twoDigitNumber('abc')).toBe('bc'); // hmm...
-    expect(twoDigitNumber('a')).toBe('0a'); // hmm...
-    expect(twoDigitNumber('')).toBe('00');
+  it('should return undefined if invoked without a number', function () {
+    expect(twoDigitNumber(null)).toBeUndefined();
+    expect(twoDigitNumber(undefined)).toBeUndefined();
+    expect(twoDigitNumber('abc')).toBeUndefined();
+    expect(twoDigitNumber('a')).toBeUndefined();
+    expect(twoDigitNumber('')).toBeUndefined();
+  });
+});
+
+describe('utils - formatEpisodeNumber', function () {
+  it('should return the correct string if invoked with valid arguments', function () {
+    expect(utils.formatEpisodeNumber(0, 0)).toBe('S00E00');
+    expect(utils.formatEpisodeNumber(0, 5)).toBe('S00E05');
+    expect(utils.formatEpisodeNumber(5, 0)).toBe('S05E00');
+    expect(utils.formatEpisodeNumber(-2, 0)).toBe('S-2E00');
+    expect(utils.formatEpisodeNumber(0, -2)).toBe('S00E-2');
+    expect(utils.formatEpisodeNumber(-2, 5)).toBe('S-2E05');
+    expect(utils.formatEpisodeNumber(12, 34)).toBe('S12E34');
+  });
+
+  it('should return undefined if invoked with invalid arguments', function () {
+    expect(utils.formatEpisodeNumber(0)).toBeUndefined();
+    expect(utils.formatEpisodeNumber(null, 0)).toBeUndefined();
+    expect(utils.formatEpisodeNumber(undefined, 0)).toBeUndefined();
+    expect(utils.formatEpisodeNumber(null, null)).toBeUndefined();
+    expect(utils.formatEpisodeNumber(12, 'ab')).toBeUndefined();
+    expect(utils.formatEpisodeNumber('', 34)).toBeUndefined();
   });
 });
 
