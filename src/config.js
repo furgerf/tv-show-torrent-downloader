@@ -4,8 +4,8 @@ exports.api = {
 };
 
 exports.database = {
-    'host' : 'localhost',
-    'port': 27017
+  'host' : 'localhost',
+  'port': 27017
 };
 
 exports.torrentSite = 'piratebay.mn';

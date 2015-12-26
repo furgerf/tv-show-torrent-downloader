@@ -4,7 +4,7 @@
  * Returns a string representing a number, making sure it has exactly 2 digits.
  * @param num Number which should be formatted as a two-digit number
  */
-function twoDigitNumber (num) {
+function twoDigitNumber(num) {
   var n = typeof num === 'number' ? num : parseInt(num, 10);
   return Number.isNaN(n) ? undefined : ('0' + n).slice(-2);
 }
@@ -18,7 +18,7 @@ function twoDigitNumber (num) {
  */
 exports.formatEpisodeNumber = function (season, episode) {
   var formattedSeason = twoDigitNumber(season),
-      formattedEpisode = twoDigitNumber(episode);
+    formattedEpisode = twoDigitNumber(episode);
 
   return formattedSeason && formattedEpisode
     ? 'S' + formattedSeason + 'E' + formattedEpisode
@@ -34,22 +34,23 @@ exports.formatEpisodeNumber = function (season, episode) {
 exports.fileSizeToBytes = function (num, unit) {
   var n = typeof num === 'number' ? num : parseInt(num, 10);
 
-  if (Number.isNaN(n))
+  if (Number.isNaN(n)) {
     return undefined;
+  }
 
   switch (unit) {
-    case 'KiB':
-      return n * 1024;
-    case 'MiB':
-      return n * Math.pow(1024, 2);
-    case 'GiB':
-      return n * Math.pow(1024, 3);
-    case 'KB':
-      return n * 1000;
-    case 'MB':
-      return n * Math.pow(1000, 2);
-    case 'GB':
-      return n * Math.pow(1000, 3);
+  case 'KiB':
+    return n * 1024;
+  case 'MiB':
+    return n * Math.pow(1024, 2);
+  case 'GiB':
+    return n * Math.pow(1024, 3);
+  case 'KB':
+    return n * 1000;
+  case 'MB':
+    return n * Math.pow(1000, 2);
+  case 'GB':
+    return n * Math.pow(1000, 3);
   }
 
   return undefined;

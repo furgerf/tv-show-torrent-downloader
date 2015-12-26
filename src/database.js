@@ -1,28 +1,27 @@
 'use strict';
 
 var log = require('./logger').log.child({component: 'database'}),
-    mongoose = require('mongoose'),
+  mongoose = require('mongoose'),
 
-    config = require('./config');
+  config = require('./config'),
 
-const databaseUrl = config.database.host + ':' + config.database.port + '/',
-      databaseName = 'tv-shows',
-      databaseAddress = 'mongodb://' + databaseUrl + databaseName;
+  databaseUrl = config.database.host + ':' + config.database.port + '/',
+  databaseName = 'tv-shows',
+  databaseAddress = 'mongodb://' + databaseUrl + databaseName;
 
 /**
  * Mongoose schema definition for the subscription of a tv show.
  */
-var subscriptionSchema = new mongoose.Schema(
-    {
-      name: { type: String, required: true, unique: true },
-      searchParameters: String,
-      lastSeason: Number,
-      lastEpisode: Number,
-      creationTime: Date,
-      lastModified: Date,
-      lastSeasonUpdateCheck: Date,
-      lastEpisodeUpdateCheck: Date
-    });
+var subscriptionSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  searchParameters: String,
+  lastSeason: Number,
+  lastEpisode: Number,
+  creationTime: Date,
+  lastModified: Date,
+  lastSeasonUpdateCheck: Date,
+  lastEpisodeUpdateCheck: Date
+});
 
 /**
  * Gets a version of the subscription that can be returned
@@ -45,15 +44,16 @@ subscriptionSchema.methods.getReturnable = function () {
  * Pre-save action for subscriptions. Sets last modified
  * and, if necessary, creation date.
  */
-subscriptionSchema.pre('save', function(next) {
+subscriptionSchema.pre('save', function (next) {
   log.debug('Running pre-save action for subsciption "%s"', this.name);
 
   var currentDate = new Date();
   this.lastModified = currentDate;
 
   // if creationTime doesn't exist, add it
-  if (!this.creationTime)
+  if (!this.creationTime) {
     this.creationTime = currentDate;
+  }
 
   next();
 });

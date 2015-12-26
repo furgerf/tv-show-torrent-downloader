@@ -1,10 +1,10 @@
 'use strict';
 
 var config = require('./config'),
-    pirateBayMn = require('./torrent-sites/piratebay.mn.js'),
-    log = require('./logger').log.child({component: 'torrents'}),
+  pirateBayMn = require('./torrent-sites/piratebay.mn.js'),
+  log = require('./logger').log.child({component: 'torrents'}),
 
-const pirateBayMnSite = 'piratebay.mn';
+  pirateBayMnSite = 'piratebay.mn';
 
 /**
  * Parses the size of a torrent, depending on the torrent site's format.
@@ -12,11 +12,11 @@ const pirateBayMnSite = 'piratebay.mn';
  */
 exports.parseSize = function (str) {
   switch (config.torrentSite) {
-    case pirateBayMnSite:
-      return pirateBayMn.parseSize(str);
-    default:
-      log.error('Requesting unknown torrent site: "%s"', config.torrentSite);
-      return -1;
+  case pirateBayMnSite:
+    return pirateBayMn.parseSize(str);
+  default:
+    log.error('Requesting unknown torrent site: "%s"', config.torrentSite);
+    return -1;
   }
 };
 
@@ -26,11 +26,11 @@ exports.parseSize = function (str) {
  */
 exports.parseDate = function (str) {
   switch (config.torrentSite) {
-    case pirateBayMnSite:
-      return pirateBayMn.parseDate(str);
-    default:
-      log.error('Requesting unknown torrent site: "%s"', config.torrentSite);
-      return -1; // TODO: Try to return invalid date instead (or null/undefined?)
+  case pirateBayMnSite:
+    return pirateBayMn.parseDate(str);
+  default:
+    log.error('Requesting unknown torrent site: "%s"', config.torrentSite);
+    return -1; // TODO: Try to return invalid date instead (or null/undefined?)
   }
 };
 

@@ -6,8 +6,7 @@ exports.log = bunyan.createLogger({
   name: 'tvshowdownloader',
   src: true, // DONT USE SRC LOGGING IN PRODUCTION (SLOW)
   serializers: bunyan.stdSerializers,
-  streams: [
-  {
+  streams: [{
     name: 'stdout',
     level: 'debug',
     stream: process.stdout
@@ -25,6 +24,6 @@ exports.log = bunyan.createLogger({
     path: 'error.log'
   }
   */
-  ]
+    ]
 });
 
