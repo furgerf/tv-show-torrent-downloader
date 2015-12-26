@@ -8,8 +8,6 @@ var request = require('request'),
 
     Subscription = database.Subscription;
 
-    //awful.util.spawn("firefox -new-tab http://thepiratebay.mn/search/" .. word)
-
 exports.getSubscription = function (req, res, next) {
   var subscriptionName = req.params[0];
 

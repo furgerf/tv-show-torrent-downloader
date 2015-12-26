@@ -1,46 +1,31 @@
+'use strict';
+
 /**
- * utils.js
- * Contains various util functions.
+ * Returns a string representing a number, making sure it has exactly 2 digits.
+ * @param num Number which should be formatted as a two-digit number
  */
+function twoDigitNumber (num) {
+  return ('0' + num).slice(-2);
+}
 
-var request = require('request'),
-    promise = require('promise'),
-    //sha1 = require('sha1'),
 
-    config = require('./config');
 
-exports.sendOkResponse = function (res, message, data, url, etag, lastModified) {
-  'use strict';
-
-  // assign always-same fields
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/json');
-
-  // assign fields that may also be provided
-  url && res.setHeader('Location', url);
-  etag && res.setHeader('ETag', etag);
-  lastModified && res.setHeader('Last-Modified', lastModified);
-
-  // send response
-  res.send({
-    code: 'Success',
-    message: message || '',
-    href: url || '<unknown>',
-    data: data || {},
-  });
-  res.end();
+/**
+ * Returs the common tv show episode number format "SxxEyy".
+ * @param season Number of the season
+ * @param episode Number of the episode
+ */
+exports.formatEpisodeNumber = function (season, episode) {
+  return 'S' + twoDigitNumber(season) + 'E' + twoDigitNumber(episode);
 };
 
-exports.sendBinaryResponse = function (res, data) {
-  'use strict';
-
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/octetstream');
-  res.send(data);
-  res.end();
-};
-
-fileSizeToBytes = function (number, unit) {
+/**
+ * Converts a formatted file size to bytes.
+ * Eg. 2 KiB would be converted to 2048.
+ * @param number Number of the file size
+ * @param unit Unit of the file size
+ */
+exports.fileSizeToBytes = function (number, unit) {
   switch (unit) {
     case 'KiB':
       return number * 1024;
@@ -57,29 +42,34 @@ fileSizeToBytes = function (number, unit) {
   }
 
   return -1;
-}
+};
 
-twoDigitNumber = function (num) {
-  return ('0' + num).slice(-2);
-}
+/**
+ * Sends a response to the request which was handled successfully.
+ * @param res Response which should be sent
+ * @param message Message that describes how the request was handled
+ * @param data Response data
+ * @param url Optional. URL which was accessed in the request
+ * @param etag Optional. ETAG header
+ * @param lastModified Optional. Date of last modification
+ */
+exports.sendOkResponse = function (res, message, data, url, etag, lastModified) {
+  // assign always-same fields
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
 
-exports.formatEpisodeNumber = function (season, episode) {
-  return 'S' + twoDigitNumber(season) + 'E' + twoDigitNumber(episode);
-}
+  // assign optional fields (if provided)
+  url && res.setHeader('Location', url);
+  etag && res.setHeader('ETag', etag);
+  lastModified && res.setHeader('Last-Modified', lastModified);
 
-exports.parseSize = function (str) {
-  var data = str.match(/(\d+(?:\.\d+)?).*\b(.{2}B).*/);
-  return fileSizeToBytes(parseInt(data[1], 10), data[2]);
-}
-
-exports.parseDate = function (str) {
-  var data = str.match(/(\d{2})-(\d{2}).*;(\d{2}):(\d{2})/),
-      date = new Date(new Date().getFullYear(), parseInt(data[1], 10) - 1, parseInt(data[2], 10), parseInt(data[3], 10), parseInt(data[4], 10));
-
-  if (date > new Date()) {
-    date.setFullYear(date.getFullYear() - 1);
-  }
-
-  return date;
-}
+  // send response
+  res.send({
+    code: 'Success',
+    message: message || '',
+    href: url || '<unknown>',
+    data: data || {},
+  });
+  res.end();
+};
 
