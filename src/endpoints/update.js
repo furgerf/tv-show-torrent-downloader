@@ -75,11 +75,11 @@ function startTorrent(torrentLink, log) {
   });
 }
 
-function checkForEpisode(showName, season, episode, log) {
+function checkForEpisode(subscription, season, episode, log) {
   var torrentUrl = 'http://thepiratebay.mn/search/',
-    url = encodeURI(torrentUrl + showName + ' ' + utils.formatEpisodeNumber(season, episode));
+    url = encodeURI(torrentUrl + subscription.name + ' ' + utils.formatEpisodeNumber(season, episode));
 
-  log && log.debug('Checking whether %s %s is available for download with url %s', showName, utils.formatEpisodeNumber(season, episode), url);
+  log && log.debug('Checking whether %s %s is available for download with url %s', subscription.name, utils.formatEpisodeNumber(season, episode), url);
 
   return new Promise(function (resolve, reject) {
     exec('wget -O- ' + url, function (err, stdout, stderr) {
@@ -108,25 +108,29 @@ function checkForEpisode(showName, season, episode, log) {
         maxSize = Math.max.apply(Math, torrents.map(function (torrent) { return torrent.size; })),
         torrent = torrents.filter(function (t) { return t.size === maxSize; })[0];
 
+      log.debug('Episode %s of show %s was%s found!', utils.formatEpisodeNumber(season, episode), subscription.name, torrent ? '' : ' NOT');
+
       if (torrent) {
-        startTorrent(torrent.link, log);
+        if (subscription.updateLastEpisode(season, episode)) {
+          log && log.info('Successfully updated subscription %s to %s, starting torrent...', subscription.name, utils.formatEpisodeNumber(subscription.lastSeason, subscription.lastEpisode));
+          startTorrent(torrent.link, log);
+        }
       }
 
-      //resolve(Math.random()<.5 ? torrent : undefined);
       resolve(torrent);
     });
   });
 }
 
-function checkForMultipleEpisodes(showName, season, episode, torrents, log) {
-  return checkForEpisode(showName, season, episode, log)
+function checkForMultipleEpisodes(subscription, season, episode, torrents, log) {
+  return checkForEpisode(subscription, season, episode, log)
     .then(function (torrent) {
       if (torrent) {
         // we found the episode, add to list
         torrents.push(torrent);
 
         // look for next episode...
-        return checkForMultipleEpisodes(showName, season, episode + 1, torrents, log);
+        return checkForMultipleEpisodes(subscription, season, episode + 1, torrents, log);
       }
 
       // couldn't find the episode, return the torrents we already have
@@ -135,16 +139,22 @@ function checkForMultipleEpisodes(showName, season, episode, torrents, log) {
 }
 
 function checkSubscriptionForUpdate(subscription, log) {
-  // TODO: Update database entry (update check date)
-
   log && log.debug('Checking subscription "%s" for updates...', subscription.name);
 
   // check for new episode of same season
-  return checkForMultipleEpisodes(subscription.name, subscription.lastSeason, subscription.lastEpisode + 1, [], log)
+  return checkForMultipleEpisodes(subscription, subscription.lastSeason, subscription.lastEpisode + 1, [], log)
     .then(function (newEpisodes) {
+      // we just finished checking for new episodes
+      subscription.lastEpisodeUpdateCheck = new Date();
+
       if (newEpisodes.length === 0) {
         // no new episodes, check for new season
-        return checkForMultipleEpisodes(subscription.name, subscription.lastSeason + 1, 1, [], log);
+        return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1, [], log)
+          .then(function (episodes) {
+            // we just finished checking for new episodes
+            subscription.lastSeasonUpdateCheck = new Date();
+            return episodes;
+          });
       }
 
       return newEpisodes;
@@ -162,7 +172,11 @@ exports.checkForUpdates = function (req, res, next) {
     }
 
     Promise.all(subscriptions.map(function (subscription) {
-      return checkSubscriptionForUpdate(subscription, req.log);
+      return checkSubscriptionForUpdate(subscription, req.log)
+        .then(function (data) {
+          subscription.save();
+          return data;
+        });
     }))
       .then(function (data) {
         result = data.filter(function (entry) { return entry.length > 0; });

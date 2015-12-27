@@ -4,6 +4,7 @@ var log = require('./logger').log.child({component: 'database'}),
   mongoose = require('mongoose'),
 
   config = require('./config'),
+  utils = require('./utils'),
 
   databaseUrl = config.database.host + ':' + config.database.port + '/',
   databaseName = 'tv-shows',
@@ -38,6 +39,36 @@ subscriptionSchema.methods.getReturnable = function () {
   delete returnable.__v;
 
   return returnable;
+};
+
+/**
+ * Updates the last downloaded season/episode of the subscription, making
+ * thorough checks to ensure only valid updates are accepted. Whether the
+ * season/episode update was accepted is returned as a boolean.
+ */
+subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
+  if (season > this.lastSeason) {
+    if (episode === 1) {
+      log.debug('Updating last episode of subscription %s from %s to %s', this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode), utils.formatEpisodeNumber(season, episode));
+      this.lastSeason = season;
+      this.lastEpisode = episode;
+    } else {
+      log.warn('Attempting to increase last season of subscription %s and assign episode %d - aborting', this.name, episode);
+      return false;
+    }
+  } else if (season === this.lastSeason) {
+    if (episode === this.lastEpisode + 1) {
+      log.debug('Updating last episode of subscription %s from %s to %s', this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode), utils.formatEpisodeNumber(this.lastSeason, episode));
+      this.lastEpisode = episode;
+    } else {
+      log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting', this.name, this.lastEpisode, episode);
+      return false;
+    }
+  } else {
+    log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting', this.name, this.lastSeason, season);
+    return false;
+  }
+  return true;
 };
 
 /**
