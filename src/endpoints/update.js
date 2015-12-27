@@ -1,7 +1,5 @@
 'use strict';
 
-/*global Promise*/
-
 var restify = require('restify'),
   exec = require('child_process').exec,
   url = require('url'),

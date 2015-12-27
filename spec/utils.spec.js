@@ -1,7 +1,7 @@
 'use strict';
 
 var rewire = require('rewire'),
-    utils = rewire('../src/utils');
+  utils = rewire('../src/utils');
 
 describe('utils - twoDigitNumber', function () {
   var twoDigitNumber = utils.__get__('twoDigitNumber');
@@ -56,9 +56,9 @@ describe('utils - fileSizeToBytes', function () {
     expect(utils.fileSizeToBytes(0, 'MB')).toBe(0);
     expect(utils.fileSizeToBytes(0, 'GB')).toBe(0);
 
-    expect(utils.fileSizeToBytes(123, 'KiB')).toBe(123*1024);
-    expect(utils.fileSizeToBytes(456, 'MiB')).toBe(456*1024*1024);
-    expect(utils.fileSizeToBytes(789, 'GiB')).toBe(789*1024*1024*1024);
+    expect(utils.fileSizeToBytes(123, 'KiB')).toBe(123 * 1024);
+    expect(utils.fileSizeToBytes(456, 'MiB')).toBe(456 * 1024 * 1024);
+    expect(utils.fileSizeToBytes(789, 'GiB')).toBe(789 * 1024 * 1024 * 1024);
     expect(utils.fileSizeToBytes(12.3, 'KB')).toBe(12300);
     expect(utils.fileSizeToBytes(45.6, 'MB')).toBe(45600000);
     expect(utils.fileSizeToBytes(78.9, 'GB')).toBe(78900000000);
@@ -83,14 +83,14 @@ describe('utils - fileSizeToBytes', function () {
 describe('utils - sendOkResponse', function () {
   it('should only set the minimum headers when invoked without further data', function () {
     var header = {},
-        data,
-        endCalls = 0,
-        response = {
-          statusCode: null,
-          setHeader: function (key, value) { header[key] = value; },
-          send: function (responseData) { data = responseData; },
-          end: function () { endCalls++; }
-        };
+      data,
+      endCalls = 0,
+      response = {
+        statusCode: null,
+        setHeader: function (key, value) { header[key] = value; },
+        send: function (responseData) { data = responseData; },
+        end: function () { endCalls++; }
+      };
 
     utils.sendOkResponse(response);
 

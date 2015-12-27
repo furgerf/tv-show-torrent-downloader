@@ -1,7 +1,5 @@
 'use strict';
 
-/*global Promise*/
-
 var request = require('request'),
   restify = require('restify'),
   JSZip = require('jszip'),
