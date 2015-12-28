@@ -29,7 +29,7 @@ var subscriptionSchema = new mongoose.Schema({
  * to the caller. This means removing and potentially also
  * renaming some fields.
  */
-subscriptionSchema.methods.getReturnable = function () {
+function getReturnableSubscription () {
   var returnable = JSON.parse(JSON.stringify(this));
 
   // remove MongoDB id
@@ -39,14 +39,15 @@ subscriptionSchema.methods.getReturnable = function () {
   delete returnable.__v;
 
   return returnable;
-};
+}
+subscriptionSchema.methods.getReturnable = getReturnableSubscription;
 
 /**
  * Updates the last downloaded season/episode of the subscription, making
  * thorough checks to ensure only valid updates are accepted. Whether the
  * season/episode update was accepted is returned as a boolean.
  */
-subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
+function updateLastEpisode (season, episode) {
   if (season > this.lastSeason) {
     if (episode === 1) {
       log.debug('Updating last episode of subscription %s from %s to %s', this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode), utils.formatEpisodeNumber(season, episode));
@@ -69,13 +70,14 @@ subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
     return false;
   }
   return true;
-};
+}
+subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
 
 /**
  * Pre-save action for subscriptions. Sets last modified
  * and, if necessary, creation date.
  */
-subscriptionSchema.pre('save', function (next) {
+function preSaveAction (next) {
   log.debug('Running pre-save action for subsciption "%s"', this.name);
 
   var currentDate = new Date();
@@ -86,13 +88,19 @@ subscriptionSchema.pre('save', function (next) {
     this.creationTime = currentDate;
   }
 
+  this.lastSeason = this.lastSeason || 1;
+  this.lastEpisode = this.lastEpisode || 0;
+
   next();
-});
+}
+subscriptionSchema.pre('save', preSaveAction);
 
 // create and export model
 exports.Subscription = mongoose.model('Subscription', subscriptionSchema);
 
-// TODO: Find out how to check and, if required, establish a connection before
-// each database interaction
-mongoose.connect(databaseAddress);
+exports.connect = function () {
+  // TODO: Find out how to check and, if required, establish a connection before
+  // each database interaction
+  mongoose.connect(databaseAddress);
+};
 

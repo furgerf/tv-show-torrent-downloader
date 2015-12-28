@@ -6,6 +6,7 @@ var restify = require('restify'),
     // common files
     config = require('./src/config'),
     logger = require('./src/logger'),
+    database = require('./src/database'),
 
     // endpoint handlers
     subscription = require('./src/endpoints/subscription'),
@@ -42,6 +43,9 @@ server.on('uncaughtException', function (req, res, route, error) {
   req.log.error(error, 'Uncaught exception');
   res.send(new restify.InternalServerError('%s (%s)', error.name || '', error.message || error));
 });
+
+// connect to dtaabase
+database.connect();
 
 // start server
 server.listen(config.api.port, function () {
