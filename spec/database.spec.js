@@ -1,37 +1,16 @@
 'use strict';
 
-var rewire = require('rewire'),
-  database = rewire('./../src/database'),
-  Subscription = database.Subscription;
+var subscriptions = require('./test-subscriptions');
 
 describe('subscription', function () {
   var minimalSubscription,
     extendedSubscription,
-    subscriptions;
+    allSubscriptions;
 
   beforeEach(function () {
-    var preSaveAction;
-
-    // create subscriptions
-    minimalSubscription = new Subscription({ name: 'test minimal' });
-    extendedSubscription = new Subscription({ name: 'test extended', searchParameters: 'a b c', lastSeason: 12, lastEpisode: 34 });
-
-    // extract, assign and execute preSaveAction
-    // this is "necessary" to avoid calling Subscription.save()
-    // which would include actual database interaction (and thus
-    // require an actual database instance for the tests to run)
-
-    // extract preSaveAction
-    preSaveAction = database.__get__('preSaveAction');
-    // assign preSaveAction to the subscriptions
-    minimalSubscription.preSaveAction = preSaveAction;
-    extendedSubscription.preSaveAction = preSaveAction;
-    // execute preSaveAction for the subscriptions
-    minimalSubscription.preSaveAction(function () {});
-    extendedSubscription.preSaveAction(function () {});
-
-    // store array with all pre-defined test subscriptions
-    subscriptions  = [ minimalSubscription, extendedSubscription ];
+    minimalSubscription = subscriptions.getMinimalSubscription();
+    extendedSubscription = subscriptions.getExtendedSubscription();
+    allSubscriptions = subscriptions.getAllSubscriptions();
   });
 
   it('should assign the expected default values', function () {
@@ -56,7 +35,7 @@ describe('subscription', function () {
 
   it('should return the expected returnable', function () {
     // the _id and __v field should be removed by getReturnable (but everything else should be unchanged
-    subscriptions.forEach(function (sub) {
+    allSubscriptions.forEach(function (sub) {
       var returnable,
         property;
 
@@ -74,7 +53,7 @@ describe('subscription', function () {
       // iterate over the schema properties
       for (property in sub.schema.paths) {
         // skip the database fields...
-        if (property === '_id' || property === '__v') {
+        if (!sub.schema.paths.hasOwnProperty(property) || property === '_id' || property === '__v') {
           continue;
         }
 

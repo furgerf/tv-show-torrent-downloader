@@ -1,14 +1,10 @@
 'use strict';
 
-var request = require('request'),
-  restify = require('restify'),
-  JSZip = require('jszip'),
+var restify = require('restify'),
 
-  config = require('./../config'),
-  database = require('./../database'),
   utils = require('./../utils'),
 
-  Subscription = database.Subscription;
+  Subscription = require('./../database').Subscription;
 
 exports.getSubscription = function (req, res, next) {
   var subscriptionName = req.params[0];
