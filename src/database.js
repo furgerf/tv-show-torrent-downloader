@@ -48,6 +48,13 @@ subscriptionSchema.methods.getReturnable = getReturnableSubscription;
  * season/episode update was accepted is returned as a boolean.
  */
 function updateLastEpisode (season, episode) {
+  var season = typeof season === 'number' ? season : parseInt(season, 10),
+    episode = typeof episode === 'number' ? episode : parseInt(episode, 10);
+
+  if (Number.isNaN(season) || Number.isNaN(episode)) {
+    return false;
+  }
+
   if (season > this.lastSeason) {
     if (episode === 1) {
       log.debug('Updating last episode of subscription %s from %s to %s', this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode), utils.formatEpisodeNumber(season, episode));

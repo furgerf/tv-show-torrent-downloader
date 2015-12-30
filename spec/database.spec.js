@@ -88,8 +88,46 @@ describe('subscription', function () {
     });
   });
 
-  it('should react correctly to (in)valid updateLastEpisode calls', function () {
-    // TODO
+  it('should react correctly to updateLastEpisode calls with valid arguments', function () {
+    // make valid episode updates
+    expect(extendedSubscription.updateLastEpisode(12, 35)).toBe(true);
+    expect(extendedSubscription.lastSeason).toBe(12);
+    expect(extendedSubscription.lastEpisode).toBe(35);
+
+    expect(extendedSubscription.updateLastEpisode(12, 36)).toBe(true);
+    expect(extendedSubscription.lastSeason).toBe(12);
+    expect(extendedSubscription.lastEpisode).toBe(36);
+
+    // make valid season updates
+    expect(extendedSubscription.updateLastEpisode(13, 1)).toBe(true);
+    expect(extendedSubscription.lastSeason).toBe(13);
+    expect(extendedSubscription.lastEpisode).toBe(1);
+
+    expect(extendedSubscription.updateLastEpisode(14, 1)).toBe(true);
+    expect(extendedSubscription.lastSeason).toBe(14);
+    expect(extendedSubscription.lastEpisode).toBe(1);
+
+    expect(extendedSubscription.updateLastEpisode('14', '2')).toBe(true);
+    expect(extendedSubscription.lastSeason).toBe(14);
+    expect(extendedSubscription.lastEpisode).toBe(2);
+  });
+
+  it('should react correctly to updateLastEpisode calls with invalid arguments', function () {
+    // make invalid episode update attempts
+    expect(extendedSubscription.updateLastEpisode(12, 33)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode(12, 34)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode(12, 36)).toBe(false);
+
+    // make invalid season update attempts
+    expect(extendedSubscription.updateLastEpisode(13, 34)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode(13, 35)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode(13, 0)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode(11, 1)).toBe(false);
+
+    expect(extendedSubscription.updateLastEpisode(13)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode(undefined, 1)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode('asdf', 1)).toBe(false);
+    expect(extendedSubscription.updateLastEpisode(13, 'foobar')).toBe(false);
   });
 });
 
