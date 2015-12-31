@@ -5,10 +5,9 @@ var restify = require('restify'),
   url = require('url'),
 
   config = require('./../config'),
-  database = require('./../database'),
   utils = require('./../utils'),
 
-  Subscription = database.Subscription;
+  Subscription = require('./../database/subscription').Subscription;
 
 function parseTorrentSearch(html) {
   var magnetRegexp = /<a href="magnet:?/,

@@ -4,7 +4,7 @@ var restify = require('restify'),
 
   utils = require('./../utils'),
 
-  Subscription = require('./../database').Subscription;
+  Subscription = require('./../database/subscription').Subscription;
 
 exports.getSubscription = function (req, res, next) {
   var subscriptionName = req.params[0];

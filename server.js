@@ -6,7 +6,7 @@ var restify = require('restify'),
     // common files
     config = require('./src/config'),
     logger = require('./src/logger'),
-    database = require('./src/database'),
+    database = require('./src/database/database'),
 
     // endpoint handlers
     subscription = require('./src/endpoints/subscription'),

@@ -1,7 +1,7 @@
 'use strict';
 
 var rewire = require('rewire'),
-  database = rewire('./../src/database'),
+  database = rewire('./../src/database/subscription'),
   Subscription = database.Subscription,
   preSaveAction = database.__get__('preSaveAction');
 

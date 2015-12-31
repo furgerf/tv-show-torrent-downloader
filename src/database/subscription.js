@@ -1,14 +1,9 @@
 'use strict';
 
-var log = require('./logger').log.child({component: 'database'}),
+var log = require('./../logger').log.child({component: 'subscription'}),
   mongoose = require('mongoose'),
 
-  config = require('./config'),
-  utils = require('./utils'),
-
-  databaseUrl = config.database.host + ':' + config.database.port + '/',
-  databaseName = 'tv-shows',
-  databaseAddress = 'mongodb://' + databaseUrl + databaseName;
+  utils = require('./../utils');
 
 /**
  * Mongoose schema definition for the subscription of a tv show.
@@ -104,10 +99,4 @@ subscriptionSchema.pre('save', preSaveAction);
 
 // create and export model
 exports.Subscription = mongoose.model('Subscription', subscriptionSchema);
-
-exports.connect = function () {
-  // TODO: Find out how to check and, if required, establish a connection before
-  // each database interaction
-  mongoose.connect(databaseAddress);
-};
 

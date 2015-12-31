@@ -2,7 +2,7 @@
 
 var subscriptions = require('./test-subscriptions');
 
-describe('subscription', function () {
+describe('database', function () {
   var minimalSubscription,
     extendedSubscription,
     allSubscriptions;
