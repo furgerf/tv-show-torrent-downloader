@@ -24,7 +24,8 @@ function getMinimalSubscription() {
 }
 
 function getExtendedSubscription() {
-  var extendedSubscription = new Subscription({ name: 'test extended', searchParameters: 'a b c', lastSeason: 12, lastEpisode: 34 });
+  var extendedSubscription = new Subscription({ name: 'test extended', searchParameters: 'a b c',
+    lastSeason: 12, lastEpisode: 34 });
 
   // extract, assign and execute preSaveAction
   // this is "necessary" to avoid calling Subscription.save()
@@ -44,5 +45,7 @@ exports.getMinimalSubscription = getMinimalSubscription;
 
 exports.getExtendedSubscription = getExtendedSubscription;
 
-exports.getAllSubscriptions = function () { return [ getMinimalSubscription(), getExtendedSubscription() ]; };
+exports.getAllSubscriptions = function () {
+  return [ getMinimalSubscription(), getExtendedSubscription() ];
+};
 

@@ -74,9 +74,11 @@ function startTorrent(torrentLink, log) {
 
 function checkForEpisode(subscription, season, episode, log) {
   var torrentUrl = 'http://thepiratebay.mn/search/',
-    url = encodeURI(torrentUrl + subscription.name + ' ' + utils.formatEpisodeNumber(season, episode));
+    url = encodeURI(torrentUrl + subscription.name + ' ' +
+        utils.formatEpisodeNumber(season, episode));
 
-  log && log.debug('Checking whether %s %s is available for download with url %s', subscription.name, utils.formatEpisodeNumber(season, episode), url);
+  log && log.debug('Checking whether %s %s is available for download with url %s',
+      subscription.name, utils.formatEpisodeNumber(season, episode), url);
 
   return new Promise(function (resolve, reject) {
     exec('wget -O- ' + url, function (err, stdout, stderr) {
@@ -105,11 +107,14 @@ function checkForEpisode(subscription, season, episode, log) {
         maxSize = Math.max.apply(Math, torrents.map(function (torrent) { return torrent.size; })),
         torrent = torrents.filter(function (t) { return t.size === maxSize; })[0];
 
-      log.debug('Episode %s of show %s was%s found!', utils.formatEpisodeNumber(season, episode), subscription.name, torrent ? '' : ' NOT');
+      log.debug('Episode %s of show %s was%s found!', utils.formatEpisodeNumber(season, episode),
+          subscription.name, torrent ? '' : ' NOT');
 
       if (torrent) {
         if (subscription.updateLastEpisode(season, episode)) {
-          log && log.info('Successfully updated subscription %s to %s, starting torrent...', subscription.name, utils.formatEpisodeNumber(subscription.lastSeason, subscription.lastEpisode));
+          log && log.info('Successfully updated subscription %s to %s, starting torrent...',
+              subscription.name, utils.formatEpisodeNumber(subscription.lastSeason,
+                subscription.lastEpisode));
           startTorrent(torrent.link, log);
         }
       }
@@ -139,7 +144,8 @@ function checkSubscriptionForUpdate(subscription, log) {
   log && log.debug('Checking subscription "%s" for updates...', subscription.name);
 
   // check for new episode of same season
-  return checkForMultipleEpisodes(subscription, subscription.lastSeason, subscription.lastEpisode + 1, [], log)
+  return checkForMultipleEpisodes(subscription, subscription.lastSeason,
+      subscription.lastEpisode + 1, [], log)
     .then(function (newEpisodes) {
       // we just finished checking for new episodes
       subscription.lastEpisodeUpdateCheck = new Date();
@@ -165,7 +171,7 @@ exports.checkForUpdates = function (req, res, next) {
   Subscription.find({}, function (err, subscriptions) {
     if (err) {
       req.log.error(err);
-      return next(new restify.InternalServerError('Something went wrong when accessing the database.'));
+      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
     }
 
     Promise.all(subscriptions.map(function (subscription) {
@@ -180,7 +186,9 @@ exports.checkForUpdates = function (req, res, next) {
         result.forEach(function (torrents) {
           updateCount += torrents.length;
         });
-        utils.sendOkResponse(res, 'Checked ' + subscriptions.length + ' subscriptions for updates and started the download of ' + updateCount + ' new torrents', data, 'http://' + req.headers.host + req.url);
+        utils.sendOkResponse(res, 'Checked ' + subscriptions.length +
+            ' subscriptions for updates and started the download of ' + updateCount +
+            ' new torrents', data, 'http://' + req.headers.host + req.url);
         res.end();
         return next();
       });

@@ -24,7 +24,7 @@ var subscriptionSchema = new mongoose.Schema({
  * to the caller. This means removing and potentially also
  * renaming some fields.
  */
-function getReturnableSubscription () {
+function getReturnableSubscription() {
   var returnable = JSON.parse(JSON.stringify(this));
 
   // remove MongoDB id
@@ -42,9 +42,9 @@ subscriptionSchema.methods.getReturnable = getReturnableSubscription;
  * thorough checks to ensure only valid updates are accepted. Whether the
  * season/episode update was accepted is returned as a boolean.
  */
-function updateLastEpisode (season, episode) {
-  var season = typeof season === 'number' ? season : parseInt(season, 10),
-    episode = typeof episode === 'number' ? episode : parseInt(episode, 10);
+function updateLastEpisode(newSeason, newEpisode) {
+  var season = typeof newSeason === 'number' ? newSeason : parseInt(newSeason, 10),
+    episode = typeof newEpisode === 'number' ? newEpisode : parseInt(newEpisode, 10);
 
   if (Number.isNaN(season) || Number.isNaN(episode)) {
     return false;
@@ -52,23 +52,30 @@ function updateLastEpisode (season, episode) {
 
   if (season > this.lastSeason) {
     if (episode === 1) {
-      log.debug('Updating last episode of subscription %s from %s to %s', this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode), utils.formatEpisodeNumber(season, episode));
+      log.debug('Updating last episode of subscription %s from %s to %s',
+          this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+          utils.formatEpisodeNumber(season, episode));
       this.lastSeason = season;
       this.lastEpisode = episode;
     } else {
-      log.warn('Attempting to increase last season of subscription %s and assign episode %d - aborting', this.name, episode);
+      log.warn('Attempting to change season of subscription %s and assign episode %d - aborting',
+          this.name, episode);
       return false;
     }
   } else if (season === this.lastSeason) {
     if (episode === this.lastEpisode + 1) {
-      log.debug('Updating last episode of subscription %s from %s to %s', this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode), utils.formatEpisodeNumber(this.lastSeason, episode));
+      log.debug('Updating last episode of subscription %s from %s to %s', this.name,
+          utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+          utils.formatEpisodeNumber(this.lastSeason, episode));
       this.lastEpisode = episode;
     } else {
-      log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting', this.name, this.lastEpisode, episode);
+      log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
+          this.name, this.lastEpisode, episode);
       return false;
     }
   } else {
-    log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting', this.name, this.lastSeason, season);
+    log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
+        this.name, this.lastSeason, season);
     return false;
   }
   return true;
@@ -79,7 +86,7 @@ subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
  * Pre-save action for subscriptions. Sets last modified
  * and, if necessary, creation date.
  */
-function preSaveAction (next) {
+function preSaveAction(next) {
   log.debug('Running pre-save action for subsciption "%s"', this.name);
 
   var currentDate = new Date();

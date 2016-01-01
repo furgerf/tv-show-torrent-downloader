@@ -1,8 +1,8 @@
 'use strict';
 
 var subscriptions = require('./../test-subscriptions'),
-    frisby = require('frisby');
-    //subscription = require('./../../src/endpoints/subscription');
+  frisby = require('frisby');
+  //subscription = require('./../../src/endpoints/subscription');
 
 describe('subscription', function () {
   var minimalSubscription,

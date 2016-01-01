@@ -34,7 +34,8 @@ describe('database', function () {
   });
 
   it('should return the expected returnable', function () {
-    // the _id and __v field should be removed by getReturnable (but everything else should be unchanged
+    // the _id and __v field should be removed by getReturnable
+    // (but everything else should be unchanged)
     allSubscriptions.forEach(function (sub) {
       var returnable,
         property;
@@ -53,7 +54,8 @@ describe('database', function () {
       // iterate over the schema properties
       for (property in sub.schema.paths) {
         // skip the database fields...
-        if (!sub.schema.paths.hasOwnProperty(property) || property === '_id' || property === '__v') {
+        if (!sub.schema.paths.hasOwnProperty(property) ||
+            property === '_id' || property === '__v') {
           continue;
         }
 
