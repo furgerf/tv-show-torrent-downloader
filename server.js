@@ -44,12 +44,12 @@ server.on('uncaughtException', function (req, res, route, error) {
   res.send(new restify.InternalServerError('%s (%s)', error.name || '', error.message || error));
 });
 
-// connect to dtaabase
+// connect to database
 database.connect();
 
 // start server
-server.listen(config.api.port, function () {
-  log.info('TV show downloader API running on port ' + config.api.port);
+server.listen(config.api.port, config.api.host, function () {
+  log.info('TV show downloader API running on %s:%s ', config.api.host, config.api.port);
 
   // subscriptions
   server.get(/^\/subscription\/?$/, subscription.getSubscriptions);
@@ -64,10 +64,11 @@ server.listen(config.api.port, function () {
   server.get(/^\/exit$/, process.exit);
 
   // Root
-  server.get(/^\/$/, function (req, res) {
+  server.get(/^\/$/, function (req, res, next) {
     res.setHeader('content-type', 'application/json');
     res.write('Welcome to the TV show downloader REST interface!\n');
     res.end();
+    next();
   });
 });
 
