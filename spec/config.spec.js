@@ -13,11 +13,12 @@ describe('config - ensure that the expected config values are defined', function
     expect(typeof config.database.port).toBe('number');
   });
 
-  it('should contain the torrent site', function () {
-    expect(typeof config.torrentSite).toBe('string');
+  it('should contain the flag that denotes the environment', function () {
+    expect(typeof config.productionEnvironment).toBe('boolean');
   });
 
   it('should contain the command to start torrents', function () {
     expect(typeof config.torrentCommand).toBe('string');
   });
 });
+

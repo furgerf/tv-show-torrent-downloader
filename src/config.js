@@ -8,7 +8,7 @@ exports.database = {
   port: 27017
 };
 
-exports.torrentSite = 'piratebay.mn';
+exports.productionEnvironment = false;
 
-exports.torrentCommand = 'echo'; //'qbittorrent';
+exports.torrentCommand = exports.productionEnvironment ? 'qbittorrent' : 'echo';
 
