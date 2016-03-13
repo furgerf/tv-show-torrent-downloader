@@ -2,6 +2,10 @@
 
 // modules
 var restify = require('restify'),
+    http = require('http'),
+    join = require('path').join,
+    fs = require('fs'),
+
 
     // common files
     config = require('./src/config'),
@@ -19,7 +23,8 @@ var restify = require('restify'),
       name: 'TV show downloader REST server',
       log: logger.log.child({component: 'endpoint'}),
     }),
-    requestStarts = {};
+    requestStarts = {},
+    root = join(__dirname, 'public');
 
 // set up server
 server.use(restify.bodyParser());
@@ -60,15 +65,23 @@ server.listen(config.api.port, config.api.host, function () {
   // updates
   server.get(/^\/update\/check\/?$/, updates.checkForUpdates);
 
-  // Shutdown
+  // shutdown
   server.get(/^\/exit$/, process.exit);
 
-  // Root
+  // root
   server.get(/^\/$/, function (req, res, next) {
-    res.setHeader('content-type', 'application/json');
-    res.write('Welcome to the TV show downloader REST interface!\n');
-    res.end();
-    next();
+    req.log.debug('Accessing root');
+    res.redirect('/index.html', next);
+});
+
+  // evertything else... try public FS
+  server.get(/^\/([a-zA-Z0-9_\/\.~-]*)/, function (req, res, next) {
+    var //url = parse(req.url),
+        path = join(root, req.params[0]),
+        stream = fs.createReadStream(path);
+    req.log.debug('Accessing path %s', path);
+
+    stream.pipe(res);
   });
 });
 
