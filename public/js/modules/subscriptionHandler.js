@@ -10,7 +10,8 @@
     settings.serverPort = settings.serverPort || '8000';
 
     var serverUrl = settings.serverHost + ':' + settings.serverPort + '/',
-        subscriptionUrl = serverUrl + 'subscription/';
+        subscriptionUrl = serverUrl + 'subscription/',
+        updateCheckUrl = serverUrl + 'update/check/';
 
     this.getAllSubscriptions = function () {
       logger.logConsole('Retrieving all subscriptions from ' + subscriptionUrl);
@@ -39,8 +40,7 @@
     };
 
     this.updateSubscription = function (subscription) {
-      logger.logAlert('throw new notimplementedexception()');
-      // (TODO: return promise)
+      return $http.get(updateCheckUrl + encodeURIComponent(subscription.name));
     };
 
     this.updateAllSubscriptions = function () {

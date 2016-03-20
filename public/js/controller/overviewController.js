@@ -14,9 +14,11 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
         subscriptionHandler.updateSubscription(sub)
           .then(function (resp) {
             logger.logConsole('TODO: Handle response');
+            logger.logConsole(resp);
           })
           .catch(function (resp) {
             logger.logConsole('TODO: Handle response');
+            logger.logConsole(resp);
           });
       };
 
@@ -24,9 +26,11 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
         subscriptionHandler.updateAllSubscriptions()
           .then(function (resp) {
             logger.logConsole('TODO: Handle response');
+            logger.logConsole(resp);
           })
           .catch(function (resp) {
             logger.logConsole('TODO: Handle response');
+            logger.logConsole(resp);
           });
       };
 

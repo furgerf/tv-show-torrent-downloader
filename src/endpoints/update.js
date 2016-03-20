@@ -112,7 +112,7 @@ function checkSubscriptionForUpdate(subscription, log) {
 }
 
 exports.checkSubscriptionForUpdates = function (req, res, next) {
-  var subscriptionName = req.params[0];
+  var subscriptionName = decodeURIComponent(req.params[0]);
 
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {
     if (err) {
@@ -128,9 +128,8 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
 
     checkSubscriptionForUpdate(subscriptions[0], req.log)
       .then(function (data) {
-        result = data.filter(function (entry) { return entry.length > 0; });
-        utils.sendOkResponse(res, 'Started the download of ' + updateCount +
-            ' new torrents', result, 'http://' + req.headers.host + req.url);
+        utils.sendOkResponse(res, 'Started the download of ' + data.length +
+            ' new torrents', data, 'http://' + req.headers.host + req.url);
         res.end();
         return next();
       });
@@ -154,6 +153,7 @@ exports.checkAllForUpdates = function (req, res, next) {
         });
     }))
       .then(function (data) {
+        // TODO: double-check this...
         result = data.filter(function (entry) { return entry.length > 0; });
         result.forEach(function (torrents) {
           updateCount += torrents.length;
