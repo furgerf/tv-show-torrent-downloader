@@ -37,6 +37,10 @@
           logger.logAlert("ERROR while adding subscription: " + JSON.stringify(data));
         });
     };
+
+    this.updateSubscription = function (subscription) {
+      logger.logAlert('throw new notimplementedexception()');
+      // (TODO: return promise)
   };
 
   // Export to window

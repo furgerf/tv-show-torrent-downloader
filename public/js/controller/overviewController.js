@@ -8,7 +8,25 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
       // continuous access to caller and some Important Objects
       var that = this;
 
-      that.shows = [];
+      that.subscriptions = [];
+
+      that.updateSubscription = function (sub){
+        updateSubscription(sub);
+      };
+
+      that.updateAllSubscriptions = function (){
+        that.subscriptions.forEach(updateSubscription);
+      };
+
+      function updateSubscription(sub) {
+        subscriptionHandler.updateSubscription(sub)
+          .then(function (resp) {
+            logger.logConsole('TODO: Handle response');
+          })
+          .catch(function (resp) {
+            logger.logConsole('TODO: Handle response');
+          });
+      }
 
       subscriptionHandler.getAllSubscriptions()
         .then(function (resp) {
@@ -18,7 +36,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
           }
 
           logger.logConsole('Response message: ' + resp.data.message);
-          that.shows = resp.data.data.map(function (data) {
+          that.subscriptions = resp.data.data.map(function (data) {
             return new app.Subscription(data.name, new app.ShowEpisode(data.lastSeason, data.lastEpisode), data.searchParameters, data.lastModified);
           });
         });
