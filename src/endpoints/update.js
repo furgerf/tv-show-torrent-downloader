@@ -111,7 +111,33 @@ function checkSubscriptionForUpdate(subscription, log) {
     });
 }
 
-exports.checkForUpdates = function (req, res, next) {
+exports.checkSubscriptionForUpdates = function (req, res, next) {
+  var subscriptionName = req.params[0];
+
+  Subscription.find({name: subscriptionName}, function (err, subscriptions) {
+    if (err) {
+      req.log.error(err);
+      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
+    }
+
+    if (subscriptions.length === 0) {
+      req.log.warn('No subscription with name "%s" found', subscriptionName);
+      utils.sendOkResponse(res, 'No subscription with name "%s" found', subscriptionName, {}, 'http://' + req.headers.host + req.url);
+      return next();
+    }
+
+    checkSubscriptionForUpdate(subscriptions[0], req.log)
+      .then(function (data) {
+        result = data.filter(function (entry) { return entry.length > 0; });
+        utils.sendOkResponse(res, 'Started the download of ' + updateCount +
+            ' new torrents', result, 'http://' + req.headers.host + req.url);
+        res.end();
+        return next();
+      });
+  });
+};
+
+exports.checkAllForUpdates = function (req, res, next) {
   var result,
     updateCount = 0;
 
@@ -134,7 +160,7 @@ exports.checkForUpdates = function (req, res, next) {
         });
         utils.sendOkResponse(res, 'Checked ' + subscriptions.length +
             ' subscriptions for updates and started the download of ' + updateCount +
-            ' new torrents', data, 'http://' + req.headers.host + req.url);
+            ' new torrents', result, 'http://' + req.headers.host + req.url);
         res.end();
         return next();
       });

@@ -63,7 +63,8 @@ server.listen(config.api.port, config.api.host, function () {
   server.del(/^\/subscription\/(.+)\/?$/, subscription.deleteSubscription);
 
   // updates
-  server.get(/^\/update\/check\/?$/, updates.checkForUpdates);
+  server.get(/^\/update\/check\/?$/, updates.checkAllForUpdates);
+  server.get(/^\/update\/check\/(.+)\/?$/, updates.checkSubscriptionForUpdates);
 
   // shutdown
   server.get(/^\/exit$/, process.exit);
