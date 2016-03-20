@@ -99,7 +99,7 @@ exports.getSubscriptions = function (req, res, next) {
 };
 
 exports.addSubscription = function (req, res, next) {
-  var data = JSON.parse(req.body),
+  var data = req.body, //JSON.parse(req.body),
     newSubscriptionData,
     newSubscription;
 
