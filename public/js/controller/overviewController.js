@@ -11,14 +11,6 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
       that.subscriptions = [];
 
       that.updateSubscription = function (sub){
-        updateSubscription(sub);
-      };
-
-      that.updateAllSubscriptions = function (){
-        that.subscriptions.forEach(updateSubscription);
-      };
-
-      function updateSubscription(sub) {
         subscriptionHandler.updateSubscription(sub)
           .then(function (resp) {
             logger.logConsole('TODO: Handle response');
@@ -26,7 +18,17 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
           .catch(function (resp) {
             logger.logConsole('TODO: Handle response');
           });
-      }
+      };
+
+      that.updateAllSubscriptions = function (){
+        subscriptionHandler.updateAllSubscriptions()
+          .then(function (resp) {
+            logger.logConsole('TODO: Handle response');
+          })
+          .catch(function (resp) {
+            logger.logConsole('TODO: Handle response');
+          });
+      };
 
       subscriptionHandler.getAllSubscriptions()
         .then(function (resp) {

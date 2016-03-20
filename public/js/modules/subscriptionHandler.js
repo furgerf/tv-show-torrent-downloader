@@ -41,6 +41,12 @@
     this.updateSubscription = function (subscription) {
       logger.logAlert('throw new notimplementedexception()');
       // (TODO: return promise)
+    };
+
+    this.updateAllSubscriptions = function () {
+      logger.logAlert('throw new notimplementedexception()');
+      // (TODO: return promise)
+    };
   };
 
   // Export to window
