@@ -1,0 +1,32 @@
+<h1>Add New Show</h1>
+<form>
+  <table>
+    <tr>
+      <td>
+        Name
+      </td>
+      <td>
+        <input type="text" ng-model="newShowCtrl.newShow.name" placeholder="Name of the show" style="width:174px" required>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Current episode
+      </td>
+      <td>
+        <input type="number" ng-model="newShowCtrl.newShow.season" placeholder="Season" style="width:70px">
+        <input type="number" ng-model="newShowCtrl.newShow.episode" placeholder="Episode" style="width:70px">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Search parameters
+      </td>
+      <td>
+        <input type="text" ng-model="newShowCtrl.newShow.searchParameters" placeholder="Search parameters" style="width:174px">
+      </td>
+    </tr>
+  </table>
+  <button ng-click="newShowCtrl.addShow()">Add Show</button>
+</form>
+

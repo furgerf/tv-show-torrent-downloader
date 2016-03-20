@@ -1,13 +1,16 @@
 <h1>Overview</h1>
-<table ng-repeat="show in overviewCtrl.shows">
+<div>
+  <table ng-repeat="show in overviewCtrl.shows">
     <col width="300"></col>
+    <col width="200"></col>
     <col width="500"></col>
     <tr class="left">
-        <td class="title">{{show.name}}</td>
-        <td class="left">Current episode: S{{show.lastSeason | twoDigits}}E{{show.lastEpisode | twoDigits}}</td>
+      <td class="title">{{show.name}}</td>
+      <td>Search parameters: "{{show.searchParameters}}"</td>
+      <td>Current episode: S{{show.currentEpisode.season | twoDigits}}E{{show.currentEpisode.episode | twoDigits}} (Last updated on {{show.lastUpdateCheck}})</td>
+      <td><button>Update now!</button></td>
     </tr>
-    <tr class="left">
-        <td class="edit">Last updated on {{show.lastEpisodeUpdateCheck}}</td>
-        <td class="left">Search parameters: {{show.searchParameters}}</td>
-    </tr>
-</table>
+  </table>
+  <button>Update all!</button>
+</div>
+

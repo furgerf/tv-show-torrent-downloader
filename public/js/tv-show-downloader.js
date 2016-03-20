@@ -15,10 +15,10 @@ mod.value('settings', {
   serverPort: 8000
 });
 
-mod.service('subscriptions', ['$http', 'logger', 'settings',
+mod.service('subscriptionHandler', ['$http', 'logger', 'settings',
     function ($http, logger, settings) {
       'use strict';
-      return new app.Subscriptions($http, logger, settings);
+      return new app.SubscriptionHandler($http, logger, settings);
     }]);
 
 mod.filter('twoDigits', function () {
@@ -49,24 +49,10 @@ mod.config(['$routeProvider',
           templateUrl: 'html/overview.html',
           controller: 'overviewController as overviewCtrl'
         })
-      /*
-        .when('/ownposts', {
-          templateUrl: 'html/own_posts.html',
-          controller: 'ownPostsController as ownCtrl'
+        .when('/new', {
+          templateUrl: 'html/newSubscription.html',
+          controller: 'newSubscriptionController as newShowCtrl'
         })
-        .when('/poststats', {
-          templateUrl: 'html/post_stats.html',
-          controller: 'postStatsController as psCtrl'
-        })
-        .when('/userstats', {
-          templateUrl: 'html/user_stats.html',
-          controller: 'userStatsController as usCtrl'
-        })
-        .when('/settings', {
-          templateUrl: 'html/settings.html',
-          controller: 'settingsController as setCtrl'
-        })
-        */
         .otherwise({
           redirectTo: '/overview'
         });

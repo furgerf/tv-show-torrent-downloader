@@ -1,51 +1,34 @@
 <!doctype html>
-<html lang="en" ng-app="tv-show-downloader" ng-controller="mainController as ctrl">
-
+<html lang="en" ng-app="tv-show-downloader">
   <head>
     <meta charset="utf-8">
-    <title>TV Show Doanloader</title>
+    <title>TV Show Downloader</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-route.js"></script>
   </head>
 
   <body>
     <h1>TV Shows</h1>
-    <br/>
+    <br>
 
-    <div>
-      foobar
-      <!--
-        <span ng-if="ctrl.currentUser.name">Currently logged in as </span><span class="title" ng-if="ctrl.currentUser.name">{{ctrl.currentUser.name}}</span>
-        <span ng-if="!ctrl.currentUser.name">Not logged in.</span>
-
-        <input ng-if="!ctrl.currentUser || !ctrl.currentUser.name" type="text" ng-model="ctrl.user.name" placeholder="Username">
-        <input ng-if="!ctrl.currentUser || !ctrl.currentUser.name" type="text" ng-model="ctrl.user.password" placeholder="Password">
-        <button ng-if="!ctrl.currentUser || !ctrl.currentUser.name" ng-click="ctrl.userLogin()" ng-disabled="!ctrl.user.name || !ctrl.user.password">Login</button>
-        <button ng-if="!ctrl.currentUser || !ctrl.currentUser.name" ng-click="ctrl.userRegister()" ng-disabled="!ctrl.user.name || !ctrl.user.password">Register</button>
-        <button ng-if="ctrl.currentUser && ctrl.currentUser.name" ng-click="ctrl.userLogout()">Logout</button>
-        <button ng-if="ctrl.currentUser && ctrl.currentUser.name" ng-click="ctrl.userDelete()">Delete user</button>
-      -->
-    </div>
-    <br/>
-
-    <!--
-      <a href="#/posts">All posts</a><span ng-if="ctrl.currentUser && ctrl.currentUser.name"> | <a href="#/ownposts">{{ctrl.currentUser.name}}'s posts</a></span> | <a href="#/poststats">Post statistics</a> | <a href="#/userstats">User statistics</a> | <a href="#/settings">Settings</a>
-    -->
-    <br/>
-    <br/>
+    <a href="#/overview">Overview</a>
+    <a href="#/new">Add Show</a>
+    <br>
+    <br>
 
     <div ng-view></div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular-route.js"></script>
 
     <script src="js/tv-show-downloader.js"></script>
 
     <script src="js/controller/mainController.js"></script>
+    <script src="js/controller/newSubscriptionController.js"></script>
     <script src="js/controller/overviewController.js"></script>
 
-    <script src="js/modules/subscriptions.js"></script>
-    <script src="js/modules/show.js"></script>
-    <script src="js/modules/showEpisode.js"></script>
     <script src="js/modules/logger.js"></script>
+    <script src="js/modules/showEpisode.js"></script>
+    <script src="js/modules/subscriptionHandler.js"></script>
+    <script src="js/modules/subscription.js"></script>
   </body>
-
 </html>
