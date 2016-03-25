@@ -9,12 +9,21 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
       var that = this;
 
       that.subscriptions = [];
+      that.newEpisodes = {};
 
       that.updateSubscription = function (sub){
         subscriptionHandler.updateSubscription(sub)
           .then(function (resp) {
-            logger.logConsole('TODO: Handle response');
-            logger.logConsole(resp);
+            resp.data.data.forEach(function (torrent) {
+              if (!that.newEpisodes[sub.name])
+                that.newEpisodes[sub.name] = [];
+              that.newEpisodes[sub.name].push(torrent);
+
+              subscriptionHandler.getAllSubscriptions()
+                .then(function (resp) {
+                  that.handleSubscriptionResponse(resp);
+                });
+            });
           })
           .catch(function (resp) {
             logger.logConsole('TODO: Handle response');
@@ -25,8 +34,16 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
       that.updateAllSubscriptions = function (){
         subscriptionHandler.updateAllSubscriptions()
           .then(function (resp) {
-            logger.logConsole('TODO: Handle response');
-            logger.logConsole(resp);
+            resp.data.data.forEach(function (torrent) {
+              if (!that.newEpisodes[sub.name])
+                that.newEpisodes[sub.name] = [];
+              that.newEpisodes[sub.name].push(torrent);
+
+              subscriptionHandler.getAllSubscriptions()
+                .then(function (resp) {
+                  that.handleSubscriptionResponse(resp);
+                });
+            });
           })
           .catch(function (resp) {
             logger.logConsole('TODO: Handle response');
@@ -36,6 +53,10 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
 
       subscriptionHandler.getAllSubscriptions()
         .then(function (resp) {
+          that.handleSubscriptionResponse(resp);
+        });
+
+      that.handleSubscriptionResponse = function (resp) {
           if (resp.status !== 200) {
             logger.logConsole('Unexpected response code ' + resp.status + '!');
             return;
@@ -45,5 +66,5 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
           that.subscriptions = resp.data.data.map(function (data) {
             return new app.Subscription(data.name, new app.ShowEpisode(data.lastSeason, data.lastEpisode), data.searchParameters, data.lastModified);
           });
-        });
+        };
     }]);

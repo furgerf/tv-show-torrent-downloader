@@ -28,6 +28,20 @@ mod.filter('twoDigits', function () {
   };
 });
 
+mod.filter('dateTime', function () {
+  return function(date) {
+    dt = new Date(date);
+    return dt.getDate() + '.' + (dt.getMonth() + 1) + '.' + dt.getFullYear()
+      + ', ' + dt.getHours() + ':' + dt.getMinutes();
+  };
+});
+
+mod.filter('searchParameters', function () {
+  return function(parameters) {
+    return 'Searching for "... SxxEyy ' + parameters + '"';
+  };
+});
+
 /*
 mod.service('currentUser', [
 

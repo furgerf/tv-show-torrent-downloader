@@ -44,8 +44,7 @@
     };
 
     this.updateAllSubscriptions = function () {
-      logger.logAlert('throw new notimplementedexception()');
-      // (TODO: return promise)
+      return $http.get(updateCheckUrl);
     };
   };
 
