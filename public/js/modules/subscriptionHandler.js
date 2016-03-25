@@ -29,7 +29,7 @@
 
       logger.logConsole('Adding subscription ' + reqBody + ' to ' + subscriptionUrl);
 
-      $http.post(subscriptionUrl, sub)
+      return $http.post(subscriptionUrl, sub)
         .success(function (data, status, headers, config) {
           logger.logConsole("Successfully added subscription!");
         })
