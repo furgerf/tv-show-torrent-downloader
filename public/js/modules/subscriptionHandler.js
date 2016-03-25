@@ -15,7 +15,6 @@
 
     this.getAllSubscriptions = function () {
       logger.logConsole('Retrieving all subscriptions from ' + subscriptionUrl);
-
       return $http.get(subscriptionUrl);
     };
 
@@ -40,10 +39,12 @@
     };
 
     this.updateSubscription = function (subscription) {
+      logger.logConsole('Updating subscription ' + subscription.name + ' from ' + subscriptionUrl);
       return $http.get(updateCheckUrl + encodeURIComponent(subscription.name));
     };
 
     this.updateAllSubscriptions = function () {
+      logger.logConsole('Updating all subscriptions from ' + subscriptionUrl);
       return $http.get(updateCheckUrl);
     };
   };
@@ -52,3 +53,4 @@
   window.app = window.app || {};
   window.app.SubscriptionHandler = SubscriptionHandler;
 }(window));
+

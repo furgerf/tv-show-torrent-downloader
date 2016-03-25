@@ -1,105 +1,108 @@
 body {
-    font: 14px'Helvetica Neue', Helvetica, Arial, sans-serif;
-    line-height: 1.4em;
-    color: #143D29;
-    margin: 10 auto;
-    -webkit-font-smoothing: antialiased;
-    -moz-font-smoothing: antialiased;
-    -ms-font-smoothing: antialiased;
-    -o-font-smoothing: antialiased;
-    font-smoothing: antialiased;
-}
-table {
-    border-style: groove;
-    border-collapse: collapse;
-    border-color: #143D29;
-    border-width: thin;
-    background-color: #A9D4BF;
-}
-td.left {
-    background-color: #C8E4D6;
-}
-td.edit {
-    font-style: italic;
-    font-size: 12px;
-}
-.title {
-    font-size: 24px;
-    font-weight: bold;
-}
-a {
-    color: #143D29;
-    background-color: #C8E4D6;
-    border-style: inset;
-    padding: 4pt;
-    border-width: thin;
+  font: 14px'Helvetica Neue', Helvetica, Arial, sans-serif;
+  line-height: 1.4em;
+  color: #143D29;
+  margin: 10 auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  -ms-font-smoothing: antialiased;
+  -o-font-smoothing: antialiased;
+  font-smoothing: antialiased;
 }
 * {
-    margin: 3pt;
+  margin: 3pt;
+  padding: 3pt;
+  background-color: #eeeeff;
+}
+.darker {
+  background-color: #e0e0ff;
+}
+table {
+  border-style: groove;
+  border-collapse: collapse;
+  border-color: #143D29;
+  border-width: thin;
+}
+.title {
+  font-weight: bold;
+  font-size: 24px;
+}
+td {
+  color: #143D29;
+  background-color: #ccccff;
+  border-style: inset;
+  border-width: thin;
+}
+a {
+  padding: 4pt;
+  border-width: thin;
+  border-style: groove;
+  color: #143D29;
+  background-color: #e0e0ff;
 }
 button {
-    background-color: #C8E4D6;
-    border: 1px solid #143D29;
-    display: inline-block;
-    cursor: pointer;
-    color: #143D29;
-    font-family: arial;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 6px 10px;
-    text-decoration: none;
+  background-color: #b5b5ff;
+  border: 1px solid #143D29;
+  display: inline-block;
+  cursor: pointer;
+  color: #143D29;
+  font-family: arial;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 6px 10px;
+  text-decoration: none;
 }
 button:hover {
-    background-color: #A9D4BF;
+  background-color: #9999ff;
 }
 button:active {
-    position: relative;
-    top: 1px;
+  position: relative;
+  top: 1px;
 }
 button:disabled {
-    background-color: #ffffff;
-    border: 1px solid #C8E4D6;
-    color: #C8E4D6;
+  background-color: #ffffff;
+  border: 1px solid #C8E4D6;
+  color: #C8E4D6;
 }
 button:focus {
-    outline-color: #143D29;
+  outline-color: #143D29;
 }
 input {
-    width: 175px;
-    border: 1px solid #143D29;
-    outline-color: #143D29;
-    padding: 6px 10px;
+  width: 175px;
+  border: 1px solid #143D29;
+  outline-color: #143D29;
+  padding: 6px 10px;
 }
 select {
-    outline-color: #143D29;
+  outline-color: #143D29;
 }
 select:active {
-    text-emphasis-color: #999;
-    column-rule-color: #123;
+  text-emphasis-color: #999;
+  column-rule-color: #123;
 }
 textarea {
-    width: 350px;
-    border: 1px solid #143D29;
-    outline: 0;
-    padding: 6px 10px;
+  width: 350px;
+  border: 1px solid #143D29;
+  outline: 0;
+  padding: 6px 10px;
 }
-/* from http://stackoverflow.com/questions/2610497/change-an-inputs-html5-placeholder-color-with-css */
 
+/* from http://stackoverflow.com/questions/2610497/change-an-inputs-html5-placeholder-color-with-css */
 ::-webkit-input-placeholder {
-    /* WebKit browsers */
-    color: #A9D4BF;
+  /* WebKit browsers */
+  color: #A9D4BF;
 }
 :-moz-placeholder {
-    /* Mozilla Firefox 4 to 18 */
-    color: #A9D4BF;
-    opacity: 1;
+  /* Mozilla Firefox 4 to 18 */
+  color: #A9D4BF;
+  opacity: 1;
 }
 ::-moz-placeholder {
-    /* Mozilla Firefox 19+ */
-    color: #A9D4BF;
-    opacity: 1;
+  /* Mozilla Firefox 19+ */
+  color: #A9D4BF;
+  opacity: 1;
 }
 :-ms-input-placeholder {
-    /* Internet Explorer 10+ */
-    color: #A9D4BF;
+  /* Internet Explorer 10+ */
+  color: #A9D4BF;
 }

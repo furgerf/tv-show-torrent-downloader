@@ -1,10 +1,10 @@
 <h1>Overview</h1>
-<div>
+<div class="darker">
   <table ng-repeat="sub in overviewCtrl.subscriptions">
     <col width="300"></col>
     <col width="500"></col>
     <col width="300"></col>
-    <tr class="left">
+    <tr>
       <td class="title">{{sub.name}}</td>
       <td>Current episode: S{{sub.currentEpisode.season | twoDigits}}E{{sub.currentEpisode.episode | twoDigits}} (Last updated on {{sub.lastUpdateCheck | dateTime}})</td>
       <td>{{sub.searchParameters | searchParameters}}</td>
