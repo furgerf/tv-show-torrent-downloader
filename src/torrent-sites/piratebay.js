@@ -12,14 +12,22 @@ function parseSize(str) {
 function parseDate(str) {
   var dataThisYear = str.match(/(\d{2})-(\d{2}).*;(\d{2}):(\d{2})/),
     dataOtherYear = str.match(/(\d{2})-(\d{2}).*;(\d{4})/),
+    dataToday = str.match(/Today.*;(\d{2}):(\d{2})/),
     date;
 
   if (dataThisYear != null) {
     date = new Date(new Date().getFullYear(), parseInt(dataThisYear[1], 10) - 1, parseInt(dataThisYear[2], 10),
         parseInt(dataThisYear[3], 10), parseInt(dataThisYear[4], 10));
   }
-  if (dataOtherYear != null) {
+  else if (dataOtherYear != null) {
     date = new Date(parseInt(dataOtherYear[3], 10), parseInt(dataOtherYear[1], 10) - 1, parseInt(dataOtherYear[2], 10), 0, 0);
+  }
+  else if (dataToday != null) {
+    date = new Date();
+    date.setHours(parseInt(dataToday[1], 10));
+    date.setMinutes(parseInt(dataToday[2], 10));
+    date.setSeconds(0);
+    date.setMilliseconds(0);
   }
 
   if (date > new Date()) {
