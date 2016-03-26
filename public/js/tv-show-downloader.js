@@ -30,15 +30,35 @@ mod.filter('twoDigits', function () {
 
 mod.filter('dateTime', function () {
   return function(date) {
-    dt = new Date(date);
-    return dt.getDate() + '.' + (dt.getMonth() + 1) + '.' + dt.getFullYear()
-      + ', ' + dt.getHours() + ':' + dt.getMinutes();
+    if (!date)
+      return 'Unknown';
+
+    var dt = new Date(date),
+      result =  dt.getDate() + '.' + (dt.getMonth() + 1) + '.' + dt.getFullYear();
+
+    if (dt.getHours() && dt.getMinutes())
+      result += ', ' + dt.getHours() + ':' + dt.getMinutes();
+
+    return result
   };
 });
 
 mod.filter('searchParameters', function () {
   return function(parameters) {
     return 'Searching for "... SxxEyy ' + parameters + '"';
+  };
+});
+
+mod.filter('fileSize', function () {
+  return function(fileSizeInBytes) {
+    var i = -1;
+    var byteUnits = [' kB', ' MB', ' GB', ' TB', 'PB', 'EB', 'ZB', 'YB'];
+    do {
+      fileSizeInBytes = fileSizeInBytes / 1024;
+      i++;
+    } while (fileSizeInBytes > 1024);
+
+    return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
   };
 });
 

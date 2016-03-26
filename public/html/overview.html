@@ -12,7 +12,7 @@
     </tr>
     <tr ng-repeat="ep in overviewCtrl.newEpisodes[sub.name] track by $index">
       <td colspan="1">Downloaded new episode:</td>
-      <td colspan="3">{{ep.name}}, {{ep.size}} (Uploaded on {{ep.uploadDate | dateTime}})</td>
+      <td colspan="3">{{ep.name}}, {{ep.size | fileSize}} (Uploaded on {{ep.uploadDate | dateTime}})</td>
     </tr>
   </table>
   <button ng-click='overviewCtrl.updateAllSubscriptions()'>Update all!</button>

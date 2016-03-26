@@ -72,8 +72,6 @@ function checkForEpisode(subscription, season, episode, log) {
 function checkForMultipleEpisodes(subscription, season, episode, torrents, log) {
   return checkForEpisode(subscription, season, episode, log)
     .then(function (torrent) {
-      console.log("FOOOOOOOOOOBAR");
-      log.error('HERE');
       if (torrent) {
         // we found the episode, add to list
         torrents.push(torrent);
