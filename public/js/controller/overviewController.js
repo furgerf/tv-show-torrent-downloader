@@ -11,19 +11,23 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
       that.subscriptions = [];
       that.newEpisodes = {};
 
-      that.updateSubscription = function (sub){
+      that.updateSubscription = function (sub) {
         subscriptionHandler.updateSubscription(sub)
           .then(function (resp) {
             resp.data.data.forEach(function (torrent) {
               if (!that.newEpisodes[sub.name])
                 that.newEpisodes[sub.name] = [];
               that.newEpisodes[sub.name].push(torrent);
-
-              subscriptionHandler.getAllSubscriptions()
-                .then(function (resp) {
-                  that.handleSubscriptionResponse(resp);
-                });
             });
+
+
+            if (resp.data.data.length == 0)
+              return;
+
+            subscriptionHandler.getAllSubscriptions()
+              .then(function (resp) {
+                that.handleSubscriptionResponse(resp);
+              });
           })
           .catch(function (resp) {
             logger.logConsole('TODO: Handle response');
@@ -31,30 +35,28 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
           });
       };
 
-      that.updateAllSubscriptions = function (){
-        subscriptionHandler.updateAllSubscriptions()
-          .then(function (resp) {
-            resp.data.data.forEach(function (torrent) {
-              if (!that.newEpisodes[sub.name])
-                that.newEpisodes[sub.name] = [];
-              that.newEpisodes[sub.name].push(torrent);
-
-              subscriptionHandler.getAllSubscriptions()
-                .then(function (resp) {
-                  that.handleSubscriptionResponse(resp);
-                });
+      that.updateAllSubscriptions = function () {
+        Promise.all(that.subscriptions.map(function (sub) {
+          return subscriptionHandler.updateSubscription(sub)
+            .then(function (resp) {
+              resp.data.data.forEach(function (torrent) {
+                if (!that.newEpisodes[sub.name])
+                  that.newEpisodes[sub.name] = [];
+                that.newEpisodes[sub.name].push(torrent);
+              });
             });
-          })
-          .catch(function (resp) {
-            logger.logConsole('TODO: Handle response');
-            logger.logConsole(resp);
-          });
-      };
-
-      subscriptionHandler.getAllSubscriptions()
-        .then(function (resp) {
-          that.handleSubscriptionResponse(resp);
+        }))
+        .then(function () {
+          subscriptionHandler.getAllSubscriptions()
+            .then(function (resp) {
+              that.handleSubscriptionResponse(resp);
+            });
+        })
+        .catch(function (resp) {
+          logger.logConsole('TODO: Handle response');
+          logger.logConsole(resp);
         });
+      };
 
       that.handleSubscriptionResponse = function (resp) {
           if (resp.status !== 200) {
@@ -67,4 +69,9 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
             return new app.Subscription(data.name, new app.ShowEpisode(data.lastSeason, data.lastEpisode), data.searchParameters, data.lastModified);
           });
         };
+
+      subscriptionHandler.getAllSubscriptions()
+        .then(function (resp) {
+          that.handleSubscriptionResponse(resp);
+        });
     }]);
