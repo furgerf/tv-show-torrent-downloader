@@ -1,20 +1,23 @@
 'use strict';
 
 var bunyan = require('bunyan'),
+    fs = require('fs'),
 
     config = require('./config'),
 
-    streams =
-    [
-      {
-        name: 'stdout',
-        level: config.stdoutLoglevel,
-        streams: process.stdout
-      }
-    ];
+    logStreams = [{
+    name: 'stdout',
+    level: 'debug',
+    stream: process.stdout
+  }];
 
 if (config.writeLogfile) {
-  streams.push(
+  console.log('Logging to main logfile');
+  if (!fs.existsSync(config.logDirectory)){
+    fs.mkdirSync(config.logDirectory);
+  }
+
+  logStreams.push(
   {
     name: 'main log',
     level: 'info',
@@ -26,7 +29,12 @@ if (config.writeLogfile) {
 }
 
 if (config.writeErrorlogfile) {
-  streams.push(
+  console.log('Writing to error logfile');
+  if (!fs.existsSync(config.logDirectory)){
+    fs.mkdirSync(config.logDirectory);
+  }
+
+  logStreams.push(
   {
     name: 'error log',
     level: 'error',
@@ -39,8 +47,8 @@ if (config.writeErrorlogfile) {
 
 exports.log = bunyan.createLogger({
   name: 'tvshowdownloader',
-  src: !config.productionEnvironment, // don't use src logging in production (slow)
+  src: !config.productionEnvironment, // dont use src logging in production (slow)
   serializers: bunyan.stdSerializers,
-  streams: streams
+  streams: logStreams
 });
 
