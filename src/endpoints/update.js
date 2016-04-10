@@ -49,7 +49,9 @@ function checkForEpisode(subscription, season, episode, log) {
   return torrentSites.findTorrent(subscription.name + ' ' + utils.formatEpisodeNumber(season, episode))
     .then(function (torrent) {
       if (subscription.updateLastEpisode(season, episode)) {
-        //subscription.save();
+        if (config.productionEnvironment) {
+          subscription.save();
+        }
         log && log.info('Successfully updated subscription %s to %s, starting torrent...',
             subscription.name, utils.formatEpisodeNumber(subscription.lastSeason,
               subscription.lastEpisode));

@@ -32,10 +32,14 @@ server.use(restify.authorizationParser());
 server.use(restify.queryParser());
 server.use(restify.requestLogger());
 
-// hooks for connection logging
+// hooks for connection logging and allowing CORS
 server.pre(function (req, res, next) {
   req.log.info({req: req}, 'New connection (%d)', connectionCount++);
+
   requestStarts[req.id()] = new Date();
+
+  res.header("Access-Control-Allow-Origin", "*");
+
   next();
 });
 server.on('after', function (req, res, route) {
