@@ -1,29 +1,46 @@
 'use strict';
 
-var bunyan = require('bunyan');
+var bunyan = require('bunyan'),
 
-exports.log = bunyan.createLogger({
-  name: 'tvshowdownloader',
-  src: true, // DONT USE SRC LOGGING IN PRODUCTION (SLOW)
-  serializers: bunyan.stdSerializers,
-  streams: [{
-    name: 'stdout',
-    level: 'debug',
-    stream: process.stdout
-  },
-  /*
+    config = require('./config'),
+
+    streams =
+    [
+      {
+        name: 'stdout',
+        level: config.stdoutLoglevel,
+        streams: process.stdout
+      }
+    ];
+
+if (config.writeLogfile) {
+  streams.push(
   {
-    // TODO: use log rotation: https://github.com/trentm/node-bunyan#stream-type-rotating-file
     name: 'main log',
     level: 'info',
-    path: 'smrest.log'
-  },
+    path: config.logDirectory + '/tv-show-downloader.log',
+    type: 'rotating-file',
+    period: '1w',
+    count: 5
+  });
+}
+
+if (config.writeErrorlogfile) {
+  streams.push(
   {
     name: 'error log',
     level: 'error',
-    path: 'error.log'
-  }
-  */
-    ]
+    path: config.logDirectory + '/tv-show-downloader_error.log',
+    type: 'rotating-file',
+    period: '1w',
+    count: 5
+  });
+}
+
+exports.log = bunyan.createLogger({
+  name: 'tvshowdownloader',
+  src: !config.productionEnvironment, // don't use src logging in production (slow)
+  serializers: bunyan.stdSerializers,
+  streams: streams
 });
 

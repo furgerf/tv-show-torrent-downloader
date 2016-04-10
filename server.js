@@ -34,7 +34,7 @@ server.use(restify.requestLogger());
 
 // hooks for connection logging and allowing CORS
 server.pre(function (req, res, next) {
-  req.log.info({req: req}, 'New connection (%d)', connectionCount++);
+  req.log.warn({req: req}, 'New connection (%d)', connectionCount++);
 
   requestStarts[req.id()] = new Date();
 
@@ -46,7 +46,7 @@ server.on('after', function (req, res, route) {
   var duration = new Date().getTime() - requestStarts[req.id()].getTime();
   delete requestStarts[req.id()];
 
-  req.log.info({res: res}, 'Finished handling request in %d ms', duration);
+  req.log.warn({res: res}, 'Finished handling request in %d ms', duration);
 });
 server.on('uncaughtException', function (req, res, route, error) {
   req.log.error(error, 'Uncaught exception');
@@ -58,7 +58,7 @@ database.connect();
 
 // start server
 server.listen(config.api.port, config.api.host, function () {
-  log.info('TV show downloader API running on %s:%s ', config.api.host, config.api.port);
+  log.warn('TV show downloader API running on %s:%s ', config.api.host, config.api.port);
 
   // subscriptions
   server.get(/^\/subscription\/?$/, subscription.getSubscriptions);
