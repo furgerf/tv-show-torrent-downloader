@@ -11,6 +11,10 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
       that.subscriptions = [];
       that.newEpisodes = {};
 
+      that.getNumberOfDaysSinceDate = function (date) {
+        return (new Date().getTime() - new Date(date).getTime()) / 1000 / 3600 / 24;
+      };
+
       that.updateSubscription = function (sub) {
         subscriptionHandler.updateSubscription(sub)
           .then(function (resp) {

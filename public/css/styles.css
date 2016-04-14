@@ -8,11 +8,11 @@ body {
   -ms-font-smoothing: antialiased;
   -o-font-smoothing: antialiased;
   font-smoothing: antialiased;
+  background-color: #eeeeff;
 }
 * {
   margin: 3pt;
   padding: 3pt;
-  background-color: #eeeeff;
 }
 .darker {
   background-color: #e0e0ff;
@@ -29,9 +29,17 @@ table {
 }
 td {
   color: #143D29;
-  background-color: #ccccff;
   border-style: inset;
   border-width: thin;
+}
+.good {
+  background-color: #ccccff;
+}
+.ok {
+  background-color: #ffffcc;
+}
+.bad {
+  background-color: #ffcccc;
 }
 a {
   padding: 4pt;
