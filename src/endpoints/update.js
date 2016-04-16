@@ -136,7 +136,7 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
   });
 };
 
-exports.checkAllForUpdates = function (req, res, next) {
+exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
   var result,
     updateCount = 0;
 
@@ -165,5 +165,9 @@ exports.checkAllForUpdates = function (req, res, next) {
         return next();
       });
   });
+};
+
+exports.updateSubscriptionWithTorrent = function (req, res, next) {
+  return next(new restify.InternalServerError('Not implemented'));
 };
 

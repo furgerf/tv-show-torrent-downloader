@@ -13,7 +13,8 @@ var restify = require('restify'),
     database = require('./src/database/database'),
 
     // endpoint handlers
-    subscription = require('./src/endpoints/subscription'),
+    readSubscription = require('./src/endpoints/readSubscription'),
+    writeSubscription = require('./src/endpoints/writeSubscription'),
     updates = require('./src/endpoints/update'),
 
     // misc variables
@@ -61,13 +62,20 @@ server.listen(config.api.port, config.api.host, function () {
   log.warn('TV show downloader API running on %s:%s ', config.api.host, config.api.port);
 
   // subscriptions
-  server.get(/^\/subscriptions\/?$/, subscription.getSubscriptions);
-  server.get(/^\/subscriptions\/(.+)\/?$/, subscription.getSubscription);
-  server.post(/^\/subscriptions\/?$/, subscription.addSubscription);
-  server.del(/^\/subscriptions\/(.+)\/?$/, subscription.deleteSubscription);
+  // retrieve all/specific subscription info
+  server.get(/^\/subscriptions\/?$/, readSubscription.getAllSubscriptions);
+  server.get(/^\/subscriptions\/(.+)\/?$/, readSubscription.getSubscription);
 
-  server.get(/^\/update\/check\/?$/, updates.checkAllForUpdates);
-  server.get(/^\/update\/check\/(.+)\/?$/, updates.checkSubscriptionForUpdates);
+  // add/delete subscription
+  server.post(/^\/subscriptions\/?$/, writeSubscription.addSubscription);
+  server.del(/^\/subscriptions\/(.+)\/?$/, writeSubscription.deleteSubscription);
+
+  // check all/specific subscription for update
+  server.get(/^\/subscriptions\/find\/?$/, updates.checkAllSubscriptionsForUpdates);
+  server.get(/^\/subscriptions\/(.+)\/find\/?$/, updates.checkSubscriptionForUpdates);
+
+  // update specific subscription with torrent
+  server.put(/^\/subscriptions\/(.+)\/update\/?$/, updates.updateSubscriptionWithTorrent);
 
   // shutdown
   server.get(/^\/exit$/, process.exit);
@@ -80,9 +88,9 @@ server.listen(config.api.port, config.api.host, function () {
 
   // evertything else... try public FS
   server.get(/^\/([a-zA-Z0-9_\/\.~-]*)/, function (req, res, next) {
-    var //url = parse(req.url),
-        path = join(root, req.params[0]),
+    var path = join(root, req.params[0]),
         stream = fs.createReadStream(path);
+
     req.log.debug('Accessing path %s', path);
 
     stream.pipe(res);

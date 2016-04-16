@@ -11,7 +11,7 @@
 
     var serverUrl = settings.serverHost + ':' + settings.serverPort + '/',
         subscriptionUrl = serverUrl + 'subscriptions/',
-        updateCheckUrl = serverUrl + 'update/check/';
+        updateCheckUrl = serverUrl + 'subscriptions/';
 
     this.getAllSubscriptions = function () {
       logger.logConsole('Retrieving all subscriptions from ' + subscriptionUrl);
@@ -40,12 +40,12 @@
 
     this.updateSubscription = function (subscription) {
       logger.logConsole('Updating subscription ' + subscription.name + ' from ' + subscriptionUrl);
-      return $http.get(updateCheckUrl + encodeURIComponent(subscription.name));
+      return $http.get(subscriptionUrl + encodeURIComponent(subscription.name) + 'find/');
     };
 
     this.updateAllSubscriptions = function () {
       logger.logConsole('Updating all subscriptions from ' + subscriptionUrl);
-      return $http.get(updateCheckUrl);
+      return $http.get(updateCheckUrl + 'find/');
     };
   };
 
