@@ -15,7 +15,8 @@ var restify = require('restify'),
     // endpoint handlers
     readSubscription = require('./src/endpoints/readSubscription'),
     writeSubscription = require('./src/endpoints/writeSubscription'),
-    updates = require('./src/endpoints/update'),
+    findSubscriptionUpdates = require('./src/endpoints/findSubscriptionUpdates'),
+    updateSubscription = require('./src/endpoints/updateSubscription'),
 
     // misc variables
     log = logger.log.child({component: 'server'}),
@@ -64,18 +65,18 @@ server.listen(config.api.port, config.api.host, function () {
   // subscriptions
   // retrieve all/specific subscription info
   server.get(/^\/subscriptions\/?$/, readSubscription.getAllSubscriptions);
-  server.get(/^\/subscriptions\/(.+)\/?$/, readSubscription.getSubscription);
+  server.get(/^\/subscriptions\/([a-zA-Z0-9]+)\/?$/, readSubscription.getSubscription);
 
   // add/delete subscription
   server.post(/^\/subscriptions\/?$/, writeSubscription.addSubscription);
-  server.del(/^\/subscriptions\/(.+)\/?$/, writeSubscription.deleteSubscription);
+  server.del(/^\/subscriptions\/([a-zA-Z0-9]+)\/?$/, writeSubscription.deleteSubscription);
 
   // check all/specific subscription for update
-  server.get(/^\/subscriptions\/find\/?$/, updates.checkAllSubscriptionsForUpdates);
-  server.get(/^\/subscriptions\/(.+)\/find\/?$/, updates.checkSubscriptionForUpdates);
+  server.get(/^\/subscriptions\/find\/?$/, findSubscriptionUpdates.checkAllSubscriptionsForUpdates);
+  server.get(/^\/subscriptions\/([a-zA-Z0-9]+)\/find\/?$/, findSubscriptionUpdates.checkSubscriptionForUpdates);
 
   // update specific subscription with torrent
-  server.put(/^\/subscriptions\/(.+)\/update\/?$/, updates.updateSubscriptionWithTorrent);
+  server.put(/^\/subscriptions\/([a-zA-Z0-9]+)\/update\/?$/, updateSubscription.updateSubscriptionWithTorrent);
 
   // shutdown
   server.get(/^\/exit$/, process.exit);
@@ -84,15 +85,19 @@ server.listen(config.api.port, config.api.host, function () {
   server.get(/^\/$/, function (req, res, next) {
     req.log.debug('Accessing root');
     res.redirect('/index.html', next);
-});
+  });
 
   // evertything else... try public FS
   server.get(/^\/([a-zA-Z0-9_\/\.~-]*)/, function (req, res, next) {
     var path = join(root, req.params[0]),
-        stream = fs.createReadStream(path);
+      stream = fs.createReadStream(path);
+
+    stream.on('error', function (err) {
+      req.log.error('Error while trying to access %s: %s', path, err);
+      return next(new restify.NotFoundError());
+    });
 
     req.log.debug('Accessing path %s', path);
-
     stream.pipe(res);
   });
 });

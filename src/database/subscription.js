@@ -97,6 +97,8 @@ function preSaveAction(next) {
     this.creationTime = currentDate;
   }
 
+  this.searchParameters = this.searchParameters || '';
+
   this.lastSeason = this.lastSeason || 1;
   this.lastEpisode = this.lastEpisode || 0;
 
