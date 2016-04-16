@@ -61,12 +61,11 @@ server.listen(config.api.port, config.api.host, function () {
   log.warn('TV show downloader API running on %s:%s ', config.api.host, config.api.port);
 
   // subscriptions
-  server.get(/^\/subscription\/?$/, subscription.getSubscriptions);
-  server.get(/^\/subscription\/(.+)\/?$/, subscription.getSubscription);
-  server.post(/^\/subscription\/?$/, subscription.addSubscription);
-  server.del(/^\/subscription\/(.+)\/?$/, subscription.deleteSubscription);
+  server.get(/^\/subscriptions\/?$/, subscription.getSubscriptions);
+  server.get(/^\/subscriptions\/(.+)\/?$/, subscription.getSubscription);
+  server.post(/^\/subscriptions\/?$/, subscription.addSubscription);
+  server.del(/^\/subscriptions\/(.+)\/?$/, subscription.deleteSubscription);
 
-  // updates
   server.get(/^\/update\/check\/?$/, updates.checkAllForUpdates);
   server.get(/^\/update\/check\/(.+)\/?$/, updates.checkSubscriptionForUpdates);
 

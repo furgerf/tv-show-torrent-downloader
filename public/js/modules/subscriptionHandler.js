@@ -10,7 +10,7 @@
     settings.serverPort = settings.serverPort || '8000';
 
     var serverUrl = settings.serverHost + ':' + settings.serverPort + '/',
-        subscriptionUrl = serverUrl + 'subscription/',
+        subscriptionUrl = serverUrl + 'subscriptions/',
         updateCheckUrl = serverUrl + 'update/check/';
 
     this.getAllSubscriptions = function () {
