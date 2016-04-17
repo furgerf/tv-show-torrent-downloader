@@ -1,0 +1,34 @@
+<h1>Administration</h1>
+<div class="darker">
+  <h2>Disks</h2>
+  <table>
+    <col width="150"></col>
+    <col width="100"></col>
+    <col width="100"></col>
+    <col width="100"></col>
+    <col width="100"></col>
+    <tr class="title">
+      <td>Mount point</td>
+      <td>Avail.</td>
+      <td>Used</td>
+      <td>Total</td>
+      <td>Free</td>
+    </tr>
+  </table>
+  <table ng-repeat="disk in adminCtrl.disks">
+    <col width="150"></col>
+    <col width="100"></col>
+    <col width="100"></col>
+    <col width="100"></col>
+    <col width="100"></col>
+    <tr ng-class="{bad: {{disk.freePercentage <= 5}}, ok: {{disk.freePercentage <= 10}}, good: true}">
+      <td>{{disk.mountPoint}}</td>
+      <td>{{disk.spaceAvailable | fileSize}}</td>
+      <td>{{disk.spaceUsed | fileSize}}</td>
+      <td>{{disk.spaceTotal | fileSize}}</td>
+      <td>{{disk.freePercentage}}%</td>
+    </tr>
+  </table>
+  <button ng-click='adminCtrl.refresh()'>Update all!</button>
+</div>
+

@@ -21,6 +21,12 @@ mod.service('subscriptionHandler', ['$http', 'logger', 'settings',
       return new app.SubscriptionHandler($http, logger, settings);
     }]);
 
+mod.service('adminHandler', ['$http', 'logger', 'settings',
+    function ($http, logger, settings) {
+      'use strict';
+      return new app.AdminHandler($http, logger, settings);
+    }]);
+
 mod.filter('twoDigits', function () {
   return function(num) {
     var n = typeof num === 'number' ? num : parseInt(num, 10);
@@ -86,6 +92,10 @@ mod.config(['$routeProvider',
         .when('/new', {
           templateUrl: 'html/newSubscription.html',
           controller: 'newSubscriptionController as newShowCtrl'
+        })
+        .when('/admin', {
+          templateUrl: 'html/admin.html',
+          controller: 'adminController as adminCtrl'
         })
         .otherwise({
           redirectTo: '/overview'
