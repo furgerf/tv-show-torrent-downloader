@@ -34,9 +34,10 @@ function checkForEpisode(subscription, season, episode, log) {
       */
     })
   .catch(function (err) {
+    // no torrent was found for that episode
     // TODO: Rethink catch's and do error handling in appropriate places
     // we might have arrived here because no torrents were found
-    log.error(err);
+    //log.error(err);
     return null;
   });
 }

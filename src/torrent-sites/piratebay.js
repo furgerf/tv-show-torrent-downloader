@@ -38,31 +38,36 @@ function parseDate(str) {
 };
 
 function parseTorrentData(html) {
-  var magnetRegexp = /<a href="magnet:?/,
-    torrentInfoRegexp = /.*Uploaded(.*)\,.*Size(.*)\,/,
+  try {
+    var magnetRegexp = /<a href="magnet:?/,
+      torrentInfoRegexp = /.*Uploaded(.*)\,.*Size(.*)\,/,
 
-    torrents = [];
+      torrents = [];
 
-  html.split('\n').forEach(function (line, index, lines) {
-    if (line.match(magnetRegexp)) {
-      var link = decodeURI(line.split('"')[1]), // TODO: check that all trackers are added
-        queryData = url.parse(link, true),
-        torrentName = queryData.query.dn,
-        infoLine = lines[index + 1],
-        infos = infoLine.match(torrentInfoRegexp),
-        uploadDate = parseDate(infos[1]),
-        size = parseSize(infos[2]);
+    html.split('\n').forEach(function (line, index, lines) {
+      if (line.match(magnetRegexp)) {
+        var link = decodeURI(line.split('"')[1]), // TODO: check that all trackers are added
+          queryData = url.parse(link, true),
+          torrentName = queryData.query.dn,
+          infoLine = lines[index + 1],
+          infos = infoLine.match(torrentInfoRegexp),
+          uploadDate = parseDate(infos[1]),
+          size = parseSize(infos[2]);
 
-      torrents.push({
-        name: torrentName,
-        size: size,
-        uploadDate: uploadDate,
-        link: link
-      });
-    }
-  });
+        torrents.push({
+          name: torrentName,
+          size: size,
+          uploadDate: uploadDate,
+          link: link
+        });
+      }
+    });
 
-  return torrents;
+    return torrents;
+  } catch (err) {
+    console.log('Torrent parsing error: ' + err);
+    return null;
+  }
 }
 
 function Parser (urlEnding) {

@@ -21,41 +21,31 @@ var pirateBay = require('./piratebay'),
 function tryTorrentSite(torrentSite, searchString) {
   var url = encodeURI(torrentSite.url + searchString);
 
-  log.debug('Checking whether %s contains any torrents', url);
+  log.info('Checking torrent site %s (URL %s)', torrentSite.url, url);
 
   return new Promise(function (resolve, reject) {
     exec('wget -nv -O- ' + url, function (err, stdout, stderr) {
+      // ignore stderr, it's fine if wget/the current torrent site failed
       if (err) {
-        if (log) {
-          log.error(err);
-        } else {
-          console.log(err);
-        }
-
-        return reject(err);
-      }
-
-      if (stderr) {
-        if (log) {
-          log.warn('Wget stderr: %s', stderr);
-        } else {
-          console.log('Wget stderr: %s', stderr);
-        }
+        // (we're not really interested in why wget failed)
+        log.debug('Torrent request on %s failed', torrentSite.url);
+        reject(err);
+        return;
       }
 
       var torrents = torrentSite.parseTorrentData(stdout),
-
-      // select one (or several?) of the torrents to download
-      // at the moment, select the largest one
-      maxSize = Math.max.apply(Math, torrents.map(function (torrent) { return torrent.size; })),
-      torrent = torrents.filter(function (t) { return t.size === maxSize; })[0];
-      // TODO: Move torrent selection to caller
+        // select one (or several?) of the torrents to download
+        // at the moment, select the largest one
+        maxSize = Math.max.apply(Math, torrents.map(function (torrent) { return torrent.size; })),
+        torrent = torrents.filter(function (t) { return t.size === maxSize; })[0];
+        // TODO: Move torrent selection to caller
 
       log.debug('URL "%s" contains %d torrents', url, torrents.length);
 
       if (torrent) {
         resolve(torrent);
       } else {
+        // we got a response from the site but we couldn't find any torrents
         reject();
       }
     });
@@ -75,7 +65,7 @@ exports.findTorrent = function (searchString, siteIndex) {
     tryTorrentSite(allSites[siteIndex++], searchString)
       .then (function (torrent) {
         // found torrents, resolve
-        log.info('Found a torrent, not trying further torrent sites');
+        //log.info('Found a torrent, not trying further torrent sites');
         resolve(torrent);
       })
       .catch (function (err) {
@@ -95,5 +85,4 @@ exports.findTorrent = function (searchString, siteIndex) {
       });
   });
 };
-
 
