@@ -18,6 +18,8 @@ var restify = require('restify'),
     findSubscriptionUpdates = require('./src/endpoints/findSubscriptionUpdates'),
     updateSubscription = require('./src/endpoints/updateSubscription'),
 
+    systemStatus = require('./src/endpoints/systemStatus'),
+
     // misc variables
     log = logger.log.child({component: 'server'}),
     connectionCount = 0,
@@ -77,6 +79,9 @@ server.listen(config.api.port, config.api.host, function () {
 
   // update specific subscription with torrent
   server.put(/^\/subscriptions\/([a-zA-Z0-9]+)\/update\/?$/, updateSubscription.updateSubscriptionWithTorrent);
+
+  // system status
+  server.get(/^\/status\/system\/disk\/?$/, systemStatus.getSystemDiskUsage);
 
   // shutdown
   server.get(/^\/exit$/, process.exit);
