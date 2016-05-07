@@ -5,17 +5,14 @@ var mod = angular.module('tv-show-downloader', ['ngRoute']);
 // services
 mod.service('logger', [
     function () {
-      // logger singleton instance
       'use strict';
       return new app.Logger(0xFF);
     }]);
-
 mod.service('utils', [
     function () {
       'use strict';
       return new app.Utils();
     }]);
-
 mod.service('settings', ['utils',
     function (utils) {
       'use strict';
@@ -27,20 +24,19 @@ mod.service('subscriptionHandler', ['$http', 'logger', 'settings',
       'use strict';
       return new app.SubscriptionHandler($http, logger, settings);
     }]);
-
 mod.service('adminHandler', ['$http', 'logger', 'settings',
     function ($http, logger, settings) {
       'use strict';
       return new app.AdminHandler($http, logger, settings);
     }]);
 
+// filters
 mod.filter('twoDigits', function () {
   return function(num) {
     var n = typeof num === 'number' ? num : parseInt(num, 10);
     return Number.isNaN(n) ? undefined : ('0' + n).slice(-2);
   };
 });
-
 mod.filter('dateTime', function () {
   return function(date) {
     if (!date)
@@ -55,13 +51,11 @@ mod.filter('dateTime', function () {
     return result
   };
 });
-
 mod.filter('searchParameters', function () {
   return function(parameters) {
     return 'Searching for "... SxxEyy ' + parameters + '"';
   };
 });
-
 mod.filter('fileSize', function () {
   return function(fileSizeInBytes) {
     var i = -1;
@@ -74,17 +68,6 @@ mod.filter('fileSize', function () {
     return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
   };
 });
-
-/*
-mod.service('currentUser', [
-
-function () {
-// current user singleton instance
-'use strict';
-
-return new app.User();
-}]);
-*/
 
 // routing configuration
 mod.config(['$routeProvider',
