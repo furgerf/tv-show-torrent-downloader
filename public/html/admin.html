@@ -1,4 +1,12 @@
 <h1>Administration</h1>
+<h2>Configuration</h2>
+<div class="darker">
+  <h2>Server</h2>
+  Server host: <input type="text" ng-model="adminCtrl.serverHost" placeholder="Server host IP or name"> <button ng-click='adminCtrl.saveServerHost()'>Save</button>
+  Server port: <input type="number" ng-model="adminCtrl.serverPort" placeholder="Server port"> <button ng-click='adminCtrl.saveServerPort()'>Save</button>
+</div>
+
+<h2>Monitoring</h2>
 <div class="darker">
   <h2>Disks</h2>
   <table>
@@ -29,6 +37,6 @@
       <td>{{disk.freePercentage}}%</td>
     </tr>
   </table>
-  <button ng-click='adminCtrl.refresh()'>Update all!</button>
+  <button ng-click='adminCtrl.refresh()'>Refresh</button>
 </div>
 

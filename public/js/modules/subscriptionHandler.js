@@ -5,13 +5,9 @@
   'use strict';
 
   function SubscriptionHandler($http, logger, settings) {
-    settings = settings || {};
-    settings.serverHost = settings.serverHost || 'http://localhost';
-    settings.serverPort = settings.serverPort || '8000';
-
-    var serverUrl = settings.serverHost + ':' + settings.serverPort + '/',
-        subscriptionUrl = serverUrl + 'subscriptions/',
-        updateCheckUrl = serverUrl + 'subscriptions/';
+    var serverUrl = settings.getServerAddress(),
+        subscriptionUrl = serverUrl + '/subscriptions',
+        updateCheckUrl = serverUrl + '/subscriptions';
 
     this.getAllSubscriptions = function () {
       logger.logConsole('Retrieving all subscriptions from ' + subscriptionUrl);
@@ -40,12 +36,12 @@
 
     this.updateSubscription = function (subscription) {
       logger.logConsole('Updating subscription ' + subscription.name + ' from ' + subscriptionUrl);
-      return $http.get(subscriptionUrl + encodeURIComponent(subscription.name) + 'find/');
+      return $http.get(subscriptionUrl + '/' + encodeURIComponent(subscription.name) + 'find/');
     };
 
     this.updateAllSubscriptions = function () {
-      logger.logConsole('Updating all subscriptions from ' + subscriptionUrl);
-      return $http.get(updateCheckUrl + 'find/');
+      logger.logConsole('Updating all subscriptions from ' + updateCheckUrl);
+      return $http.get(updateCheckUrl + '/find');
     };
   };
 

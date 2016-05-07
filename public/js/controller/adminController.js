@@ -1,14 +1,24 @@
 
 /*global app, confirm, mod*/
 
-mod.controller('adminController', ['logger', 'adminHandler',
-    function (logger, adminHandler) {
+mod.controller('adminController', ['logger', 'settings', 'adminHandler',
+    function (logger, settings, adminHandler) {
       'use strict';
 
       // continuous access to caller and some Important Objects
       var that = this;
 
       that.disks = [];
+
+      that.serverHost = settings.getServerHost();
+      that.serverPort = parseInt(settings.getServerPort(), 10);
+
+      that.saveServerHost = function () {
+        settings.setServerHost(that.serverHost);
+      };
+      that.saveServerPort = function () {
+        settings.setServerPort(that.serverPort);
+      };
 
       that.getDiskUsage = function () {
         adminHandler.getDiskUsage()

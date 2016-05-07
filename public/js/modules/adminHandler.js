@@ -5,12 +5,8 @@
   'use strict';
 
   function AdminHandler($http, logger, settings) {
-    settings = settings || {};
-    settings.serverHost = settings.serverHost || 'http://localhost';
-    settings.serverPort = settings.serverPort || '8000';
-
-    var serverUrl = settings.serverHost + ':' + settings.serverPort + '/',
-        diskUsageUrl = serverUrl + 'status/system/disk';
+    var serverUrl = settings.getServerAddress(),
+        diskUsageUrl = serverUrl + '/status/system/disk';
 
     this.getDiskUsage = function () {
       logger.logConsole('Retrieving disk usage information from ' + diskUsageUrl);

@@ -10,10 +10,17 @@ mod.service('logger', [
       return new app.Logger(0xFF);
     }]);
 
-mod.value('settings', {
-  serverHost: "http://localhost",
-  serverPort: 8000
-});
+mod.service('utils', [
+    function () {
+      'use strict';
+      return new app.Utils();
+    }]);
+
+mod.service('settings', ['utils',
+    function (utils) {
+      'use strict';
+      return new app.Settings(utils);
+    }]);
 
 mod.service('subscriptionHandler', ['$http', 'logger', 'settings',
     function ($http, logger, settings) {
