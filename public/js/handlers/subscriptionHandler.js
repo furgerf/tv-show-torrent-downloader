@@ -39,17 +39,30 @@
         });
     };
 
-    this.updateSubscription = function (subscription) {
+    this.findSubscriptionUpdates = function (subscription) {
       var url = getSubscriptionUrl();
-      logger.logConsole('Updating subscription ' + subscription.name + ' from ' + url);
-      return $http.get(url + '/' + encodeURIComponent(subscription.name) + 'find/');
+      logger.logConsole('Finding updates for subscription ' + subscription.name + ' from ' + url);
+      return $http.get(url + '/' + encodeURIComponent(subscription.name) + '/find');
     };
 
-    this.updateAllSubscriptions = function () {
-      var url = getUpdateCheckUrl();
-      logger.logConsole('Updating all subscriptions from ' + url);
+    this.downloadEpisode = function (subscriptionName, seasonNumber, episodeNumber, torrentLink) {
+      console.log(subscriptionName);
+      console.log(seasonNumber);
+      console.log(episodeNumber);
+      console.log(torrentLink);
+      alert('TODO');
+      //var url = getSubscriptionUrl();
+      //logger.logConsole('Finding updates for subscription ' + subscription.name + ' from ' + url);
+      //return $http.get(url + '/' + encodeURIComponent(subscription.name) + '/find');
+    };
+
+    /*
+    this.findAllSubscriptionUpdates = function () {
+      var url = getSubscriptionUrl();
+      logger.logConsole('Finding updates for all subscriptions from ' + url);
       return $http.get(url + '/find');
     };
+    */
   };
 
   // Export to window

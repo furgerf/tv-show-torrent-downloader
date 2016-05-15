@@ -15,8 +15,8 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
         return (new Date().getTime() - new Date(date).getTime()) / 1000 / 3600 / 24;
       };
 
-      that.updateSubscription = function (sub) {
-        subscriptionHandler.updateSubscription(sub)
+      that.findSubscriptionUpdates = function (sub) {
+        subscriptionHandler.findSubscriptionUpdates(sub)
           .then(function (resp) {
             resp.data.data.forEach(function (torrent) {
               if (!that.newEpisodes[sub.name])
@@ -24,7 +24,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
               that.newEpisodes[sub.name].push(torrent);
             });
 
-
+            /*
             if (resp.data.data.length == 0)
               return;
 
@@ -32,6 +32,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
               .then(function (resp) {
                 that.handleSubscriptionResponse(resp);
               });
+              */
           })
           .catch(function (resp) {
             logger.logConsole('TODO: Handle response');
@@ -39,9 +40,9 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
           });
       };
 
-      that.updateAllSubscriptions = function () {
+      that.findAllSubscriptionUpdates = function () {
         Promise.all(that.subscriptions.map(function (sub) {
-          return subscriptionHandler.updateSubscription(sub)
+          return subscriptionHandler.findSubscriptionUpdates(sub)
             .then(function (resp) {
               resp.data.data.forEach(function (torrent) {
                 if (!that.newEpisodes[sub.name])
@@ -59,6 +60,16 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
         .catch(function (resp) {
           logger.logConsole('TODO: Handle response');
           logger.logConsole(resp);
+        });
+      };
+
+      that.downloadEpisode = function (subscription, episodeInfo) {
+        subscriptionHandler.downloadEpisode(subscription.name, episodeInfo.season, episodeInfo.episode, episodeInfo.link)
+          .then(function (resp) {
+            alert('TODO');
+          })
+        .catch(function (err) {
+            alert('TODO');
         });
       };
 
