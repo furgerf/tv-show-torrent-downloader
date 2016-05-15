@@ -13,7 +13,7 @@ var restify = require('restify'),
 
 
 function checkForEpisode(subscription, season, episode, log) {
-  return torrentSites.findTorrent(subscription.name + ' ' + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters)
+  return torrentSites.findTorrent(subscription.name + ' ' + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters, season, episode)
     .then(function (torrent) {
       return torrent;
       /*

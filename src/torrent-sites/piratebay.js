@@ -37,7 +37,7 @@ function parseDate(str) {
   return date;
 };
 
-function parseTorrentData(html) {
+function parseTorrentData(html, season, episode) {
   try {
     var magnetRegexp = /<a href="magnet:?/,
       torrentInfoRegexp = /.*Uploaded(.*)\,.*Size(.*)\,/,
@@ -56,6 +56,8 @@ function parseTorrentData(html) {
 
         torrents.push({
           name: torrentName,
+          season: season,
+          episode: episode,
           size: size,
           uploadDate: uploadDate,
           link: link

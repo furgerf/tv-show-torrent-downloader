@@ -24,7 +24,7 @@ var pirateBay = require('./piratebay'),
     ],
     lastSuccessfulSite; // TODO: implement behavior to first try the last successful site
 
-function tryTorrentSite(torrentSite, searchString) {
+function tryTorrentSite(torrentSite, searchString, season, episode) {
   var url = encodeURI(torrentSite.url + searchString);
 
   log.info('Checking torrent site %s (URL %s)', torrentSite.url, url);
@@ -39,7 +39,7 @@ function tryTorrentSite(torrentSite, searchString) {
         return;
       }
 
-      var torrents = torrentSite.parseTorrentData(stdout),
+      var torrents = torrentSite.parseTorrentData(stdout, season, episode),
         // select one (or several?) of the torrents to download
         // at the moment, select the largest one
         maxSize = Math.max.apply(Math, torrents.map(function (torrent) { return torrent.size; })),
@@ -54,7 +54,8 @@ function tryTorrentSite(torrentSite, searchString) {
   });
 }
 
-exports.findTorrent = function (searchString, siteIndex) {
+// NOTE: siteIndex must STAY the last parameter!!
+exports.findTorrent = function (searchString, season, episode, siteIndex) {
   // the caller may be external and wouldn't supply a siteIndex
   // so we make sure that we start at zero if it wasn't supplied
   siteIndex = siteIndex || 0;
@@ -64,7 +65,7 @@ exports.findTorrent = function (searchString, siteIndex) {
   // 2. reject if none was found and all sites have been tried
   return new Promise(function (resolve, reject) {
     // trying the "current" torrent site
-    tryTorrentSite(allSites[siteIndex++], searchString)
+    tryTorrentSite(allSites[siteIndex++], searchString, season, episode)
       .then (function (torrent) {
         // successfully tried torrent site, resolve with result
         resolve(torrent);
@@ -82,7 +83,7 @@ exports.findTorrent = function (searchString, siteIndex) {
         // resolve the current promise because we don't know yet whether we'll find torrents
         // (rejecting means we couldn't find any torrents)
         log.info("Couldn't find torrent on previous site, trying next one...");
-        resolve(exports.findTorrent(searchString, siteIndex));
+        resolve(exports.findTorrent(searchString, season, episode, siteIndex));
       });
   });
 };
