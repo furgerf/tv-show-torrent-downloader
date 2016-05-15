@@ -59,7 +59,7 @@ function checkForMultipleEpisodes(subscription, season, episode, torrents, log) 
 }
 
 function checkSubscriptionForUpdate(subscription, log) {
-  log && log.debug('Checking subscription "%s" for updates...', subscription.name);
+  log && log.debug('Checking subscription "%s" for new episodes of same season...', subscription.name);
 
   // check for new episode of same season
   return checkForMultipleEpisodes(subscription, subscription.lastSeason,
@@ -68,13 +68,14 @@ function checkSubscriptionForUpdate(subscription, log) {
       // we just finished checking for new episodes
       subscription.lastEpisodeUpdateCheck = new Date();
 
+      log && log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
       return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1, [], log)
         .then(function (episodes) {
           // we just finished checking for new episodes
           subscription.lastSeasonUpdateCheck = new Date();
 
           // merge episodes from current and new season
-          newEpisodes.concat(episodes);
+          newEpisodes = newEpisodes.concat(episodes);
 
           return newEpisodes;
         });

@@ -8,7 +8,7 @@ var restify = require('restify'),
 
 
 exports.getSubscription = function (req, res, next) {
-  var subscriptionName = req.params[0];
+  var subscriptionName = decodeURIComponent(req.params[0]);
 
   // retrieve subscriptions
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {

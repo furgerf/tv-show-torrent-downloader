@@ -48,12 +48,8 @@ function tryTorrentSite(torrentSite, searchString) {
 
       log.debug('URL "%s" contains %d torrents', url, torrents.length);
 
-      if (torrent) {
-        resolve(torrent);
-      } else {
-        // we got a response from the site but we couldn't find any torrents
-        reject();
-      }
+      // resolve with newly-found torrent (which may be undefined)
+      resolve(torrent);
     });
   });
 }
@@ -70,8 +66,7 @@ exports.findTorrent = function (searchString, siteIndex) {
     // trying the "current" torrent site
     tryTorrentSite(allSites[siteIndex++], searchString)
       .then (function (torrent) {
-        // found torrents, resolve
-        //log.info('Found a torrent, not trying further torrent sites');
+        // successfully tried torrent site, resolve with result
         resolve(torrent);
       })
       .catch (function (err) {

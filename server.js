@@ -67,18 +67,18 @@ server.listen(config.api.port, config.api.host, function () {
   // subscriptions
   // retrieve all/specific subscription info
   server.get(/^\/subscriptions\/?$/, readSubscription.getAllSubscriptions);
-  server.get(/^\/subscriptions\/([a-zA-Z0-9]+)\/?$/, readSubscription.getSubscription);
+  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, readSubscription.getSubscription);
 
   // add/delete subscription
   server.post(/^\/subscriptions\/?$/, writeSubscription.addSubscription);
-  server.del(/^\/subscriptions\/([a-zA-Z0-9]+)\/?$/, writeSubscription.deleteSubscription);
+  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscription.deleteSubscription);
 
   // check all/specific subscription for update
   server.get(/^\/subscriptions\/find\/?$/, findSubscriptionUpdates.checkAllSubscriptionsForUpdates);
-  server.get(/^\/subscriptions\/([a-zA-Z0-9]+)\/find\/?$/, findSubscriptionUpdates.checkSubscriptionForUpdates);
+  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, findSubscriptionUpdates.checkSubscriptionForUpdates);
 
   // update specific subscription with torrent
-  server.put(/^\/subscriptions\/([a-zA-Z0-9]+)\/update\/?$/, updateSubscription.updateSubscriptionWithTorrent);
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/, updateSubscription.updateSubscriptionWithTorrent);
 
   // system status
   server.get(/^\/status\/system\/disk\/?$/, systemStatus.getSystemDiskUsage);
