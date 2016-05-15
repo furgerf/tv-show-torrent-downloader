@@ -70,12 +70,12 @@ function parseTorrentData(html) {
   }
 }
 
-function Parser (urlEnding) {
-  if (!urlEnding || !urlEnding.toString()) {
+function Parser (url) {
+  if (!url || !url.toString()) {
     throw new ArgumentException('Must provide valid URL ending');
   }
 
-  this.url = 'http://thepiratebay.' + urlEnding + '/search/';
+  this.url = 'http://' + url + '/search/';
   this.parseTorrentData = parseTorrentData;
 }
 
