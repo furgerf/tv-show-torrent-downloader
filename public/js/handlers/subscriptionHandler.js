@@ -5,27 +5,32 @@
   'use strict';
 
   function SubscriptionHandler($http, logger, settings) {
-    var serverUrl = settings.getServerAddress(),
-        subscriptionUrl = serverUrl + '/subscriptions',
-        updateCheckUrl = serverUrl + '/subscriptions';
+    var getSubscriptionUrl = function () {
+          return settings.getServerAddress() + '/subscriptions';
+        },
+        getUpdateCheckUrl = function () {
+          return settings.getServerAddres() + '/subscriptions';
+        };
 
     this.getAllSubscriptions = function () {
-      logger.logConsole('Retrieving all subscriptions from ' + subscriptionUrl);
-      return $http.get(subscriptionUrl);
+      var url = getSubscriptionUrl();
+      logger.logConsole('Retrieving all subscriptions from ' + url);
+      return $http.get(url);
     };
 
     this.addSubscription = function (newSubscription) {
-      var sub = {
-        name: newSubscription.name,
-        lastSeason: newSubscription.currentEpisode.season,
-        lastEpisode: newSubscription.currentEpisode.episode,
-        searchParameters: newSubscription.searchParameters
-      },
-      reqBody = JSON.stringify(sub);
+      var url = getSubscriptionUrl(),
+          sub = {
+            name: newSubscription.name,
+            lastSeason: newSubscription.currentEpisode.season,
+            lastEpisode: newSubscription.currentEpisode.episode,
+            searchParameters: newSubscription.searchParameters
+          },
+          reqBody = JSON.stringify(sub);
 
-      logger.logConsole('Adding subscription ' + reqBody + ' to ' + subscriptionUrl);
+      logger.logConsole('Adding subscription ' + reqBody + ' to ' + url);
 
-      return $http.post(subscriptionUrl, sub)
+      return $http.post(url, sub)
         .success(function (data, status, headers, config) {
           logger.logConsole("Successfully added subscription!");
         })
@@ -35,13 +40,15 @@
     };
 
     this.updateSubscription = function (subscription) {
-      logger.logConsole('Updating subscription ' + subscription.name + ' from ' + subscriptionUrl);
-      return $http.get(subscriptionUrl + '/' + encodeURIComponent(subscription.name) + 'find/');
+      var url = getSubscriptionUrl();
+      logger.logConsole('Updating subscription ' + subscription.name + ' from ' + url);
+      return $http.get(url + '/' + encodeURIComponent(subscription.name) + 'find/');
     };
 
     this.updateAllSubscriptions = function () {
-      logger.logConsole('Updating all subscriptions from ' + updateCheckUrl);
-      return $http.get(updateCheckUrl + '/find');
+      var url = getUpdateCheckUrl();
+      logger.logConsole('Updating all subscriptions from ' + url);
+      return $http.get(url + '/find');
     };
   };
 

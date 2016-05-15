@@ -5,12 +5,14 @@
   'use strict';
 
   function AdminHandler($http, logger, settings) {
-    var serverUrl = settings.getServerAddress(),
-        diskUsageUrl = serverUrl + '/status/system/disk';
+    var getDiskUsageUrl = function () {
+          return settings.getServerAddress() + '/status/system/disk';
+        };
 
     this.getDiskUsage = function () {
-      logger.logConsole('Retrieving disk usage information from ' + diskUsageUrl);
-      return $http.get(diskUsageUrl);
+      var url = getDiskUsageUrl();
+      logger.logConsole('Retrieving disk usage information from ' + url);
+      return $http.get(url);
     };
   };
 
