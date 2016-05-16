@@ -16,36 +16,96 @@ function startTorrent(torrentLink, log) {
 
   log && log.warn('Starting torrent: %s (command: %s)', torrentLink, command);
 
-  exec(command, function (err, stdout, stderr) {
-    if (err) {
-      if (log) {
-        log.error(err);
-      } else {
-        console.log(err);
+  return new Promise(function (resolve, reject) {
+    exec(command, function (err, stdout, stderr) {
+      if (err) {
+        if (log) {
+          log.error(err);
+        } else {
+          console.log(err);
+        }
+
+        reject(err);
       }
 
-      return err;
-    }
-
-    if (stderr) {
-      if (log) {
-        log.warn('Torrent command stderr: %s', stderr);
-      } else {
-        console.log('Torrent command stderr: %s', stderr);
+      if (stderr) {
+        if (log) {
+          log.warn('Torrent command stderr: %s', stderr);
+        } else {
+          console.log('Torrent command stderr: %s', stderr);
+        }
       }
-    }
 
-    if (stdout) {
-      if (log) {
-        log.info('Torrent command stdout: %s', stdout);
-      } else {
-        console.log('Torrent command stdout: %s', stdout);
+      if (stdout) {
+        if (log) {
+          log.info('Torrent command stdout: %s', stdout);
+        } else {
+          console.log('Torrent command stdout: %s', stdout);
+        }
       }
-    }
+
+      resolve();
+    });
   });
 }
 
-exports.updateSubscriptionWithTorrent = function (req, res, next) {
-  return next(new restify.InternalServerError('Not implemented'));
-};
+function isNextEpisode (sub, season, episode) {
+  if (episode === 0 || episode === 1)
+    return true;
 
+  if (season === sub.lastSeason && episode === sub.lastEpisode + 1)
+    return true;
+
+  return false;
+}
+
+exports.updateSubscriptionWithTorrent = function (req, res, next) {
+  var subscriptionName = decodeURIComponent(req.params[0]),
+      season = parseInt(req.body.season, 10),
+      episode = parseInt(req.body.episode, 10),
+      link = req.body.link;
+
+  Subscription.find({name: subscriptionName}, function (err, subscriptions) {
+    if (err) {
+      req.log.error(err);
+      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
+    }
+
+    if (subscriptions.length === 0) {
+      req.log.warn('No subscription with name "%s" found', subscriptionName);
+      utils.sendOkResponse(res, 'No subscription with name "%s" found', subscriptionName, {}, 'http://' + req.headers.host + req.url);
+      return next();
+    }
+
+    var sub = subscriptions[0];
+
+    req.log.info('Requesting to download %s, %s', subscriptionName, utils.formatEpisodeNumber(season, episode));
+
+    if (!isNextEpisode(sub, season, episode)) {
+      return next(new restify.BadRequestError('Episode %s of show %s cannot be downloaded when the current episode is %s', utils.formatEpisodeNumber(season, episode), sub.name, utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode)));
+    }
+
+    startTorrent(link, req.log)
+      .then(function () {
+        if (config.productionEnvironment) {
+          if (sub.updateLastEpisode(season, episode)) {
+            sub.save();
+            req.log.info('Successfully updated subscription %s to %s...',
+                sub.name, utils.formatEpisodeNumber(sub.lastSeason,
+                  sub.lastEpisode));
+          } else {
+            req.log.error('Failed to update subscription %s to %s!', sub.name,
+                utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
+            return next(new restify.InternalServerError('Error while updating subscription: %s', error));
+          }
+        }
+
+        utils.sendOkResponse(res, 'Started torrent for new episode ' + utils.formatEpisodeNumber(sub.season, sub.episode) + ' of ' + sub.name, null, 'http://' + req.headers.host + req.url);
+        res.end();
+        return next();
+      })
+      .catch(function (error) {
+        return next(new restify.InternalServerError('Error while trying to start torrent: %s', error));
+      });
+  });
+};

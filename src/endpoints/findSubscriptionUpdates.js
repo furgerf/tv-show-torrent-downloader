@@ -1,7 +1,6 @@
 'use strict';
 
 var restify = require('restify'),
-  exec = require('child_process').exec,
   url = require('url'),
 
   config = require('./../config'),
