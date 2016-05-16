@@ -13,7 +13,7 @@
     <tr ng-repeat="ep in overviewCtrl.newEpisodes[sub.name] track by $index">
       <td colspan="1">New episode S{{ep.season | twoDigits}}E{{ep.episode | twoDigits}} to download:</td>
       <td colspan="2">{{ep.name}}, {{ep.size | fileSize}} (Uploaded on {{ep.uploadDate | dateTime}})</td>
-      <td colspan="1"><button ng-click='overviewCtrl.downloadEpisode(sub, ep)'>Download</button></td>
+      <td colspan="1"><button ng-click='overviewCtrl.downloadEpisode(sub, ep)'>{{ep.isDownloaded ? 'Refresh' : 'Download'}}</button></td>
     </tr>
   </table>
   <button ng-click='overviewCtrl.findAllSubscriptionUpdates()'>Find updates for all!</button>

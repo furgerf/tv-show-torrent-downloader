@@ -37,7 +37,7 @@ mod.filter('twoDigits', function () {
     return Number.isNaN(n) ? undefined : ('0' + n).slice(-2);
   };
 });
-mod.filter('dateTime', function () {
+mod.filter('dateTime', function (twoDigitsFilter) {
   return function(date) {
     if (!date)
       return 'Unknown';
@@ -46,7 +46,7 @@ mod.filter('dateTime', function () {
       result =  dt.getDate() + '.' + (dt.getMonth() + 1) + '.' + dt.getFullYear();
 
     if (dt.getHours() && dt.getMinutes())
-      result += ', ' + dt.getHours() + ':' + dt.getMinutes();
+      result += ', ' + dt.getHours() + ':' + twoDigitsFilter(dt.getMinutes());
 
     return result
   };

@@ -7,10 +7,13 @@
   function SubscriptionHandler($http, logger, settings) {
     var getSubscriptionUrl = function () {
           return settings.getServerAddress() + '/subscriptions';
-        },
-        getUpdateCheckUrl = function () {
-          return settings.getServerAddres() + '/subscriptions';
         };
+
+    this.getSubscription = function (subscription) {
+      var url = getSubscriptionUrl();
+      logger.logConsole('Retrieving subscription ' + subscription.name + ' from ' + url);
+      return $http.get(url + '/' + encodeURIComponent(subscription.name));
+    };
 
     this.getAllSubscriptions = function () {
       var url = getSubscriptionUrl();
@@ -46,14 +49,9 @@
     };
 
     this.downloadEpisode = function (subscriptionName, seasonNumber, episodeNumber, torrentLink) {
-      console.log(subscriptionName);
-      console.log(seasonNumber);
-      console.log(episodeNumber);
-      console.log(torrentLink);
-      alert('TODO');
-      //var url = getSubscriptionUrl();
-      //logger.logConsole('Finding updates for subscription ' + subscription.name + ' from ' + url);
-      //return $http.get(url + '/' + encodeURIComponent(subscription.name) + '/find');
+      var url = getSubscriptionUrl();
+      logger.logConsole('Starting download of torrent ' + subscriptionName + ', ' + seasonNumber + '/' + episodeNumber + ' from ' + url);
+      return $http.put(url + '/' + encodeURIComponent(subscriptionName) + '/update', { season: seasonNumber, episode: episodeNumber, link: torrentLink });
     };
 
     /*
