@@ -72,7 +72,7 @@ exports.updateSubscriptionWithTorrent = function (req, res, next) {
     }
 
     if (subscriptions.length === 0) {
-      req.log.warn('No subscription with name "%s" found', subscriptionName);
+      req.log.warn('No subscription with name "' + subscriptionName + '" found');
       utils.sendOkResponse(res, 'No subscription with name "%s" found', subscriptionName, {}, 'http://' + req.headers.host + req.url);
       return next();
     }
@@ -100,7 +100,7 @@ exports.updateSubscriptionWithTorrent = function (req, res, next) {
           }
         }
 
-        utils.sendOkResponse(res, 'Started torrent for new episode ' + utils.formatEpisodeNumber(sub.season, sub.episode) + ' of ' + sub.name, null, 'http://' + req.headers.host + req.url);
+        utils.sendOkResponse(res, 'Started torrent for new episode ' + utils.formatEpisodeNumber(season, episode) + ' of ' + sub.name, null, 'http://' + req.headers.host + req.url);
         res.end();
         return next();
       })

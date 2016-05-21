@@ -1,17 +1,20 @@
+// true if the server instance is running in a production environment
+exports.productionEnvironment = true;
+
 // host/port configuration of the server
+
+// always start the server locally
 exports.api = {
   host : 'localhost',
   port : 8000
 };
+
+// use the raspi database if we actually want to do something
+// NOTE that the torrents are still started locally though
 exports.database = {
-  host : 'localhost',
+  host : exports.productionEnvironment ? '192.168.1.31' : 'localhost',
   port: 27017
 };
-
-
-// true if the server instance is running in a production environment
-exports.productionEnvironment = false;
-
 
 // command to use for starting torrents - don't start torrents in non-production environment
 exports.torrentCommand = exports.productionEnvironment ? 'qbittorrent' : 'echo';
