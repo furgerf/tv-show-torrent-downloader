@@ -38,6 +38,24 @@ function getReturnableSubscription() {
 subscriptionSchema.methods.getReturnable = getReturnableSubscription;
 
 /**
+ * Updates the last episode update check time to now and saves the subscription.
+ */
+function updateLastEpisodeUpdateCheck() {
+  this.lastEpisodeUpdateCheck = new Date();
+  this.save();
+}
+subscriptionSchema.methods.updateLastEpisodeUpdateCheck = updateLastEpisodeUpdateCheck;
+
+/**
+ * Update the last season update check time to now and saves the subscription.
+ */
+function updateLastSeasonUpdateCheck() {
+  this.lastSeasonUpdateCheck = new Date();
+  this.save();
+}
+subscriptionSchema.methods.updateLastSeasonUpdateCheck = updateLastSeasonUpdateCheck;
+
+/**
  * Updates the last downloaded season/episode of the subscription, making
  * thorough checks to ensure only valid updates are accepted. Whether the
  * season/episode update was accepted is returned as a boolean.

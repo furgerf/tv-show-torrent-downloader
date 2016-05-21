@@ -15,28 +15,11 @@ function checkForEpisode(subscription, season, episode, log) {
   return torrentSites.findTorrent(subscription.name + ' ' + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters, season, episode)
     .then(function (torrent) {
       return torrent;
-      /*
-      if (subscription.updateLastEpisode(season, episode)) {
-        if (config.productionEnvironment) {
-          subscription.save();
-        }
-        log && log.info('Successfully updated subscription %s to %s, starting torrent...',
-            subscription.name, utils.formatEpisodeNumber(subscription.lastSeason,
-              subscription.lastEpisode));
-        startTorrent(torrent.link, log);
-        return torrent;
-      } else {
-        log && log.error('Failed to update subscription %s to %s!', subscription.name,
-            utils.formatEpisodeNumber(subscription.lastSeason, subscription.lastEpisode));
-        reject();
-      }
-      */
     })
   .catch(function (err) {
     // no torrent was found for that episode
     // TODO: Rethink catch's and do error handling in appropriate places
     // we might have arrived here because no torrents were found
-    //log.error(err);
     return null;
   });
 }
@@ -65,13 +48,13 @@ function checkSubscriptionForUpdate(subscription, log) {
       subscription.lastEpisode + 1, [], log)
     .then(function (newEpisodes) {
       // we just finished checking for new episodes
-      subscription.lastEpisodeUpdateCheck = new Date();
+      subscription.updateLastEpisodeUpdateCheck();
 
       log && log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
       return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1, [], log)
         .then(function (episodes) {
           // we just finished checking for new episodes
-          subscription.lastSeasonUpdateCheck = new Date();
+          subscription.updateLastSeasonUpdateCheck();
 
           // merge episodes from current and new season
           newEpisodes = newEpisodes.concat(episodes);
