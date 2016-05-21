@@ -32,6 +32,9 @@ td {
   border-style: inset;
   border-width: thin;
 }
+.disabled {
+  background-color: #eeeeee;
+}
 .good {
   background-color: #ccccff;
 }
