@@ -33,6 +33,9 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
         subscriptionHandler.findSubscriptionUpdates(subscriptionName)
           .then(function (response) {
             handleSubscriptionUpdatesResponse(response, subscriptionName);
+
+            // because the last update date changed, retrieve the subscription again
+            getSubscription(subscriptionName);
           })
         .catch(function (resp) {
           logger.logAlert('Error ' + err.status + ' while requesting updates for subscription ' + subscriptionName + ':\n' + err.data.message);
@@ -44,15 +47,8 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
        */
       that.findAllSubscriptionUpdates = function () {
         logger.logConsole('Requesting updates for all subscriptions');
-        // make one request for each subscription to retrieve updates
-        Promise.all(that.subscriptions.map(function (sub) {
-          return subscriptionHandler.findSubscriptionUpdates(sub.name)
-            .then(function (response) {
-              handleSubscriptionUpdatesResponse(response, sub.name);
-            });
-        }))
-        .catch(function (resp) {
-          logger.logAlert('Error ' + err.status + ' while requesting all subscription updates:\n' + err.data.message);
+        that.subscriptions.forEach(function (sub) {
+          that.findSubscriptionUpdates(sub.name);
         });
       };
 
@@ -180,6 +176,9 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
       function updateSubscriptionInfo (newSubscriptionInfo) {
           that.subscriptions = that.subscriptions.filter(sub => sub.name != newSubscriptionInfo.name);
           that.subscriptions.push(new app.Subscription(newSubscriptionInfo.name, new app.ShowEpisode(newSubscriptionInfo.lastSeason, newSubscriptionInfo.lastEpisode), newSubscriptionInfo.searchParameters, newSubscriptionInfo.lastModified));
+          that.subscriptions.sort(function (a, b) {
+            return a.name > b.name;
+          });
       }
 
       // initialization - retrieve all subscriptions
