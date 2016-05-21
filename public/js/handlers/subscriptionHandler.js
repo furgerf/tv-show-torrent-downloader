@@ -5,24 +5,55 @@
   'use strict';
 
   function SubscriptionHandler($http, logger, settings) {
-    var getSubscriptionUrl = function () {
+    // URL helpers
+    var getBaseSubscriptionUrl = function () {
           return settings.getServerAddress() + '/subscriptions';
+        },
+        getSubscriptionUrl = function (subscriptionName) {
+          return getBaseSubscriptionUrl() + '/' + encodeURIComponent(subscriptionName);
+        },
+        getSubscriptionFindUpdateUrl = function (subscriptionName) {
+          return getSubscriptionUrl(subscriptionName) + '/find';
+        },
+        getSubscriptionDownloadEpisodeUrl = function (subscriptionName) {
+          return getSubscriptionUrl(subscriptionName) + '/update';
         };
 
-    this.getSubscription = function (subscription) {
-      var url = getSubscriptionUrl();
-      logger.logConsole('Retrieving subscription ' + subscription.name + ' from ' + url);
-      return $http.get(url + '/' + encodeURIComponent(subscription.name));
-    };
+    // public methods
 
-    this.getAllSubscriptions = function () {
-      var url = getSubscriptionUrl();
-      logger.logConsole('Retrieving all subscriptions from ' + url);
+    /**
+     * Retrieves information about a subscription.
+     * @param {String} subscriptionName - Name of the subscription to retrieve.
+     * @returns {Promise} Promise of the HTTP request.
+     */
+    this.getSubscription = function (subscriptionName) {
+      var url = getSubscriptionUrl(subscriptionName);
+
+      logger.logConsole('Retrieving subscription info for "' + subscriptionName + '" with GET ' + url);
       return $http.get(url);
     };
 
+    /**
+     * Retrieves information about all subscriptions.
+     * @returns {Promise} Promise of the HTTP request.
+     */
+    this.getAllSubscriptions = function () {
+      var url = getBaseSubscriptionUrl();
+      logger.logConsole('Retrieving all subscriptions with GET ' + url);
+      return $http.get(url);
+    };
+
+    /**
+     * Adds a new subscription.
+     * @param {String} subscriptionName - Name of the subscription to retrieve.
+     * @param {Object} newSubscription - Container for information about new subscription.
+     * @param {String} newSubscription.name - Name of the new subscription.
+     * @param {Object} newSubscription.currentEpisode - ShowEpisode object of the current episode.
+     * @param {String} newSubscription.searchParameters - Optional search parameters for the subscription.
+     * @returns {Promise} Promise of the HTTP request.
+     */
     this.addSubscription = function (newSubscription) {
-      var url = getSubscriptionUrl(),
+      var url = getBaseSubscriptionUrl(),
           sub = {
             name: newSubscription.name,
             lastSeason: newSubscription.currentEpisode.season,
@@ -32,35 +63,32 @@
           reqBody = JSON.stringify(sub);
 
       logger.logConsole('Adding subscription ' + reqBody + ' to ' + url);
-
-      return $http.post(url, sub)
-        .success(function (data, status, headers, config) {
-          logger.logConsole("Successfully added subscription!");
-        })
-        .error(function (data, status, headers, config) {
-          logger.logAlert("ERROR while adding subscription: " + JSON.stringify(data));
-        });
+      return $http.post(url, sub);
     };
 
-    this.findSubscriptionUpdates = function (subscription) {
-      var url = getSubscriptionUrl();
-      logger.logConsole('Finding updates for subscription ' + subscription.name + ' from ' + url);
-      return $http.get(url + '/' + encodeURIComponent(subscription.name) + '/find');
+    /**
+     * Finds updates for the subscription with the given name.
+     * @returns {Promise} Promise of the HTTP request.
+     */
+    this.findSubscriptionUpdates = function (subscriptionName) {
+      var url = getSubscriptionFindUpdateUrl(subscriptionName);
+      logger.logConsole('Finding updates for subscription "' + subscriptionName + '" with GET ' + url);
+      return $http.get(url);
     };
 
+    /**
+     * Tells the server to start download of a specific episode of a specific subscription.
+     * @param {String} subscriptionName - Name of the subscription.
+     * @param {Number} seasonNumber - Season number of the episode to download.
+     * @param {Number} episodeNumber - Episode number of the episode to download..
+     * @param {String} torrentLink - Link to the torrent to download.
+     * @returns {Promise} Promise of the HTTP request.
+     */
     this.downloadEpisode = function (subscriptionName, seasonNumber, episodeNumber, torrentLink) {
-      var url = getSubscriptionUrl();
-      logger.logConsole('Starting download of torrent ' + subscriptionName + ', ' + seasonNumber + '/' + episodeNumber + ' from ' + url);
-      return $http.put(url + '/' + encodeURIComponent(subscriptionName) + '/update', { season: seasonNumber, episode: episodeNumber, link: torrentLink });
+      var url = getSubscriptionDownloadEpisodeUrl(subscriptionName);
+      logger.logConsole('Starting download of torrent ' + subscriptionName + ' ' + seasonNumber + '/' + episodeNumber + ' with PUT ' + url);
+      return $http.put(url, { season: seasonNumber, episode: episodeNumber, link: torrentLink });
     };
-
-    /*
-    this.findAllSubscriptionUpdates = function () {
-      var url = getSubscriptionUrl();
-      logger.logConsole('Finding updates for all subscriptions from ' + url);
-      return $http.get(url + '/find');
-    };
-    */
   };
 
   // Export to window
