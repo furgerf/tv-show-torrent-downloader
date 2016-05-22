@@ -11,9 +11,9 @@
       <td><button ng-click='overviewCtrl.findSubscriptionUpdates(sub.name)'>Find updates</button></td>
     </tr>
     <tr ng-repeat="ep in overviewCtrl.newEpisodes[sub.name] track by $index">
-      <td ng-class="{disabled: ep.isDownloaded == true, darker: true}" colspan="1">New episode S{{ep.season | twoDigits}}E{{ep.episode | twoDigits}} to download:</td>
-      <td ng-class="{disabled: ep.isDownloaded == true, darker: true}" colspan="2">{{ep.name}}, {{ep.size | fileSize}} (Uploaded on {{ep.uploadDate | dateTime}})</td>
-      <td ng-class="{disabled: ep.isDownloaded == true, darker: true}" colspan="1"><button ng-class="{disabled: ep.isDownloaded == true, button: true}" ng-click='overviewCtrl.downloadEpisode(sub.name, ep)'>{{ep.isDownloaded ? 'Refresh' : 'Download'}}</button></td>
+      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="1">New episode S{{ep.season | twoDigits}}E{{ep.episode | twoDigits}} to download:</td>
+      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="2">{{ep.name}}, {{ep.size | fileSize}} (Uploaded on {{ep.uploadDate | dateTime}})</td>
+      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="1"><button ng-class="{disabled: ep.isDownloaded == true, button: true}" ng-click='overviewCtrl.downloadEpisode(sub.name, ep)'>{{ep.isDownloaded ? 'Refresh' : 'Download'}}</button></td>
     </tr>
   </table>
   <button ng-click='overviewCtrl.findAllSubscriptionUpdates()'>Find updates for all!</button>

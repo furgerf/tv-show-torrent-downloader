@@ -129,10 +129,21 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
 
           logger.logConsole('Handling subscription update response for ' + subscriptionName + ' with message: ' + response.data.message);
 
+          var responseData = response.data.data,
+            lastEpisode,
+            isAlternate = true;
+
           // remove all previously present new episodes for the subscription
           that.newEpisodes[subscriptionName] = [];
           // add the own new episodes for the subscription
-          response.data.data.forEach(function (torrent) {
+          responseData.forEach(function (torrent, index) {
+            // add flag to alternate episodes
+            if (torrent.episode != lastEpisode) {
+              isAlternate = !isAlternate;
+              lastEpisode = torrent.episode;
+            }
+            torrent.isAlternateEpisode = isAlternate;
+
             that.newEpisodes[subscriptionName].push(torrent);
           });
       }
