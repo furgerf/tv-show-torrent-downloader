@@ -79,13 +79,19 @@ button:focus {
   outline-color: #143D29;
 }
 input {
+  height: 20px;
   width: 175px;
   border: 1px solid #143D29;
   outline-color: #143D29;
   padding: 6px 10px;
 }
 select {
+  height: 32px;
+  width: 175px;
+  border: 1px solid #143D29;
+  padding: 6px 10px;
   outline-color: #143D29;
+  background-color: #FFFFFF;
 }
 select:active {
   text-emphasis-color: #999;

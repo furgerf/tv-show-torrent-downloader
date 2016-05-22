@@ -12,12 +12,20 @@ mod.controller('adminController', ['logger', 'settings', 'adminHandler',
 
       that.serverHost = settings.getServerHost();
       that.serverPort = parseInt(settings.getServerPort(), 10);
+      that.torrentSort = settings.getTorrentSort();
+      that.maxTorrentsPerEpisode = parseInt(settings.getMaxTorrentsPerEpisode(), 10);
 
       that.saveServerHost = function () {
         settings.setServerHost(that.serverHost);
       };
       that.saveServerPort = function () {
         settings.setServerPort(that.serverPort);
+      };
+      that.saveTorrentSort = function () {
+        settings.setTorrentSort(that.torrentSort);
+      };
+      that.saveMaxTorrentsPerEpisode = function () {
+        settings.setMaxTorrentsPerEpisode(that.maxTorrentsPerEpisode);
       };
 
       that.getDiskUsage = function () {

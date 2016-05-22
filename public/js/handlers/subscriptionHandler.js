@@ -73,7 +73,7 @@
     this.findSubscriptionUpdates = function (subscriptionName) {
       var url = getSubscriptionFindUpdateUrl(subscriptionName);
       logger.logConsole('Finding updates for subscription "' + subscriptionName + '" with GET ' + url);
-      return $http.get(url);
+      return $http.put(url, { torrentSort: settings.getTorrentSort(), maxTorrentsPerEpisode: settings.getMaxTorrentsPerEpisode() });
     };
 
     /**

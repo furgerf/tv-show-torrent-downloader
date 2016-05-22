@@ -37,7 +37,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
             // because the last update date changed, retrieve the subscription again
             getSubscription(subscriptionName);
           })
-        .catch(function (resp) {
+        .catch(function (err) {
           logger.logAlert('Error ' + err.status + ' while requesting updates for subscription ' + subscriptionName + ':\n' + err.data.message);
         });
       };
