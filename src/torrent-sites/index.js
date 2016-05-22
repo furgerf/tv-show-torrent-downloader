@@ -24,7 +24,20 @@ var pirateBay = require('./piratebay'),
     ],
     lastSuccessfulSite; // TODO: implement behavior to first try the last successful site
 
-function tryTorrentSite(torrentSite, searchString, season, episode) {
+function compareTorrents(t1, t2, sort) {
+  if (sort === 'largest')
+    return t1.size < t2.size;
+  if (sort === 'smallest')
+    return t1.size > t2.size;
+  if (sort === 'newest')
+    return t1.uploadDate < t2.uploadDate;
+  if (sort === 'oldest')
+    return t1.uploadDate > t2.uploadDate;
+
+  throw new Error('Unknown sort: ' + sort);
+}
+
+function tryTorrentSite(torrentSite, searchString, season, episode, torrentSort, maxTorrentsPerEpisode) {
   var url = encodeURI(torrentSite.url + searchString);
 
   log.info('Checking torrent site %s (URL %s)', torrentSite.url, url);
@@ -39,23 +52,24 @@ function tryTorrentSite(torrentSite, searchString, season, episode) {
         return;
       }
 
-      var torrents = torrentSite.parseTorrentData(stdout, season, episode),
-        // select one (or several?) of the torrents to download
-        // at the moment, select the largest one
-        maxSize = Math.max.apply(Math, torrents.map(function (torrent) { return torrent.size; })),
-        torrent = torrents.filter(function (t) { return t.size === maxSize; })[0];
-        // TODO: Move torrent selection to caller
+      var torrents = torrentSite.parseTorrentData(stdout, season, episode);
 
       log.debug('URL "%s" contains %d torrents', url, torrents.length);
 
+      // select the torrents to return: sort + slice
+      torrents.sort(function (a, b) { return compareTorrents(a, b, torrentSort); });
+      torrents = torrents.slice(0, maxTorrentsPerEpisode);
+
+      log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
+
       // resolve with newly-found torrent (which may be undefined)
-      resolve(torrent);
+      resolve(torrents);
     });
   });
 }
 
 // NOTE: siteIndex must STAY the last parameter!!
-exports.findTorrent = function (searchString, season, episode, siteIndex) {
+exports.findTorrents = function (searchString, season, episode, torrentSort, maxTorrentsPerEpisode, siteIndex) {
   // the caller may be external and wouldn't supply a siteIndex
   // so we make sure that we start at zero if it wasn't supplied
   siteIndex = siteIndex || 0;
@@ -65,10 +79,10 @@ exports.findTorrent = function (searchString, season, episode, siteIndex) {
   // 2. reject if none was found and all sites have been tried
   return new Promise(function (resolve, reject) {
     // trying the "current" torrent site
-    tryTorrentSite(allSites[siteIndex++], searchString, season, episode)
-      .then (function (torrent) {
+    tryTorrentSite(allSites[siteIndex++], searchString, season, episode, torrentSort, maxTorrentsPerEpisode)
+      .then (function (torrents) {
         // successfully tried torrent site, resolve with result
-        resolve(torrent);
+        resolve(torrents);
       })
       .catch (function (err) {
         // no torrents were found
@@ -83,7 +97,7 @@ exports.findTorrent = function (searchString, season, episode, siteIndex) {
         // resolve the current promise because we don't know yet whether we'll find torrents
         // (rejecting means we couldn't find any torrents)
         log.info("Couldn't find torrent on previous site, trying next one...");
-        resolve(exports.findTorrent(searchString, season, episode, siteIndex));
+        resolve(exports.findTorrents(searchString, season, episode, siteIndex));
       });
   });
 };

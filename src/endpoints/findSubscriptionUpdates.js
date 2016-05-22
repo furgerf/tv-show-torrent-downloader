@@ -10,11 +10,29 @@ var restify = require('restify'),
 
   Subscription = require('./../database/subscription').Subscription;
 
+function getTorrentSort(torrentSort) {
+  var sort = (torrentSort || 'largest').toLowerCase();
 
-function checkForEpisode(subscription, season, episode, log) {
-  return torrentSites.findTorrent(subscription.name + ' ' + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters, season, episode)
-    .then(function (torrent) {
-      return torrent;
+  if (sort === 'largest')
+    return 'largest';
+
+  if (sort === 'smallest')
+    return 'smallest';
+
+  if (sort === 'newest')
+    return 'newest';
+
+  if (sort === 'oldest')
+    return 'oldest';
+
+  // default
+  return 'largest';
+}
+
+function checkForEpisode(subscription, season, episode, torrentSort, maxTorrentsPerEpisode, log) {
+  return torrentSites.findTorrents(subscription.name + ' ' + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters, season, episode, torrentSort, maxTorrentsPerEpisode)
+    .then(function (torrents) {
+      return torrents;
     })
   .catch(function (err) {
     // no torrent was found for that episode
@@ -24,15 +42,15 @@ function checkForEpisode(subscription, season, episode, log) {
   });
 }
 
-function checkForMultipleEpisodes(subscription, season, episode, torrents, log) {
-  return checkForEpisode(subscription, season, episode, log)
-    .then(function (torrent) {
-      if (torrent) {
-        // we found the episode, add to list
-        torrents.push(torrent);
+function checkForMultipleEpisodes(subscription, season, episode, torrents, torrentSort, maxTorrentsPerEpisode, log) {
+  return checkForEpisode(subscription, season, episode, torrentSort, maxTorrentsPerEpisode, log)
+    .then(function (newTorrents) {
+      if (newTorrents.length > 0) {
+        // we found torrents, add to list
+        torrents = torrents.concat(newTorrents);
 
         // look for next episode...
-        return checkForMultipleEpisodes(subscription, season, episode + 1, torrents, log);
+        return checkForMultipleEpisodes(subscription, season, episode + 1, torrents, torrentSort, maxTorrentsPerEpisode, log);
       }
 
       // couldn't find the episode, return the torrents we already have
@@ -40,18 +58,18 @@ function checkForMultipleEpisodes(subscription, season, episode, torrents, log) 
     });
 }
 
-function checkSubscriptionForUpdate(subscription, log) {
+function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, log) {
   log && log.debug('Checking subscription "%s" for new episodes of same season...', subscription.name);
 
   // check for new episode of same season
   return checkForMultipleEpisodes(subscription, subscription.lastSeason,
-      subscription.lastEpisode + 1, [], log)
+      subscription.lastEpisode + 1, [], torrentSort, maxTorrentsPerEpisode, log)
     .then(function (newEpisodes) {
       // we just finished checking for new episodes
       subscription.updateLastEpisodeUpdateCheck();
 
       log && log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
-      return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1, [], log)
+      return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1, [], torrentSort, maxTorrentsPerEpisode, log)
         .then(function (episodes) {
           // we just finished checking for new episodes
           subscription.updateLastSeasonUpdateCheck();
@@ -66,7 +84,9 @@ function checkSubscriptionForUpdate(subscription, log) {
 
 
 exports.checkSubscriptionForUpdates = function (req, res, next) {
-  var subscriptionName = decodeURIComponent(req.params[0]);
+  var subscriptionName = decodeURIComponent(req.params[0]),
+    torrentSort = getTorrentSort(req.body.torrentSort),
+    maxTorrentsPerEpisode = parseInt(req.body.maxTorrentsPerEpisode, 10) || 1;
 
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {
     if (err) {
@@ -80,7 +100,7 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
       return next();
     }
 
-    checkSubscriptionForUpdate(subscriptions[0], req.log)
+    checkSubscriptionForUpdate(subscriptions[0], torrentSort, maxTorrentsPerEpisode, req.log)
       .then(function (data) {
         utils.sendOkResponse(res, 'Found ' + data.length +
             ' new torrents', data, 'http://' + req.headers.host + req.url);
@@ -92,7 +112,9 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
 
 exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
   var result,
-    updateCount = 0;
+    updateCount = 0,
+    torrentSort = getTorrentSort(req.body.torrentSort),
+    maxTorrentsPerEpisode = parseInt(req.body.maxTorrentsPerEpisode, 10) || 1;
 
   Subscription.find({}, function (err, subscriptions) {
     if (err) {
@@ -101,7 +123,7 @@ exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
     }
 
     Promise.all(subscriptions.map(function (subscription) {
-      return checkSubscriptionForUpdate(subscription, req.log)
+      return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
         .then(function (data) {
           return data;
         });

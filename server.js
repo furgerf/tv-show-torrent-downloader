@@ -74,8 +74,8 @@ server.listen(config.api.port, config.api.host, function () {
   server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscription.deleteSubscription);
 
   // check all/specific subscription for update
-  server.get(/^\/subscriptions\/find\/?$/, findSubscriptionUpdates.checkAllSubscriptionsForUpdates);
-  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, findSubscriptionUpdates.checkSubscriptionForUpdates);
+  server.put(/^\/subscriptions\/find\/?$/, findSubscriptionUpdates.checkAllSubscriptionsForUpdates);
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, findSubscriptionUpdates.checkSubscriptionForUpdates);
 
   // update specific subscription with torrent
   server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/, updateSubscription.updateSubscriptionWithTorrent);
