@@ -40,9 +40,83 @@ exports.addSubscription = function (req, res, next) {
   });
 };
 
+function updateFields (subscription, data, log) {
+  log && log.info('Updating subscription %s with:', subscription, data);
+
+  if (data.name !== undefined)
+    subscription.name = data.name;
+  if (data.searchParameters !== undefined)
+    subscription.searchParameters = data.searchParameters;
+  if (data.lastSeason !== undefined)
+    subscription.lastSeason = data.lastSeason;
+  if (data.lastEpisode !== undefined)
+    subscription.lastEpisode = data.lastEpisode;
+
+  return subscription.save();
+}
+
+exports.updateSubscription = function (req, res, next) {
+  var data = JSON.parse(req.body),  //req.body, //
+  subscriptionName = decodeURIComponent(req.params[0]),
+  subscription;
+
+  // retrieve subscription
+  Subscription.find({name: subscriptionName}, function (err, subscriptions) {
+    if (err) {
+      req.log.error(err);
+      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
+    }
+
+    // no sub with the requested name found
+    if (subscriptions.length === 0) {
+      utils.sendOkResponse(res, 'No subscription with name "' + subscriptionName
+          + '" found to update', {}, 'http://' + req.headers.host + req.url);
+      res.end();
+      return next();
+    }
+
+    subscription = subscriptions[0];
+
+    new Promise(function (resolve, reject) {
+      if (data.name === undefined) {
+        updateFields(subscription, data, req.log)
+          .then (function () {
+            resolve();
+          });
+      } else {
+        Subscription.find({name: data.name}, function (err, subs) {
+          if (err) {
+            req.log.error(err);
+            return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
+          }
+
+          // there already exists a subscription with the name, abort
+          if (subs.length > 0) {
+            utils.sendOkResponse(res, 'There already exists a subscription with the new name"' +
+                data.name + '", aborting update.', {}, 'http://' + req.headers.host + req.url);
+            res.end();
+            return next();
+          }
+
+          updateFields(subscription, data, req.log)
+            .then (function () {
+              resolve();
+            });
+        })
+      }
+    })
+    .then (function () {
+      utils.sendOkResponse(res, 'Subscription updated', subscription.getReturnable(),
+          'http://' + req.headers.host + req.url);
+      res.end();
+      return next();
+    })
+  });
+};
+
 
 exports.deleteSubscription = function (req, res, next) {
-  var subscriptionName = req.params[0];
+  var subscriptionName = decodeURIComponent(req.params[0]);
 
   // retrieve subscriptions
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {

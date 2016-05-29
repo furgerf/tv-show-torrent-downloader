@@ -69,8 +69,9 @@ server.listen(config.api.port, config.api.host, function () {
   server.get(/^\/subscriptions\/?$/, readSubscription.getAllSubscriptions);
   server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, readSubscription.getSubscription);
 
-  // add/delete subscription
+  // add/update/delete subscription
   server.post(/^\/subscriptions\/?$/, writeSubscription.addSubscription);
+  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscription.updateSubscription);
   server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscription.deleteSubscription);
 
   // check all/specific subscription for update
