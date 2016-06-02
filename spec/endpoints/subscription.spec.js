@@ -2,6 +2,7 @@
 
 // TODO: Remove/implement
 
+  /*
 var subscriptions = require('./../test-subscriptions'),
   frisby = require('frisby');
   //subscription = require('./../../src/endpoints/subscription');
@@ -17,7 +18,6 @@ describe('subscription', function () {
     allSubscriptions = subscriptions.getAllSubscriptions();
   });
 
-  /*
   it('foo', function () {
     expect(minimalSubscription.name).toBe('test minimal');
   });
@@ -32,6 +32,6 @@ describe('subscription', function () {
       message: 'Please specify exactly one exact query.'
     })
   .toss();
-  */
 });
+  */
 

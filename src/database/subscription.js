@@ -124,6 +124,6 @@ function preSaveAction(next) {
 }
 subscriptionSchema.pre('save', preSaveAction);
 
-// create and export model
+// create and export model - TODO: avoid recompiling (else unit tests can't work)
 exports.Subscription = mongoose.model('Subscription', subscriptionSchema);
 

@@ -3,15 +3,15 @@
 var restify = require('restify'),
   url = require('url'),
 
-  config = require('./../config'),
-  utils = require('./../utils'),
+  config = require('../config'),
+  utils = require('../utils'),
 
-  torrentSites = require('./../torrent-sites/'),
+  torrentSites = require('../torrent-sites/'),
 
-  Subscription = require('./../database/subscription').Subscription;
+  Subscription = require('../database/subscription').Subscription;
 
 function getTorrentSort(torrentSort) {
-  var sort = (torrentSort || 'largest').toLowerCase();
+  var sort = (torrentSort || 'largest').toString().toLowerCase();
 
   if (sort === 'largest') {
     return 'largest';
