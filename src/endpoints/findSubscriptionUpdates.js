@@ -13,44 +13,53 @@ var restify = require('restify'),
 function getTorrentSort(torrentSort) {
   var sort = (torrentSort || 'largest').toLowerCase();
 
-  if (sort === 'largest')
+  if (sort === 'largest') {
     return 'largest';
+  }
 
-  if (sort === 'smallest')
+  if (sort === 'smallest') {
     return 'smallest';
+  }
 
-  if (sort === 'newest')
+  if (sort === 'newest') {
     return 'newest';
+  }
 
-  if (sort === 'oldest')
+  if (sort === 'oldest') {
     return 'oldest';
+  }
 
   // default
   return 'largest';
 }
 
 function checkForEpisode(subscription, season, episode, torrentSort, maxTorrentsPerEpisode, log) {
-  return torrentSites.findTorrents(subscription.name + ' ' + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters, season, episode, torrentSort, maxTorrentsPerEpisode)
+  return torrentSites.findTorrents(subscription.name + ' ' +
+      utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
+      season, episode, torrentSort, maxTorrentsPerEpisode)
     .then(function (torrents) {
       return torrents;
     })
-  .catch(function (err) {
-    // no torrent was found for that episode
-    // TODO: Rethink catch's and do error handling in appropriate places
-    // we might have arrived here because no torrents were found
-    return null;
-  });
+    .catch(function () {
+      // no torrent was found for that episode
+      // TODO: Rethink catch's and do error handling in appropriate places
+      // we might have arrived here because no torrents were found
+      return null;
+    });
 }
 
-function checkForMultipleEpisodes(subscription, season, episode, torrents, torrentSort, maxTorrentsPerEpisode, log) {
-  return checkForEpisode(subscription, season, episode, torrentSort, maxTorrentsPerEpisode, log)
+function checkForMultipleEpisodes(subscription, season, episode,
+    torrents, torrentSort, maxTorrentsPerEpisode, log) {
+  return checkForEpisode(subscription, season, episode,
+    torrentSort, maxTorrentsPerEpisode, log)
     .then(function (newTorrents) {
       if (newTorrents.length > 0) {
         // we found torrents, add to list
         torrents = torrents.concat(newTorrents);
 
         // look for next episode...
-        return checkForMultipleEpisodes(subscription, season, episode + 1, torrents, torrentSort, maxTorrentsPerEpisode, log);
+        return checkForMultipleEpisodes(subscription, season, episode + 1,
+          torrents, torrentSort, maxTorrentsPerEpisode, log);
       }
 
       // couldn't find the episode, return the torrents we already have
@@ -59,7 +68,8 @@ function checkForMultipleEpisodes(subscription, season, episode, torrents, torre
 }
 
 function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, log) {
-  log && log.debug('Checking subscription "%s" for new episodes of same season...', subscription.name);
+  log &&
+    log.debug('Checking subscription "%s" for new episodes of same season...', subscription.name);
 
   // check for new episode of same season
   return checkForMultipleEpisodes(subscription, subscription.lastSeason,
@@ -68,8 +78,10 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
       // we just finished checking for new episodes
       subscription.updateLastEpisodeUpdateCheck();
 
-      log && log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
-      return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1, [], torrentSort, maxTorrentsPerEpisode, log)
+      log &&
+        log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
+      return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1,
+          [], torrentSort, maxTorrentsPerEpisode, log)
         .then(function (episodes) {
           // we just finished checking for new episodes
           subscription.updateLastSeasonUpdateCheck();
@@ -96,7 +108,8 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
 
     if (subscriptions.length === 0) {
       req.log.warn('No subscription with name "%s" found', subscriptionName);
-      utils.sendOkResponse(res, 'No subscription with name "%s" found', subscriptionName, {}, 'http://' + req.headers.host + req.url);
+      utils.sendOkResponse(res, 'No subscription with name "%s" found', subscriptionName,
+          {}, 'http://' + req.headers.host + req.url);
       return next();
     }
 

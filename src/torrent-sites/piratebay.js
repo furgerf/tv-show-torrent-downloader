@@ -1,12 +1,12 @@
 'use strict';
 
 var url = require('url'),
-    utils = require('./../utils');
+  utils = require('./../utils');
 
 function parseSize(str) {
   var data = str.match(/(\d+(?:\.\d+)?).*\b(.{2}B).*/);
   return utils.fileSizeToBytes(parseInt(data[1], 10), data[2]);
-};
+}
 
 // TODO: split into two sub-functions
 function parseDate(str) {
@@ -15,14 +15,23 @@ function parseDate(str) {
     dataToday = str.match(/Today.*;(\d{2}):(\d{2})/),
     date;
 
-  if (dataThisYear != null) {
-    date = new Date(new Date().getFullYear(), parseInt(dataThisYear[1], 10) - 1, parseInt(dataThisYear[2], 10),
-        parseInt(dataThisYear[3], 10), parseInt(dataThisYear[4], 10));
-  }
-  else if (dataOtherYear != null) {
-    date = new Date(parseInt(dataOtherYear[3], 10), parseInt(dataOtherYear[1], 10) - 1, parseInt(dataOtherYear[2], 10), 0, 0);
-  }
-  else if (dataToday != null) {
+  if (dataThisYear !== null) {
+    date = new Date(
+      new Date().getFullYear(),
+      parseInt(dataThisYear[1], 10) - 1,
+      parseInt(dataThisYear[2], 10),
+      parseInt(dataThisYear[3], 10),
+      parseInt(dataThisYear[4], 10)
+    );
+  } else if (dataOtherYear !== null) {
+    date = new Date(
+      parseInt(dataOtherYear[3], 10),
+      parseInt(dataOtherYear[1], 10) - 1,
+      parseInt(dataOtherYear[2], 10),
+      0,
+      0
+    );
+  } else if (dataToday !== null) {
     date = new Date();
     date.setHours(parseInt(dataToday[1], 10));
     date.setMinutes(parseInt(dataToday[2], 10));
@@ -35,7 +44,7 @@ function parseDate(str) {
   }
 
   return date;
-};
+}
 
 function parseTorrentData(html, season, episode) {
   try {
@@ -52,12 +61,16 @@ function parseTorrentData(html, season, episode) {
           infoLine = lines[index + 1],
           infos = infoLine.match(torrentInfoRegexp),
           uploadDate = parseDate(infos[1]),
-          size = parseSize(infos[2]);
+          size = parseSize(infos[2]),
+          seeds = -1,
+          leechers = -1;
 
         torrents.push({
           name: torrentName,
           season: season,
           episode: episode,
+          seeds: seeds,
+          leechers: leechers,
           size: size,
           uploadDate: uploadDate,
           link: link
