@@ -1,5 +1,7 @@
 'use strict';
 
+// TODO: Remove/implement
+
 var subscriptions = require('./../test-subscriptions'),
   frisby = require('frisby');
   //subscription = require('./../../src/endpoints/subscription');

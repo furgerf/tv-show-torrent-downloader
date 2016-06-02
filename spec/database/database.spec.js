@@ -1,8 +1,8 @@
 'use strict';
 
-var subscriptions = require('./test-subscriptions');
+var subscriptions = require('./../test-subscriptions');
 
-describe('database', function () {
+describe('database/database', function () {
   var minimalSubscription,
     extendedSubscription,
     allSubscriptions;
@@ -15,7 +15,7 @@ describe('database', function () {
 
   it('should assign the expected default values', function () {
     expect(minimalSubscription.name).toBe('test minimal');
-    expect(minimalSubscription.searchParameters).toBeUndefined();
+    expect(minimalSubscription.searchParameters).toBe('');
     expect(minimalSubscription.lastSeason).toBe(1);
     expect(minimalSubscription.lastEpisode).toBe(0);
     expect(typeof minimalSubscription.creationTime).toBe('object');

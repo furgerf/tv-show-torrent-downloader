@@ -1,5 +1,10 @@
 'use strict';
 
+/**
+ * This file contains helper constructs for the unit tests,
+ * e.g. test data.
+ */
+
 var rewire = require('rewire'),
   database = rewire('./../src/database/subscription'),
   Subscription = database.Subscription,
