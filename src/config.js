@@ -21,9 +21,9 @@ exports.torrentCommand = exports.productionEnvironment ? 'qbittorrent' : 'echo';
 
 
 // stdout loglevel needn't be verbose in production (because we also write to logfile)
-exports.stdoutLoglevel = exports.productionEnvironemtn ? 'warn' : 'debug';
+exports.stdoutLoglevel = exports.productionEnvironment ? 'warn' : 'debug';
 
-exports.logDirectory = '/var/log/tv-show-downloader';
+exports.logDirectory = '/var/log/tv-show-torrent-downloader';
 
 // write normal/error lot to file in production
 exports.writeLogfile = exports.productionEnvironment;
