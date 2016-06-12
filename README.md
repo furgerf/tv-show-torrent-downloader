@@ -31,7 +31,7 @@ Notable configuration items are:
 
 # Running
 
-Start the server by issuing
+Make sure that MongoDB is running, then start the server by issuing:
 
     npm start
 
