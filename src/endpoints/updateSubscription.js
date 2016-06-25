@@ -49,12 +49,12 @@ function startTorrent(torrentLink, log) {
   });
 }
 
-function isNextEpisode(sub, season, episode) {
+function isNextOrSameEpisode(sub, season, episode) {
   if (episode === 0 || episode === 1) {
     return true;
   }
 
-  if (season === sub.lastSeason && episode === sub.lastEpisode + 1) {
+  if (season === sub.lastSeason && (episode === sub.lastEpisode || episode === sub.lastEpisode + 1)) {
     return true;
   }
 
@@ -85,7 +85,7 @@ exports.updateSubscriptionWithTorrent = function (req, res, next) {
     req.log.info('Requesting to download %s, %s',
       subscriptionName, utils.formatEpisodeNumber(season, episode));
 
-    if (!isNextEpisode(sub, season, episode)) {
+    if (!isNextOrSameEpisode(sub, season, episode)) {
       return next(new restify.BadRequestError(
         'Episode %s of show %s cannot be downloaded when the current episode is %s',
         utils.formatEpisodeNumber(season, episode),

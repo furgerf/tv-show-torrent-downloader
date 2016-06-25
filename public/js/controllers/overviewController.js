@@ -83,9 +83,10 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', '$filter'
             logger.logConsole('Successfully started torrent download with message: ' + response.data.message);
 
             // when we get a successful response, we assume the download was started, so we update the properties
-            // of all episodes that represent the same season/episode
+            // so we update the properties of the episode that was downloaded
+            // this leaves other links to the same torrent still downloadable
             that.newEpisodes[subscriptionName].forEach(function (sub) {
-              if (sub.episode == episodeInfo.episode && sub.season == episodeInfo.season) {
+              if (sub.link == episodeInfo.link) {
                 sub.isDownloaded = true;
               }
             });
