@@ -1,8 +1,8 @@
 
 /*global app, confirm, mod*/
 
-mod.controller('overviewController', ['logger', 'subscriptionHandler',
-    function (logger, subscriptionHandler) {
+mod.controller('overviewController', ['logger', 'subscriptionHandler', '$filter',
+    function (logger, subscriptionHandler, $filter) {
       'use strict';
 
       // continuous access to caller and some important objects
@@ -91,7 +91,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler',
             });
           })
         .catch(function (err) {
-          logger.logAlert('Error ' + err.status + ' while requesting download of ' + subscriptionName + ', S' + $filter('filter')(episodeInfo.season, twoDigits) + 'E' + $filter('filter')(episodeInfo.episode, twoDigits) + ':\n' + err.data.message);
+          logger.logAlert('Error ' + err.status + ' while requesting download of ' + subscriptionName + ', S' + $filter('twoDigits')(episodeInfo.season) + 'E' + $filter('twoDigits')(episodeInfo.episode) + ':\n' + err.data.message);
         });
       };
 
