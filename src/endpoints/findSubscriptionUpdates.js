@@ -8,6 +8,8 @@ var restify = require('restify'),
 
   torrentSites = require('../torrent-sites/'),
 
+  updateSubscription = require('../endpoints/updateSubscription'),
+
   Subscription = require('../database/subscription').Subscription;
 
 function getTorrentSort(torrentSort) {
@@ -98,7 +100,8 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
 exports.checkSubscriptionForUpdates = function (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]),
     torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
-    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1;
+    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
+    startDownload = req.params.startDownload == 'true';
 
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {
     if (err) {
@@ -113,8 +116,17 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
 
     checkSubscriptionForUpdate(subscriptions[0], torrentSort, maxTorrentsPerEpisode, req.log)
       .then(function (data) {
-        utils.sendOkResponse(res, 'Found ' + data.length +
-            ' new torrents', data, 'http://' + req.headers.host + req.url);
+        if (startDownload) {
+          data.forEach(function (entry) {
+            entry.forEach(function (torrent) {
+              updateSubscription.downloadTorrent(torrent.link, req.log);
+            });
+          });
+        }
+
+        utils.sendOkResponse(res, 'Found ' +
+            (startDownload && data.length > 0 ? 'and started download of ' : '') +
+            data.length + ' new torrents', data, 'http://' + req.headers.host + req.url);
         res.end();
         return next();
       });
@@ -125,7 +137,8 @@ exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
   var result,
     updateCount = 0,
     torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
-    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1;
+    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
+    startDownload = req.params.startDownload == 'true';
 
   Subscription.find({}, function (err, subscriptions) {
     if (err) {
@@ -139,18 +152,27 @@ exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
           return data;
         });
     }))
-      .then(function (data) {
-        // TODO: double-check this...
-        result = data.filter(function (entry) { return entry.length > 0; });
-        result.forEach(function (torrents) {
-          updateCount += torrents.length;
-        });
-        utils.sendOkResponse(res, 'Checked ' + subscriptions.length +
-            ' subscriptions for updates and found ' + updateCount +
-            ' new torrents', result, 'http://' + req.headers.host + req.url);
-        res.end();
-        return next();
+    .then(function (data) {
+      result = data.filter(function (entry) { return entry.length > 0; });
+      result.forEach(function (torrents) {
+        updateCount += torrents.length;
       });
+
+      if (startDownload) {
+        data.forEach(function (entry) {
+          entry.forEach(function (torrent) {
+            updateSubscription.downloadTorrent(torrent.link, req.log);
+          });
+        });
+      }
+
+      utils.sendOkResponse(res, 'Checked ' + subscriptions.length +
+          ' subscriptions for updates and found ' +
+          (startDownload && updateCount > 0 ? 'and started download of ' : '' + updateCount) +
+          ' new torrents', result, 'http://' + req.headers.host + req.url);
+      res.end();
+      return next();
+    });
   });
 };
 
