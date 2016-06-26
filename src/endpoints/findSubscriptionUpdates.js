@@ -108,9 +108,7 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
 
     if (subscriptions.length === 0) {
       req.log.warn('No subscription with name "%s" found', subscriptionName);
-      utils.sendOkResponse(res, 'No subscription with name "%s" found', subscriptionName,
-          {}, 'http://' + req.headers.host + req.url);
-      return next();
+      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
     }
 
     checkSubscriptionForUpdate(subscriptions[0], torrentSort, maxTorrentsPerEpisode, req.log)

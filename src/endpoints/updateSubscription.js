@@ -74,10 +74,8 @@ exports.updateSubscriptionWithTorrent = function (req, res, next) {
     }
 
     if (subscriptions.length === 0) {
-      req.log.warn('No subscription with name "' + subscriptionName + '" found');
-      utils.sendOkResponse(res, 'No subscription with name "%s" found', subscriptionName,
-        {}, 'http://' + req.headers.host + req.url);
-      return next();
+      req.log.warn('No subscription with name "%s" found', subscriptionName);
+      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
     }
 
     var sub = subscriptions[0];

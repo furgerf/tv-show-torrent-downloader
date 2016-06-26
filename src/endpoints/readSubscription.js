@@ -21,10 +21,8 @@ exports.getSubscription = function (req, res, next) {
 
     // no sub with the requested name found
     if (subscriptions.length === 0) {
-      utils.sendOkResponse(res, 'No subscription with name "' + subscriptionName + '" found',
-          {}, 'http://' + req.headers.host + req.url);
-      res.end();
-      return next();
+      req.log.warn('No subscription with name "%s" found', subscriptionName);
+      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
     }
 
     // sub with requested name found, return returnable

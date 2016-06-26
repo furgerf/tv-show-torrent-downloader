@@ -73,10 +73,8 @@ exports.updateSubscription = function (req, res, next) {
 
     // no sub with the requested name found
     if (subscriptions.length === 0) {
-      utils.sendOkResponse(res, 'No subscription with name "' + subscriptionName
-          + '" found to update', {}, 'http://' + req.headers.host + req.url);
-      res.end();
-      return next();
+      req.log.warn('No subscription with name "%s" found', subscriptionName);
+      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
     }
 
     subscription = subscriptions[0];
@@ -96,10 +94,8 @@ exports.updateSubscription = function (req, res, next) {
 
           // there already exists a subscription with the name, abort
           if (subs.length > 0) {
-            utils.sendOkResponse(res, 'There already exists a subscription with the new name"' +
-                data.name + '", aborting update.', {}, 'http://' + req.headers.host + req.url);
-            res.end();
-            return next();
+            return next(new restify.BadRequestError('There already exists a subscription with the new name"'
+                  + data.name + '", aborting update.'));
           }
 
           updateFields(subscription, data, req.log)
@@ -133,10 +129,8 @@ exports.deleteSubscription = function (req, res, next) {
 
     // no sub with the requested name found
     if (subscriptions.length === 0) {
-      utils.sendOkResponse(res, 'No subscription with name "' + subscriptionName
-          + '" found to delete', {}, 'http://' + req.headers.host + req.url);
-      res.end();
-      return next();
+      req.log.warn('No subscription with name "%s" found', subscriptionName);
+      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
     }
 
     // delete all subs that were found (should always be 1)
