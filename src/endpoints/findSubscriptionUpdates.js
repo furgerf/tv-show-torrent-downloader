@@ -97,8 +97,8 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
 
 exports.checkSubscriptionForUpdates = function (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]),
-    torrentSort = getTorrentSort(req.body.torrentSort),
-    maxTorrentsPerEpisode = parseInt(req.body.maxTorrentsPerEpisode, 10) || 1;
+    torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
+    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1;
 
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {
     if (err) {
@@ -126,8 +126,8 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
 exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
   var result,
     updateCount = 0,
-    torrentSort = getTorrentSort(req.body.torrentSort),
-    maxTorrentsPerEpisode = parseInt(req.body.maxTorrentsPerEpisode, 10) || 1;
+    torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
+    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1;
 
   Subscription.find({}, function (err, subscriptions) {
     if (err) {
