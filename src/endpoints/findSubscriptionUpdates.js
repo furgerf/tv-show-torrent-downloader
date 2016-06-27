@@ -119,7 +119,9 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
         if (startDownload) {
           data.forEach(function (entry) {
             entry.forEach(function (torrent) {
-              updateSubscription.downloadTorrent(torrent.link, req.log);
+              // TODO: get matching subscription, season, episode to pass as first parameters
+              //updateSubscription.downloadTorrent(subscriptions[0], torrent.link, req.log);
+              return next(new restify.InternalServerError('Not implemented'));
             });
           });
         }
@@ -161,7 +163,9 @@ exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
       if (startDownload) {
         data.forEach(function (entry) {
           entry.forEach(function (torrent) {
-            updateSubscription.downloadTorrent(torrent.link, req.log);
+            // TODO: get matching subscription, season, episode to pass as first parameters
+            //updateSubscription.downloadTorrent(torrent.link, req.log);
+            return next(new restify.InternalServerError('Not implemented'));
           });
         });
       }
