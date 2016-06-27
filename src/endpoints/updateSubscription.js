@@ -61,31 +61,25 @@ function isNextOrSameEpisode(sub, season, episode) {
   return false;
 }
 
-exports.downloadTorrent = function (link, log) {
-  return new Promise(function (resolve, reject) {
-    // actually request torrent download
-    startTorrent(link, log)
-      .then(function () {
-        // update subscription if necessary
-        if (config.productionEnvironment) {
-          if (sub.updateLastEpisode(season, episode)) {
-            sub.save();
-            log && log.info('Successfully updated subscription %s to %s...',
-                sub.name, utils.formatEpisodeNumber(sub.lastSeason,
-                  sub.lastEpisode));
-          } else {
-            log && log.error('Failed to update subscription %s to %s!', sub.name,
-                utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
-            return next(new restify.InternalServerError(
-              'Error while updating subscription: Could not update database.'
-            ));
-          }
+exports.downloadTorrent = function (sub, season, episode, link, log) {
+  return startTorrent(link, log)
+    .then(function () {
+      // update subscription if necessary
+      if (config.productionEnvironment) {
+        if (sub.updateLastEpisode(season, episode)) {
+          sub.save();
+          log && log.info('Successfully updated subscription %s to %s...',
+              sub.name, utils.formatEpisodeNumber(sub.lastSeason,
+                sub.lastEpisode));
+        } else {
+          log && log.error('Failed to update subscription %s to %s!', sub.name,
+              utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
+          return next(new restify.InternalServerError(
+                'Error while updating subscription: Could not update database.'
+                ));
         }
-
-        // done
-        resolve();
-      });
-  });
+      }
+    });
 }
 
 exports.updateSubscriptionWithTorrent = function (req, res, next) {
@@ -119,7 +113,7 @@ exports.updateSubscriptionWithTorrent = function (req, res, next) {
       ));
     }
 
-    exports.downloadTorrent(link, req.log)
+    exports.downloadTorrent(sub, season, episode, link, req.log)
       .then (function () {
         utils.sendOkResponse(res, 'Started torrent for new episode '
             + utils.formatEpisodeNumber(season, episode) + ' of ' + sub.name,
