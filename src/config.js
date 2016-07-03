@@ -12,7 +12,7 @@ exports.api = {
 // use the raspi database if we actually want to do something
 // NOTE that the torrents are still started locally though
 exports.database = {
-  host : exports.productionEnvironment ? '192.168.1.31' : 'localhost',
+  host : exports.productionEnvironment ? '192.168.1.31' : '192.168.1.31',
   port: 27017
 };
 

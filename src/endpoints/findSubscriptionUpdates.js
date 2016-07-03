@@ -117,12 +117,8 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
     checkSubscriptionForUpdate(subscriptions[0], torrentSort, maxTorrentsPerEpisode, req.log)
       .then(function (data) {
         if (startDownload) {
-          data.forEach(function (entry) {
-            entry.forEach(function (torrent) {
-              // TODO: get matching subscription, season, episode to pass as first parameters
-              //updateSubscription.downloadTorrent(subscriptions[0], torrent.link, req.log);
-              return next(new restify.InternalServerError('Not implemented'));
-            });
+          data.forEach(function (torrent) {
+            updateSubscription.downloadTorrent(subscriptions[0], torrent.season, torrent.episode, torrent.link, req.log);
           });
         }
 
@@ -151,6 +147,8 @@ exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
     Promise.all(subscriptions.map(function (subscription) {
       return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
         .then(function (data) {
+          // adding a reference to the subscription for starting the torrent a bit futher down...
+          data.subscription = subscription;
           return data;
         });
     }))
@@ -160,15 +158,17 @@ exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
         updateCount += torrents.length;
       });
 
-      if (startDownload) {
-        data.forEach(function (entry) {
+      // remove the subscription property from each result entry
+      // but only after starting the download - if requested
+      result.forEach(function (entry) {
+        if (startDownload) {
           entry.forEach(function (torrent) {
-            // TODO: get matching subscription, season, episode to pass as first parameters
-            //updateSubscription.downloadTorrent(torrent.link, req.log);
-            return next(new restify.InternalServerError('Not implemented'));
+            updateSubscription.downloadTorrent(entry.subscription, torrent.season, torrent.episode, torrent.link, req.log);
           });
-        });
-      }
+        }
+        // we don't need the subscription reference anymore
+        delete entry.subscription
+      });
 
       utils.sendOkResponse(res, 'Checked ' + subscriptions.length +
           ' subscriptions for updates and found ' +

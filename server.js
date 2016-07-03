@@ -42,6 +42,7 @@ server.pre(function (req, res, next) {
 
   requestStarts[req.id()] = new Date();
 
+  // TODO: don't allow CORS in production
   res.header("Access-Control-Allow-Origin", "*");
 
   next();
@@ -93,6 +94,7 @@ server.listen(config.api.port, config.api.host, function () {
     res.redirect('/index.html', next);
   });
 
+  // TODO: don't serve static files in production
   // evertything else... try public FS
   server.get(/^\/([a-zA-Z0-9_\/\.~-]*)/, function (req, res, next) {
     var path = join(root, req.params[0]),
