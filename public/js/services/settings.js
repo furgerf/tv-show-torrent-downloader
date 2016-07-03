@@ -7,17 +7,22 @@
     const ServerHostCookieKey = 'serverHost',
           ServerPortCookieKey = 'serverPort',
           TorrentSortKey = 'torrentSort',
-          MaxTorrentsPerEpisodeKey = 'maxTorrentsPerEpisode';
+          MaxTorrentsPerEpisodeKey = 'maxTorrentsPerEpisode',
+
+          defaultServerHost = 'localhost',
+          defaultServerPort = 8000,
+          defaultTorrentSort = 'largest',
+          defaultMaxTorrentsPerEpisode = 2;
 
     this.getServerHost = function () {
-      return utils.getCookie(ServerHostCookieKey);
+      return utils.getCookie(ServerHostCookieKey) || defaultServerHost;
     };
     this.setServerHost = function (newHost) {
       return utils.setCookie(ServerHostCookieKey, newHost);
     };
 
     this.getServerPort = function () {
-      return utils.getCookie(ServerPortCookieKey);
+      return utils.getCookie(ServerPortCookieKey) || defaultServerPort;
     };
     this.setServerPort = function (newPort) {
       return utils.setCookie(ServerPortCookieKey, newPort);
@@ -28,14 +33,14 @@
     };
 
     this.getTorrentSort = function () {
-      return utils.getCookie(TorrentSortKey);
+      return utils.getCookie(TorrentSortKey) || defaultTorrentSort;
     };
     this.setTorrentSort = function (torrentSort) {
       return utils.setCookie(TorrentSortKey, torrentSort);
     };
 
     this.getMaxTorrentsPerEpisode = function () {
-      return utils.getCookie(MaxTorrentsPerEpisodeKey);
+      return utils.getCookie(MaxTorrentsPerEpisodeKey) || defaultMaxTorrentsPerEpisode;
     };
     this.setMaxTorrentsPerEpisode = function (maxTorrents) {
       return utils.setCookie(MaxTorrentsPerEpisodeKey, maxTorrents);
