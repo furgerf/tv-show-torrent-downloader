@@ -4,7 +4,7 @@
 
 var frisby = require('frisby'),
 
-  config = require('../src/config'),
+  config = require('../src/common/config'),
 
   apiUrl = 'http://' + config.api.host + ':' + config.api.port + '/';
 

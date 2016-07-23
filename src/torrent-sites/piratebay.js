@@ -1,7 +1,7 @@
 'use strict';
 
 var url = require('url'),
-  utils = require('./../utils');
+  utils = require('./../common/utils');
 
 function parseSize(str) {
   var data = str.match(/(\d+(?:\.\d+)?).*\b(.{2}B).*/);

@@ -8,8 +8,8 @@ var restify = require('restify'),
 
 
     // common files
-    config = require('./src/config'),
-    logger = require('./src/logger'),
+    config = require('./src/common/config'),
+    logger = require('./src/common/logger'),
     database = require('./src/database/database'),
 
     // endpoint handlers

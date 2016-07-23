@@ -1,7 +1,7 @@
 'use strict';
 
 var rewire = require('rewire'),
-  utils = rewire('../src/utils');
+  utils = rewire('../src/common/utils');
 
 describe('utils - twoDigitNumber', function () {
   var twoDigitNumber = utils.__get__('twoDigitNumber');

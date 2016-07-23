@@ -1,9 +1,9 @@
 'use strict';
 
-var log = require('./../logger').log.child({component: 'subscription'}),
+var log = require('./../common/logger').log.child({component: 'subscription'}),
   mongoose = require('mongoose'),
 
-  utils = require('./../utils');
+  utils = require('./../common/utils');
 
 /**
  * Mongoose schema definition for the subscription of a tv show.
@@ -105,7 +105,7 @@ subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
  * and, if necessary, creation date.
  */
 function preSaveAction(next) {
-  log.debug('Running pre-save action for subsciption "%s"', this.name);
+  log.debug('Running pre-save action for subscription "%s"', this.name);
 
   var currentDate = new Date();
   this.lastModified = currentDate;
@@ -120,7 +120,9 @@ function preSaveAction(next) {
   this.lastSeason = this.lastSeason || 1;
   this.lastEpisode = this.lastEpisode || 0;
 
+  log.info('about to be done with pre-save');
   next();
+  log.info('done with pre-save');
 }
 subscriptionSchema.pre('save', preSaveAction);
 

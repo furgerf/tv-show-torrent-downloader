@@ -3,8 +3,8 @@
 var restify = require('restify'),
   url = require('url'),
 
-  config = require('../config'),
-  utils = require('../utils'),
+  config = require('../common/config'),
+  utils = require('../common/utils'),
 
   torrentSites = require('../torrent-sites/'),
 

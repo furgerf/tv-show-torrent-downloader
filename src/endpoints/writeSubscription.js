@@ -2,7 +2,7 @@
 
 var restify = require('restify'),
 
-  utils = require('./../utils'),
+  utils = require('./../common/utils'),
 
   Subscription = require('./../database/subscription').Subscription;
 
@@ -60,7 +60,7 @@ function updateFields(subscription, data, log) {
 }
 
 exports.updateSubscription = function (req, res, next) {
-  var data = JSON.parse(req.body),  //req.body, //
+  var data = JSON.parse(req.body),  //req.body,
     subscriptionName = decodeURIComponent(req.params[0]),
     subscription;
 

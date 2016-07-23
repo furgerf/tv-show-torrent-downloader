@@ -4,8 +4,8 @@ var restify = require('restify'),
   exec = require('child_process').exec,
   url = require('url'),
 
-  config = require('./../config'),
-  utils = require('./../utils'),
+  config = require('./../common/config'),
+  utils = require('./../common/utils'),
 
   torrentSites = require('./../torrent-sites/'),
 

@@ -8,7 +8,7 @@
 var pirateBay = require('./piratebay'),
 
   exec = require('child_process').exec,
-  log = require('./../logger').log.child({component: 'torrent-sites'}),
+  log = require('./../common/logger').log.child({component: 'torrent-sites'}),
 
   pirateBayMn = new pirateBay.Parser('thepiratebay.mn'),
   pirateBaySe = new pirateBay.Parser('thepiratebay.se'),

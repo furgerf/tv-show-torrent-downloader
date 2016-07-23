@@ -1,9 +1,9 @@
 'use strict';
 
-var log = require('./../logger').log.child({component: 'database'}),
+var log = require('./../common/logger').log.child({component: 'database'}),
   mongoose = require('mongoose'),
 
-  config = require('./../config'),
+  config = require('./../common/config'),
 
   databaseUrl = config.database.host + ':' + config.database.port + '/',
   databaseName = 'tv-shows',

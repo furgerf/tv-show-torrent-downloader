@@ -4,7 +4,7 @@ var restify = require('restify'),
 
   exec = require('child_process').exec,
 
-  utils = require('./../utils');
+  utils = require('./../common/utils');
 
 
 function parseDiskInformation(data) {

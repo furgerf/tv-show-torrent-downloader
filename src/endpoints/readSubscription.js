@@ -2,7 +2,7 @@
 
 var restify = require('restify'),
 
-  utils = require('./../utils'),
+  utils = require('./../common/utils'),
 
   Subscription = require('./../database/subscription').Subscription;
 
