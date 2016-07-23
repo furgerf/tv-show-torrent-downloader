@@ -1,59 +1,40 @@
-'use strict';
+"use strict";
 
-var restify = require('restify'),
+var restify = require("restify"),
 
-  utils = require('./../common/utils'),
+  utils = require("./../common/utils"),
 
-  Subscription = require('./../database/subscription').Subscription;
+  database = require("./../database/subscription");
 
-
-exports.getSubscription = function (req, res, next) {
+function getSubscriptionByName (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]);
 
   // retrieve subscriptions
-  Subscription.find({name: subscriptionName}, function (err, subscriptions) {
-    var result;
+  database.findSubscriptionByName(subscriptionName)
+    .then(function (subscription) {
+      if (!subscription) {
+        return next(new restify.BadRequestError("No subscription with name '" + subscriptionName + "'."));
+      }
 
-    if (err) {
-      req.log.error(err);
-      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-    }
+      // sub with requested name found, return returnable
+      utils.sendOkResponse(res, "Subscription with name '" + subscriptionName + "' retrieved.",
+          subscription.getReturnable(), "http://" + req.headers.host + req.url);
+    });
+}
 
-    // no sub with the requested name found
-    if (subscriptions.length === 0) {
-      req.log.warn('No subscription with name "%s" found', subscriptionName);
-      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
-    }
-
-    // sub with requested name found, return returnable
-    result = subscriptions[0].getReturnable();
-    utils.sendOkResponse(res, 'Subscription with name "' + subscriptionName + '" retrieved',
-        result, 'http://' + req.headers.host + req.url);
-    res.end();
-    return next();
-  });
-};
-
-
-exports.getAllSubscriptions = function (req, res, next) {
+function getAllSubscriptions (req, res, next) {
   var offset = parseInt(req.params.offset, 10) || 0,
     limit = parseInt(req.params.limit, 10) || 20;
 
   // retrieve subs
-  Subscription.find().skip(offset).limit(limit).exec(function (err, subscriptions) {
-    var result;
-    if (err) {
-      req.log.error(err);
-      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-    }
+  database.findAllSubscriptions()
+    .then(function (subscriptions) {
+      // return returnable of all retrieved subscriptions
+      utils.sendOkResponse(res, subscriptions.length + " subscription(s) retrieved",
+          subscriptions.map(sub => sub.getReturnable()), "http://" + req.headers.host + req.url);
+    });
+}
 
-    // extract returnables from database results
-    result = subscriptions.map(function (sub) { return sub.getReturnable(); });
-
-    utils.sendOkResponse(res, result.length + ' subscription(s) retrieved', result,
-        'http://' + req.headers.host + req.url);
-    res.end();
-    return next();
-  });
-};
+exports.getSubscriptionByName = getSubscriptionByName;
+exports.getAllSubscriptions = getAllSubscriptions;
 

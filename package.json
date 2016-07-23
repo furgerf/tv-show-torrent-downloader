@@ -14,16 +14,16 @@
   },
   "author": "Fabian Furger",
   "license": "ISC",
-  "dependencies": {
+  "dpendencies": {
+    "bunyan": "*",
     "csprng": "*",
-    "promise": "*",
-    "request": "*",
-    "restify": "*",
-    "sha1": "*",
     "jszip": "*",
     "mongodb": "*",
     "mongoose": "*",
-    "bunyan": "*"
+    "promise": "*",
+    "request": "*",
+    "restify": "*",
+    "sha1": "*"
   },
   "devDependencies": {
     "apidoc": "*",
@@ -31,5 +31,8 @@
     "istanbul": "*",
     "jasmine-node": "*",
     "rewire": "*"
+  },
+  "dependencies": {
+    "q": "^1.4.1"
   }
 }

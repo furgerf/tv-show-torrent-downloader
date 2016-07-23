@@ -2,6 +2,7 @@
 
 var log = require('./../common/logger').log.child({component: 'subscription'}),
   mongoose = require('mongoose'),
+  Q = require('q'),
 
   utils = require('./../common/utils');
 
@@ -126,6 +127,30 @@ function preSaveAction(next) {
 }
 subscriptionSchema.pre('save', preSaveAction);
 
-// create and export model - TODO: avoid recompiling (else unit tests can't work)
-exports.Subscription = mongoose.model('Subscription', subscriptionSchema);
+// create and export model
+// TODO: avoid recompiling (else unit tests can't work)
+// TODO: find out whether it is really necessary to export it
+var Subscription = mongoose.model('Subscription', subscriptionSchema);
+
+/////////////////////////////
+// database access methods //
+/////////////////////////////
+function findSubscriptionByName (subscriptionName) {
+  return Q.fcall(function () {
+    return Subscription.find({name: subscriptionName}).limit(1);
+  })
+  .then(docs => docs.length > 0 ? docs[0] : null);
+};
+
+function findAllSubscriptions (limit, offset) {
+  return Q.fcall(function () {
+    return Subscription.find().skip(offset).limit(limit);
+  });
+};
+
+
+exports.Subscription = Subscription;
+
+exports.findSubscriptionByName = findSubscriptionByName;
+exports.findAllSubscriptions = findAllSubscriptions;
 
