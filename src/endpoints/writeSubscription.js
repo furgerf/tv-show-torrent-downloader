@@ -4,43 +4,12 @@ var restify = require('restify'),
 
   utils = require('./../common/utils'),
 
-  Subscription = require('./../database/subscription').Subscription;
+  Q = require('q'),
+  database = require('./../database/subscription'),
+  Subscription = database.Subscription;
 
 
-exports.addSubscription = function (req, res, next) {
-  var data = req.body, //JSON.parse(req.body),
-    newSubscriptionData,
-    newSubscription;
-
-  if (!data.name) {
-    return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
-  }
-
-  // we only let the user assign some fields...
-  newSubscriptionData = {
-    name: data.name,
-    searchParameters: data.searchParameters,
-    lastSeason: data.lastSeason || 1,
-    lastEpisode: data.lastEpisode || 0
-  };
-  newSubscription = new Subscription(newSubscriptionData);
-
-  req.log.debug('Saving new subscription:', newSubscription);
-  newSubscription.save(function (err) {
-    if (err) {
-      throw err;
-    }
-
-    req.log.info('New subscription created');
-
-    utils.sendOkResponse(res, 'New subscription created', newSubscription.getReturnable(),
-        'http://' + req.headers.host + req.url);
-    res.end();
-    return next();
-  });
-};
-
-function updateFields(subscription, data, log) {
+function updateFields (subscription, data, log) {
   log && log.info('Updating subscription %s with:', subscription, data);
 
   if (data.name !== undefined) {
@@ -56,101 +25,66 @@ function updateFields(subscription, data, log) {
     subscription.lastEpisode = data.lastEpisode;
   }
 
-  return subscription.save();
+  return subscription;
 }
 
-exports.updateSubscription = function (req, res, next) {
+function createNewSubscriptionFromData (data) {
+  // we only let the user assign some fields...
+  var newSubscriptionData = {
+    name: data.name,
+    searchParameters: data.searchParameters,
+    lastSeason: data.lastSeason || 1,
+    lastEpisode: data.lastEpisode || 0
+  };
+  return new Subscription(newSubscriptionData);
+}
+
+
+function addSubscription (req, res, next) {
+  var data = JSON.parse(req.body);
+
+  if (!data.name) {
+    return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
+  }
+
+  Q.fcall(createNewSubscriptionFromData(data).save)
+    .then(doc => utils.sendOkResponse(res, 'New subscription created', doc.getReturnable(),
+          'http://' + req.headers.host + req.url))
+    .fail(error => next(new restify.InternalServerError('Error while saving new subscription: ' + error)));
+}
+
+function updateSubscription (req, res, next) {
   var data = JSON.parse(req.body),  //req.body,
-    subscriptionName = decodeURIComponent(req.params[0]),
-    subscription;
+    subscriptionName = decodeURIComponent(req.params[0]);
 
-  // retrieve subscription
-  Subscription.find({name: subscriptionName}, function (err, subscriptions) {
-    if (err) {
-      req.log.error(err);
-      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-    }
+  data.name = data.name || subscriptionName;
 
-    // no sub with the requested name found
-    if (subscriptions.length === 0) {
-      req.log.warn('No subscription with name "%s" found', subscriptionName);
-      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
-    }
+  // retrieve existing subscription that would be updated
+  database.findSubscriptionByName(subscriptionName)
+    // if the subscription doesn't exist yet, create a new one
+    .then(subscription => subscription ? subscription : createNewSubscriptionFromData(data))
+      // update the fields and save
+    .then(subscription => updateFields(subscription, data, req.log).save())
+    .then(subscription => utils.sendOkResponse(res, 'Subscription updated',
+          subscription.getReturnable(), 'http://' + req.headers.host + req.url))
+    .fail(error => next(new restify.InternalServerError('Error while updating subscription: ' + error)));
+}
 
-    subscription = subscriptions[0];
-
-    new Promise(function (resolve) {
-      if (data.name === undefined) {
-        updateFields(subscription, data, req.log)
-          .then(function () {
-            resolve();
-          });
-      } else {
-        Subscription.find({name: data.name}, function (err, subs) {
-          if (err) {
-            req.log.error(err);
-            return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-          }
-
-          // there already exists a subscription with the name, abort
-          if (subs.length > 0) {
-            return next(new restify.BadRequestError('There already exists a subscription with the new name"'
-                  + data.name + '", aborting update.'));
-          }
-
-          updateFields(subscription, data, req.log)
-            .then(function () {
-              resolve();
-            });
-        });
-      }
-    })
-      .then(function () {
-        utils.sendOkResponse(res, 'Subscription updated', subscription.getReturnable(),
-            'http://' + req.headers.host + req.url);
-        res.end();
-        return next();
-      });
-  });
-};
-
-
-exports.deleteSubscription = function (req, res, next) {
+function deleteSubscription (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]);
 
-  // retrieve subscriptions
-  Subscription.find({name: subscriptionName}, function (err, subscriptions) {
-    var deleteCount = 0;
+  database.findSubscriptionByName(subscriptionName)
+    .then(subscription => subscription
+        ? subscription
+        : next(new restify.BadRequestError("No subscription with name '" + subscriptionName + "'.")))
+    .then(subscription => subscription.remove())
+    .then(() => utils.sendOkResponse(res, 'Removed subscription with name "'
+          + subscriptionName + '".', {}, 'http://' + req.headers.host + req.url))
+    .fail(error => next(new restify.InternalServerError('Error while removing subscription: ' + error)));
+}
 
-    if (err) {
-      req.log.error(err);
-      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-    }
 
-    // no sub with the requested name found
-    if (subscriptions.length === 0) {
-      req.log.warn('No subscription with name "%s" found', subscriptionName);
-      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
-    }
-
-    // delete all subs that were found (should always be 1)
-    Promise.all(subscriptions.map(function (subscription) {
-      return subscription.remove(function (err) {
-        if (err) {
-          req.log.error(err);
-          return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-        }
-
-        req.log.warn('Removed subscription with name "%s"', subscription.name);
-        deleteCount++;
-      });
-    }))
-      .then(function () {
-        utils.sendOkResponse(res, 'Removed ' + deleteCount + ' subscription(s) with name "'
-            + subscriptionName + '".', {}, 'http://' + req.headers.host + req.url);
-        res.end();
-        return next();
-      });
-  });
-};
+exports.addSubscription = addSubscription;
+exports.updateSubscription = updateSubscription;
+exports.deleteSubscription = deleteSubscription;
 
