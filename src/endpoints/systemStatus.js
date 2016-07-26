@@ -10,7 +10,7 @@ var restify = require('restify'),
 function parseDiskInformation(data) {
   try {
     var split = data.replace(/\s+/g, ' ').split(' ');
-    return {
+    return split.length <= 5 ? null : {
       mountPoint: split[5],
       spaceUsed: split[2],
       spaceAvailable: split[3]
@@ -22,20 +22,19 @@ function parseDiskInformation(data) {
 }
 
 
-exports.getSystemDiskUsage = function (req, res, next) {
+function getSystemDiskUsage(req, res, next) {
   exec('df -x tmpfs -x devtmpfs | tail -n +2', function (err, stdout, stderr) {
     if (err || stderr) {
       req.log.error("Couldn't read disk usage (err: %s, stderr: %s)", err, stderr);
       return new restify.InternalServerError('Error while running native command.');
     }
 
-    var disks = stdout.trim().split('\n')
-      .map(parseDiskInformation).filter(function (disk) { return disk; });
+    var data = stdout.split('\n').map(parseDiskInformation).filter(disk => disk);
 
-    utils.sendOkResponse(res, 'Information about ' + disks.length + ' disks retrieved',
-        disks, 'http://' + req.headers.host + req.url);
-    res.end();
-    return next();
-  });
-};
+    utils.sendOkResponse(res, 'Information about ' + data.length + ' disks retrieved',
+        data, 'http://' + req.headers.host + req.url);
+  })
+}
+
+exports.getSystemDiskUsage = getSystemDiskUsage;
 
