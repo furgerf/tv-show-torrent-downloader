@@ -3,6 +3,7 @@
 var restify = require('restify'),
   exec = require('child_process').exec,
   url = require('url'),
+  Q = require('q'),
 
   config = require('./../common/config'),
   utils = require('./../common/utils'),
@@ -11,78 +12,61 @@ var restify = require('restify'),
 
   Subscription = require('./../database/subscription').Subscription;
 
+
+function isNextOrSameEpisode(sub, season, episode) {
+  return
+    // same season and same or next episode
+    (season === sub.lastSeason && (episode === sub.lastEpisode || episode === sub.lastEpisode + 1))
+    // *OR* first episode of next season
+    || (season === sub.lastSeason + 1 && (episode === 0 || episode === 1));
+}
+
 function startTorrent(torrentLink, log) {
-  var command = config.torrentCommand + ' \'' + torrentLink + '\'';
+  var command = config.torrentCommand + " '" + torrentLink + "'";
 
   log && log.warn('Starting torrent: %s (command: %s)', torrentLink, command);
 
-  return new Promise(function (resolve, reject) {
+  return Q.fcall(function () {
     exec(command, function (err, stdout, stderr) {
       if (err) {
-        if (log) {
-          log.error(err);
-        } else {
-          console.log(err);
-        }
-
-        reject(err);
+        log ? log.error(err) : console.log(err);
+        throw err;
       }
 
       if (stderr) {
-        if (log) {
-          log.warn('Torrent command stderr: %s', stderr);
-        } else {
-          console.log('Torrent command stderr: %s', stderr);
-        }
+        log
+          ? log.warn('Torrent command stderr: %s', stderr)
+          : console.log('Torrent command stderr: %s', stderr);
       }
-
       if (stdout) {
-        if (log) {
-          log.info('Torrent command stdout: %s', stdout);
-        } else {
-          console.log('Torrent command stdout: %s', stdout);
-        }
+        log
+          ? log.info('Torrent command stdout: %s', stdout)
+          : console.log('Torrent command stdout: %s', stdout);
       }
-
-      resolve();
     });
   });
 }
 
-function isNextOrSameEpisode(sub, season, episode) {
-  if (episode === 0 || episode === 1) {
-    return true;
-  }
-
-  if (season === sub.lastSeason && (episode === sub.lastEpisode || episode === sub.lastEpisode + 1)) {
-    return true;
-  }
-
-  return false;
-}
-
-exports.downloadTorrent = function (sub, season, episode, link, log) {
+function downloadTorrent (sub, season, episode, link, log) {
   return startTorrent(link, log)
     .then(function () {
-      // update subscription if necessary
-      if (config.productionEnvironment) {
-        if (sub.updateLastEpisode(season, episode)) {
-          sub.save();
-          log && log.info('Successfully updated subscription %s to %s...',
-              sub.name, utils.formatEpisodeNumber(sub.lastSeason,
-                sub.lastEpisode));
-        } else {
-          log && log.error('Failed to update subscription %s to %s!', sub.name,
-              utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
-          return next(new restify.InternalServerError(
-                'Error while updating subscription: Could not update database.'
-                ));
-        }
+      if (!config.productionEnvironment) {
+        return;
       }
+
+      if (!sub.updateLastEpisode(season, episode)) {
+        log && log.error('Failed to update subscription %s to %s!', sub.name,
+            utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
+        throw new Error('Error while updating subscription: Could not update database.');
+      }
+
+      return sub.save()
+        .then(() => log && log.info('Successfully updated subscription %s to %s...',
+          sub.name, utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode)));
     });
 }
 
-exports.updateSubscriptionWithTorrent = function (req, res, next) {
+function updateSubscriptionWithTorrent (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]),
     season = parseInt(req.body.season, 10),
     episode = parseInt(req.body.episode, 10),
@@ -127,5 +111,8 @@ exports.updateSubscriptionWithTorrent = function (req, res, next) {
           );
     });
   });
-};
+}
+
+exports.downloadTorrent = downloadTorrent;
+exports.updateSubscriptionWithTorrent = updateSubscriptionWithTorrent;
 
