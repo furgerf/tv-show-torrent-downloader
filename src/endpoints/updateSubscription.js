@@ -97,9 +97,9 @@ function updateSubscriptionWithTorrent (req, res, next) {
 
     exports.downloadTorrent(sub, season, episode, link, req.log)
       .then (function () {
-        utils.sendOkResponse(res, 'Started torrent for new episode '
+        utils.sendOkResponse('Started torrent for new episode '
             + utils.formatEpisodeNumber(season, episode) + ' of ' + sub.name,
-            null, 'http://' + req.headers.host + req.url);
+            null, res, next, 'http://' + req.headers.host + req.url);
         res.end();
         return next();
       })

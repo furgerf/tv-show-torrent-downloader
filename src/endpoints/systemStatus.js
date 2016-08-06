@@ -31,9 +31,8 @@ function getSystemDiskUsage(req, res, next) {
 
     var data = stdout.split('\n').map(parseDiskInformation).filter(disk => disk);
 
-    utils.sendOkResponse(res, 'Information about ' + data.length + ' disks retrieved',
-        data, 'http://' + req.headers.host + req.url);
-    next();
+    utils.sendOkResponse('Information about ' + data.length + ' disks retrieved',
+        data, res, next, 'http://' + req.headers.host + req.url);
   });
 }
 

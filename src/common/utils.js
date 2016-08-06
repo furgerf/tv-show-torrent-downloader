@@ -52,14 +52,15 @@ exports.fileSizeToBytes = function (num, unit) {
 
 /**
  * Sends a response to the request which was handled successfully.
- * @param res Response which should be sent
  * @param message Message that describes how the request was handled
  * @param data Response data
+ * @param res Response which should be sent
+ * @param next Function to pass request to next handler
  * @param url Optional. URL which was accessed in the request
  * @param etag Optional. ETAG header
  * @param lastModified Optional. Date of last modification
  */
-exports.sendOkResponse = function (res, message, data, url, etag, lastModified) {
+exports.sendOkResponse = function (message, data, res, next, url, etag, lastModified) {
   // assign always-same fields
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
@@ -77,6 +78,6 @@ exports.sendOkResponse = function (res, message, data, url, etag, lastModified) 
     data: data || {},
   });
   res.end();
-  // TODO: Pass and call next();
+  next();
 };
 

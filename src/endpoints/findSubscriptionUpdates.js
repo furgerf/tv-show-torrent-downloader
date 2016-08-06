@@ -96,11 +96,9 @@ function checkSubscriptionForUpdates(req, res, next) {
           });
         }
 
-        utils.sendOkResponse(res, 'Found ' +
+        utils.sendOkResponse('Found ' +
             (startDownload && data.length > 0 ? 'and started download of ' : '') +
-            data.length + ' new torrents', data, 'http://' + req.headers.host + req.url);
-        res.end();
-        return next();
+            data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
       })
       .fail(() => next(
             new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
@@ -143,10 +141,9 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
         delete entry.subscription;
       });
 
-      utils.sendOkResponse(res, 'Checked ' + data.length +
-          ' subscriptions for updates and found ' +
+      utils.sendOkResponse('Checked ' + data.length + ' subscriptions for updates and found ' +
           (startDownload && updateCount > 0 ? 'and started download of ' : '' + updateCount) +
-          ' new torrents', result, 'http://' + req.headers.host + req.url);
+          ' new torrents', result, res, next, 'http://' + req.headers.host + req.url);
       res.end();
       return next();
     })

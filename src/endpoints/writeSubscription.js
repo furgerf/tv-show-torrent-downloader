@@ -48,8 +48,8 @@ function addSubscription (req, res, next) {
   }
 
   Q.fcall(createNewSubscriptionFromData(data).save)
-    .then(doc => utils.sendOkResponse(res, 'New subscription created', doc.getReturnable(),
-          'http://' + req.headers.host + req.url))
+    .then(doc => utils.sendOkResponse('New subscription created', doc.getReturnable(),
+          res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>
         next(new restify.InternalServerError('Error while saving new subscription: ' + error)));
 }
@@ -66,8 +66,8 @@ function updateSubscription (req, res, next) {
     .then(subscription => subscription ? subscription : createNewSubscriptionFromData(data))
       // update the fields and save
     .then(subscription => updateFields(subscription, data, req.log).save())
-    .then(subscription => utils.sendOkResponse(res, 'Subscription updated',
-          subscription.getReturnable(), 'http://' + req.headers.host + req.url))
+    .then(subscription => utils.sendOkResponse('Subscription updated',
+          subscription.getReturnable(), res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>
         next(new restify.InternalServerError('Error while updating subscription: ' + error)));
 }
@@ -80,8 +80,8 @@ function deleteSubscription (req, res, next) {
         ? subscription
         : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
     .then(subscription => subscription.remove())
-    .then(() => utils.sendOkResponse(res, 'Removed subscription with name "' +
-          subscriptionName + '".', {}, 'http://' + req.headers.host + req.url))
+    .then(() => utils.sendOkResponse('Removed subscription with name "' +
+          subscriptionName + '".', {}, res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>
         next(new restify.InternalServerError('Error while removing subscription: ' + error)));
 }

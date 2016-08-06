@@ -18,8 +18,8 @@ function getSubscriptionByName (req, res, next) {
       }
 
       // sub with requested name found, return returnable
-      utils.sendOkResponse(res, "Subscription with name '" + subscriptionName + "' retrieved.",
-          subscription.getReturnable(), "http://" + req.headers.host + req.url);
+      utils.sendOkResponse("Subscription with name '" + subscriptionName + "' retrieved.",
+          subscription.getReturnable(), res, next, "http://" + req.headers.host + req.url);
     });
 }
 
@@ -31,8 +31,8 @@ function getAllSubscriptions (req, res, next) {
   database.findAllSubscriptions(limit, offset)
     .then(function (subscriptions) {
       // return returnable of all retrieved subscriptions
-      utils.sendOkResponse(res, subscriptions.length + " subscription(s) retrieved",
-          subscriptions.map(sub => sub.getReturnable()), "http://" + req.headers.host + req.url);
+      utils.sendOkResponse(subscriptions.length + " subscription(s) retrieved",
+          subscriptions.map(sub => sub.getReturnable()), res, next, "http://" + req.headers.host + req.url);
       next();
     });
 }
