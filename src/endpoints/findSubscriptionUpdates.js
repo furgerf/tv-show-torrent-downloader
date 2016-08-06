@@ -10,58 +10,31 @@ var restify = require('restify'),
 
   updateSubscription = require('../endpoints/updateSubscription'),
 
-  Subscription = require('../database/subscription').Subscription;
+  database = require('../database/subscription'),
+  Subscription = database.Subscription;
 
 function getTorrentSort(torrentSort) {
-  var sort = (torrentSort || 'largest').toString().toLowerCase();
+  const DEFAULT_SORT = 'largest',
+        sorts = [ 'largest', 'smallest', 'newest', 'oldest' ];
 
-  if (sort === 'largest') {
-    return 'largest';
-  }
+  var sort = (torrentSort ||DEFAULT_SORT).toString().toLowerCase();
 
-  if (sort === 'smallest') {
-    return 'smallest';
-  }
-
-  if (sort === 'newest') {
-    return 'newest';
-  }
-
-  if (sort === 'oldest') {
-    return 'oldest';
-  }
-
-  // default
-  return 'largest';
-}
-
-function checkForEpisode(subscription, season, episode, torrentSort, maxTorrentsPerEpisode, log) {
-  return torrentSites.findTorrents(subscription.name + ' ' +
-      utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
-      season, episode, torrentSort, maxTorrentsPerEpisode)
-    .then(function (torrents) {
-      return torrents;
-    })
-    .catch(function () {
-      // no torrent was found for that episode
-      // TODO: Rethink catch's and do error handling in appropriate places
-      // we might have arrived here because no torrents were found
-      return null;
-    });
+  return sorts.indexOf(sort) > -1 ? sort : DEFAULT_SORT
 }
 
 function checkForMultipleEpisodes(subscription, season, episode,
-    torrents, torrentSort, maxTorrentsPerEpisode, log) {
-  return checkForEpisode(subscription, season, episode,
-    torrentSort, maxTorrentsPerEpisode, log)
+    torrents, torrentSort, maxTorrentsPerEpisode) {
+  return torrentSites.findTorrents(subscription.name + ' '
+      + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
+      season, episode, torrentSort, maxTorrentsPerEpisode)
     .then(function (newTorrents) {
-      if (newTorrents.length > 0) {
+      if (newTorrents && newTorrents.length > 0) {
         // we found torrents, add to list
         torrents = torrents.concat(newTorrents);
 
         // look for next episode...
         return checkForMultipleEpisodes(subscription, season, episode + 1,
-          torrents, torrentSort, maxTorrentsPerEpisode, log);
+          torrents, torrentSort, maxTorrentsPerEpisode);
       }
 
       // couldn't find the episode, return the torrents we already have
@@ -75,7 +48,7 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
 
   // check for new episode of same season
   return checkForMultipleEpisodes(subscription, subscription.lastSeason,
-      subscription.lastEpisode + 1, [], torrentSort, maxTorrentsPerEpisode, log)
+      subscription.lastEpisode + 1, [], torrentSort, maxTorrentsPerEpisode)
     .then(function (newEpisodes) {
       // we just finished checking for new episodes
       subscription.updateLastEpisodeUpdateCheck();
@@ -83,7 +56,7 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
       log &&
         log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
       return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1,
-          [], torrentSort, maxTorrentsPerEpisode, log)
+          [], torrentSort, maxTorrentsPerEpisode)
         .then(function (episodes) {
           // we just finished checking for new episodes
           subscription.updateLastSeasonUpdateCheck();
@@ -97,7 +70,7 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
 }
 
 
-exports.checkSubscriptionForUpdates = function (req, res, next) {
+function checkSubscriptionForUpdates(req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]),
     torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
     maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
@@ -127,31 +100,27 @@ exports.checkSubscriptionForUpdates = function (req, res, next) {
             data.length + ' new torrents', data, 'http://' + req.headers.host + req.url);
         res.end();
         return next();
-      });
+      })
+      .fail(() => next(new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
   });
-};
+}
 
-exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
+function checkAllSubscriptionsForUpdates(req, res, next) {
   var result,
     updateCount = 0,
     torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
     maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
     startDownload = req.params.startDownload == 'true';
 
-  Subscription.find({}, function (err, subscriptions) {
-    if (err) {
-      req.log.error(err);
-      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-    }
-
-    Promise.all(subscriptions.map(function (subscription) {
+  database.findSubscriptionByName(subscriptionName)
+    .then(subscriptions => Q.all(subscriptions.map(function (subscription) {
       return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
         .then(function (data) {
           // adding a reference to the subscription for starting the torrent a bit futher down...
           data.subscription = subscription;
           return data;
         });
-    }))
+    })))
     .then(function (data) {
       result = data.filter(function (entry) { return entry.length > 0; });
       result.forEach(function (torrents) {
@@ -176,7 +145,10 @@ exports.checkAllSubscriptionsForUpdates = function (req, res, next) {
           ' new torrents', result, 'http://' + req.headers.host + req.url);
       res.end();
       return next();
-    });
-  });
-};
+    })
+    .fail(() => next(new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
+}
+
+exports.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;
+exports.checkSubscriptionForUpdates = checkSubscriptionForUpdates;
 

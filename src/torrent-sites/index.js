@@ -5,9 +5,11 @@
  * class named 'Parser' which contains the field 'url' and the function 'parseTorrentData'.
  */
 
-var pirateBay = require('./piratebay'),
-
+var Q = require('q'),
   exec = require('child_process').exec,
+
+  pirateBay = require('./piratebay'),
+
   log = require('./../common/logger').log.child({component: 'torrent-sites'}),
 
   pirateBayMn = new pirateBay.Parser('thepiratebay.mn'),
@@ -15,14 +17,16 @@ var pirateBay = require('./piratebay'),
   pirateBayPe = new pirateBay.Parser('pirateproxy.pe'),
   pirateBayAhoy = new pirateBay.Parser('ahoy.one'),
   pirateBayPatatje = new pirateBay.Parser('tpb.patatje.eu'),
+  invalidParser = new pirateBay.Parser('foobar'),
   allSites = [
     pirateBayPatatje,
     pirateBayAhoy,
     pirateBayPe,
     pirateBaySe,
     pirateBayMn,
+    invalidParser,
   ],
-  lastSuccessfulSite; // TODO: implement behavior to first try the last successful site
+  lastSuccessfulSite;
 
 function compareTorrents(t1, t2, sort) {
   if (sort === 'largest') {
@@ -45,9 +49,9 @@ function tryTorrentSite(torrentSite, searchString,
     season, episode, torrentSort, maxTorrentsPerEpisode) {
   var url = encodeURI(torrentSite.url + searchString);
 
-  log.info('Checking torrent site %s (URL %s)', torrentSite.url, url);
+  log.info('Checking torrent site (URL %s)', url);
 
-  return new Promise(function (resolve, reject) {
+  return Q.Promise(function (resolve, reject) {
     exec('wget -nv -O- ' + url, function (err, stdout, stderr) {
       // ignore stderr, it's fine if wget/the current torrent site failed
       if (err) {
@@ -57,24 +61,31 @@ function tryTorrentSite(torrentSite, searchString,
         return;
       }
 
-      var torrents = torrentSite.parseTorrentData(stdout, season, episode);
+      resolve(stdout);
+    })
+  })
+  .then(function (siteData) {
+    var torrents = torrentSite.parseTorrentData(siteData, season, episode);
 
-      log.debug('URL "%s" contains %d torrents', url, torrents.length);
+    log.debug('URL "%s" contains %d torrents', url, torrents.length);
 
-      // select the torrents to return: sort + slice
-      torrents.sort(function (a, b) { return compareTorrents(a, b, torrentSort); });
-      torrents = torrents.slice(0, maxTorrentsPerEpisode);
+    if (!torrents || !torrents.length) {
+      return [];
+    }
 
-      log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
+    // select the torrents to return: sort + slice
+    torrents.sort(function (a, b) { return compareTorrents(a, b, torrentSort); });
+    torrents = torrents.slice(0, maxTorrentsPerEpisode);
 
-      // resolve with newly-found torrent (which may be undefined)
-      resolve(torrents);
-    });
+    log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
+
+    // return newly-found torrent
+    return torrents
   });
 }
 
 // NOTE: siteIndex must STAY the last parameter!!
-exports.findTorrents = function (searchString, season, episode,
+function findTorrents(searchString, season, episode,
   torrentSort, maxTorrentsPerEpisode, siteIndex) {
   // the caller may be external and wouldn't supply a siteIndex
   // so we make sure that we start at zero if it wasn't supplied
@@ -83,29 +94,27 @@ exports.findTorrents = function (searchString, season, episode,
   // return a promise that will try the different torrent sites and ultimately
   // 1. resolve with one(!) torrent if one is found
   // 2. reject if none was found and all sites have been tried
-  return new Promise(function (resolve, reject) {
+  return Q.fcall(function () {
     // trying the "current" torrent site
-    tryTorrentSite(allSites[siteIndex++], searchString,
+    return tryTorrentSite(allSites[siteIndex++], searchString,
       season, episode, torrentSort, maxTorrentsPerEpisode)
-      .then(function (torrents) {
-        // successfully tried torrent site, resolve with result
-        resolve(torrents);
-      })
-      .catch(function () {
-        // no torrents were found
+      .fail(function () {
+        // torrent search failed
         // check whether we have more sites to try
         if (siteIndex === allSites.length) {
           // no more sites, reject
           log.info("Couldn't find torrent so far and have no more sites to try, aborting...");
-          reject();
-          return;
+          throw new Error('Failed to fetch torrent data from all known sites');
         }
         // we have more sites to try, do so recursively
         // resolve the current promise because we don't know yet whether we'll find torrents
         // (rejecting means we couldn't find any torrents)
-        log.info("Couldn't find torrent on previous site, trying next one...");
-        resolve(exports.findTorrents(searchString, season, episode, siteIndex));
+        log.info("Failed fetching torrent data from site, trying next one...");
+        return findTorrents(searchString, season, episode, torrentSort,
+              maxTorrentsPerEpisode, siteIndex);
       });
   });
-};
+}
+
+exports.findTorrents = findTorrents;
 
