@@ -32,28 +32,22 @@ exports.formatEpisodeNumber = function (season, episode) {
  * @param unit Unit of the file size
  */
 exports.fileSizeToBytes = function (num, unit) {
+  const factors = {
+    KiB: 1024,
+    MiB: Math.pow(1024, 2),
+    GiB: Math.pow(1024, 3),
+    KB: 1000,
+    MB: Math.pow(1000, 2),
+    GB: Math.pow(1000, 3)
+  };
+
   var n = typeof num === 'number' ? num : parseInt(num, 10);
 
-  if (Number.isNaN(n)) {
+  if (Number.isNaN(n) || !factors[unit]) {
     return undefined;
   }
 
-  switch (unit) {
-  case 'KiB':
-    return n * 1024;
-  case 'MiB':
-    return n * Math.pow(1024, 2);
-  case 'GiB':
-    return n * Math.pow(1024, 3);
-  case 'KB':
-    return n * 1000;
-  case 'MB':
-    return n * Math.pow(1000, 2);
-  case 'GB':
-    return n * Math.pow(1000, 3);
-  }
-
-  return undefined;
+  return n * factors[unit];
 };
 
 /**
@@ -83,5 +77,6 @@ exports.sendOkResponse = function (res, message, data, url, etag, lastModified) 
     data: data || {},
   });
   res.end();
+  // TODO: Pass and call next();
 };
 

@@ -13,7 +13,8 @@ function getSubscriptionByName (req, res, next) {
   database.findSubscriptionByName(subscriptionName)
     .then(function (subscription) {
       if (!subscription) {
-        return next(new restify.BadRequestError("No subscription with name '" + subscriptionName + "'."));
+        return next(
+            new restify.BadRequestError("No subscription with name '" + subscriptionName + "'."));
       }
 
       // sub with requested name found, return returnable
@@ -27,11 +28,12 @@ function getAllSubscriptions (req, res, next) {
     limit = parseInt(req.params.limit, 10) || 20;
 
   // retrieve subs
-  database.findAllSubscriptions()
+  database.findAllSubscriptions(limit, offset)
     .then(function (subscriptions) {
       // return returnable of all retrieved subscriptions
       utils.sendOkResponse(res, subscriptions.length + " subscription(s) retrieved",
           subscriptions.map(sub => sub.getReturnable()), "http://" + req.headers.host + req.url);
+      next();
     });
 }
 

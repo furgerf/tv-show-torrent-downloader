@@ -1,5 +1,7 @@
 'use strict';
 
+/* jshint -W040 */
+
 var log = require('./../common/logger').log.child({component: 'subscription'}),
   mongoose = require('mongoose'),
   Q = require('q'),
@@ -140,17 +142,21 @@ function findSubscriptionByName (subscriptionName) {
     return Subscription.find({name: subscriptionName}).limit(1);
   })
   .then(docs => docs.length > 0 ? docs[0] : null);
-};
+}
 
 function findAllSubscriptions (limit, offset) {
   return Q.fcall(function () {
-    return Subscription.find().skip(offset).limit(limit);
+    return limit
+      ? Subscription.find().skip(offset || 0).limit(limit)
+      : Subscription.find().skip(offset || 0);
   });
-};
+}
 
 
 exports.Subscription = Subscription;
 
 exports.findSubscriptionByName = findSubscriptionByName;
 exports.findAllSubscriptions = findAllSubscriptions;
+
+/* jshint +W040 */
 

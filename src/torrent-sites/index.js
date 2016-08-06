@@ -25,8 +25,7 @@ var Q = require('q'),
     pirateBaySe,
     pirateBayMn,
     invalidParser,
-  ],
-  lastSuccessfulSite;
+  ];
 
 function compareTorrents(t1, t2, sort) {
   if (sort === 'largest') {
@@ -52,7 +51,7 @@ function tryTorrentSite(torrentSite, searchString,
   log.info('Checking torrent site (URL %s)', url);
 
   return Q.Promise(function (resolve, reject) {
-    exec('wget -nv -O- ' + url, function (err, stdout, stderr) {
+    exec('wget -nv -O- ' + url, function (err, stdout) {
       // ignore stderr, it's fine if wget/the current torrent site failed
       if (err) {
         // (we're not really interested in why wget failed)
@@ -62,7 +61,7 @@ function tryTorrentSite(torrentSite, searchString,
       }
 
       resolve(stdout);
-    })
+    });
   })
   .then(function (siteData) {
     var torrents = torrentSite.parseTorrentData(siteData, season, episode);
@@ -80,7 +79,7 @@ function tryTorrentSite(torrentSite, searchString,
     log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
 
     // return newly-found torrent
-    return torrents
+    return torrents;
   });
 }
 

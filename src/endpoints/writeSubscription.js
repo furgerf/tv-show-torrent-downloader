@@ -50,7 +50,8 @@ function addSubscription (req, res, next) {
   Q.fcall(createNewSubscriptionFromData(data).save)
     .then(doc => utils.sendOkResponse(res, 'New subscription created', doc.getReturnable(),
           'http://' + req.headers.host + req.url))
-    .fail(error => next(new restify.InternalServerError('Error while saving new subscription: ' + error)));
+    .fail(error =>
+        next(new restify.InternalServerError('Error while saving new subscription: ' + error)));
 }
 
 function updateSubscription (req, res, next) {
@@ -67,7 +68,8 @@ function updateSubscription (req, res, next) {
     .then(subscription => updateFields(subscription, data, req.log).save())
     .then(subscription => utils.sendOkResponse(res, 'Subscription updated',
           subscription.getReturnable(), 'http://' + req.headers.host + req.url))
-    .fail(error => next(new restify.InternalServerError('Error while updating subscription: ' + error)));
+    .fail(error =>
+        next(new restify.InternalServerError('Error while updating subscription: ' + error)));
 }
 
 function deleteSubscription (req, res, next) {
@@ -76,13 +78,13 @@ function deleteSubscription (req, res, next) {
   database.findSubscriptionByName(subscriptionName)
     .then(subscription => subscription
         ? subscription
-        : next(new restify.BadRequestError("No subscription with name '" + subscriptionName + "'.")))
+        : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
     .then(subscription => subscription.remove())
-    .then(() => utils.sendOkResponse(res, 'Removed subscription with name "'
-          + subscriptionName + '".', {}, 'http://' + req.headers.host + req.url))
-    .fail(error => next(new restify.InternalServerError('Error while removing subscription: ' + error)));
+    .then(() => utils.sendOkResponse(res, 'Removed subscription with name "' +
+          subscriptionName + '".', {}, 'http://' + req.headers.host + req.url))
+    .fail(error =>
+        next(new restify.InternalServerError('Error while removing subscription: ' + error)));
 }
-
 
 exports.addSubscription = addSubscription;
 exports.updateSubscription = updateSubscription;

@@ -1,9 +1,8 @@
 'use strict';
 
 var restify = require('restify'),
-  url = require('url'),
+  Q = require('q'),
 
-  config = require('../common/config'),
   utils = require('../common/utils'),
 
   torrentSites = require('../torrent-sites/'),
@@ -19,7 +18,7 @@ function getTorrentSort(torrentSort) {
 
   var sort = (torrentSort ||DEFAULT_SORT).toString().toLowerCase();
 
-  return sorts.indexOf(sort) > -1 ? sort : DEFAULT_SORT
+  return sorts.indexOf(sort) > -1 ? sort : DEFAULT_SORT;
 }
 
 function checkForMultipleEpisodes(subscription, season, episode,
@@ -74,7 +73,7 @@ function checkSubscriptionForUpdates(req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]),
     torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
     maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
-    startDownload = req.params.startDownload == 'true';
+    startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {
     if (err) {
@@ -84,14 +83,16 @@ function checkSubscriptionForUpdates(req, res, next) {
 
     if (subscriptions.length === 0) {
       req.log.warn('No subscription with name "%s" found', subscriptionName);
-      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
+      return next(new restify.BadRequestError(
+            "No subscription with name '" + subscriptionName + "'"));
     }
 
     checkSubscriptionForUpdate(subscriptions[0], torrentSort, maxTorrentsPerEpisode, req.log)
       .then(function (data) {
         if (startDownload) {
           data.forEach(function (torrent) {
-            updateSubscription.downloadTorrent(subscriptions[0], torrent.season, torrent.episode, torrent.link, req.log);
+            updateSubscription.downloadTorrent(subscriptions[0],
+                torrent.season, torrent.episode, torrent.link, req.log);
           });
         }
 
@@ -101,7 +102,8 @@ function checkSubscriptionForUpdates(req, res, next) {
         res.end();
         return next();
       })
-      .fail(() => next(new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
+      .fail(() => next(
+            new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
   });
 }
 
@@ -110,9 +112,10 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
     updateCount = 0,
     torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
     maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
-    startDownload = req.params.startDownload == 'true';
+    startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
-  database.findSubscriptionByName(subscriptionName)
+  // TODO: Cleanup
+  database.findAllSubscriptions()
     .then(subscriptions => Q.all(subscriptions.map(function (subscription) {
       return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
         .then(function (data) {
@@ -132,21 +135,23 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
       result.forEach(function (entry) {
         if (startDownload) {
           entry.forEach(function (torrent) {
-            updateSubscription.downloadTorrent(entry.subscription, torrent.season, torrent.episode, torrent.link, req.log);
+            updateSubscription.downloadTorrent(entry.subscription,
+                torrent.season, torrent.episode, torrent.link, req.log);
           });
         }
         // we don't need the subscription reference anymore
-        delete entry.subscription
+        delete entry.subscription;
       });
 
-      utils.sendOkResponse(res, 'Checked ' + subscriptions.length +
+      utils.sendOkResponse(res, 'Checked ' + data.length +
           ' subscriptions for updates and found ' +
           (startDownload && updateCount > 0 ? 'and started download of ' : '' + updateCount) +
           ' new torrents', result, 'http://' + req.headers.host + req.url);
       res.end();
       return next();
     })
-    .fail(() => next(new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
+    .fail(() => next(
+          new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
 }
 
 exports.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;

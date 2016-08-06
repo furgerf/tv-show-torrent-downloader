@@ -2,10 +2,8 @@
 
 // modules
 var restify = require('restify'),
-    http = require('http'),
     join = require('path').join,
     fs = require('fs'),
-
 
     // common files
     config = require('./src/common/config'),
@@ -51,10 +49,10 @@ server.on('after', function (req, res, route) {
   var duration = new Date().getTime() - requestStarts[req.id()].getTime();
   delete requestStarts[req.id()];
 
-  req.log.warn({res: res}, 'Finished handling request in %d ms', duration);
+  req.log.warn({res: res}, 'Finished handling request to %s in %d ms', route.name, duration);
 });
 server.on('uncaughtException', function (req, res, route, error) {
-  req.log.error(error, 'Uncaught exception');
+  req.log.error(error, 'Uncaught exception while accessing %s', route.name);
   res.send(new restify.InternalServerError('%s (%s)', error.name || '', error.message || error));
 });
 
@@ -77,10 +75,12 @@ server.listen(config.api.port, config.api.host, function () {
 
   // check all/specific subscription for update
   server.put(/^\/subscriptions\/find\/?$/, findSubscriptionUpdates.checkAllSubscriptionsForUpdates);
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, findSubscriptionUpdates.checkSubscriptionForUpdates);
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/,
+      findSubscriptionUpdates.checkSubscriptionForUpdates);
 
   // update specific subscription with torrent
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/, updateSubscription.updateSubscriptionWithTorrent);
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/,
+      updateSubscription.updateSubscriptionWithTorrent);
 
   // system status
   server.get(/^\/status\/system\/disk\/?$/, systemStatus.getSystemDiskUsage);

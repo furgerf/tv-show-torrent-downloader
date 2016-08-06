@@ -33,7 +33,8 @@ function getSystemDiskUsage(req, res, next) {
 
     utils.sendOkResponse(res, 'Information about ' + data.length + ' disks retrieved',
         data, 'http://' + req.headers.host + req.url);
-  })
+    next();
+  });
 }
 
 exports.getSystemDiskUsage = getSystemDiskUsage;

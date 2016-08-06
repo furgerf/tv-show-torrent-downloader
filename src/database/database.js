@@ -1,6 +1,6 @@
 'use strict';
 
-var log = require('./../common/logger').log.child({component: 'database'}),
+var //log = require('./../common/logger').log.child({component: 'database'}),
   mongoose = require('mongoose'),
 
   config = require('./../common/config'),

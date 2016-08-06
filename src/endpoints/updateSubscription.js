@@ -2,23 +2,20 @@
 
 var restify = require('restify'),
   exec = require('child_process').exec,
-  url = require('url'),
   Q = require('q'),
 
   config = require('./../common/config'),
   utils = require('./../common/utils'),
 
-  torrentSites = require('./../torrent-sites/'),
-
   Subscription = require('./../database/subscription').Subscription;
 
 
 function isNextOrSameEpisode(sub, season, episode) {
-  return
+  return (
     // same season and same or next episode
     (season === sub.lastSeason && (episode === sub.lastEpisode || episode === sub.lastEpisode + 1))
     // *OR* first episode of next season
-    || (season === sub.lastSeason + 1 && (episode === 0 || episode === 1));
+    || (season === sub.lastSeason + 1 && (episode === 0 || episode === 1)));
 }
 
 function startTorrent(torrentLink, log) {
@@ -36,12 +33,12 @@ function startTorrent(torrentLink, log) {
       if (stderr) {
         log
           ? log.warn('Torrent command stderr: %s', stderr)
-          : console.log('Torrent command stderr: %s', stderr);
+          : console.log('Torrent command stderr: ' + stderr);
       }
       if (stdout) {
         log
           ? log.info('Torrent command stdout: %s', stdout)
-          : console.log('Torrent command stdout: %s', stdout);
+          : console.log('Torrent command stdout: ' + stdout);
       }
     });
   });
@@ -80,7 +77,8 @@ function updateSubscriptionWithTorrent (req, res, next) {
 
     if (subscriptions.length === 0) {
       req.log.warn('No subscription with name "%s" found', subscriptionName);
-      return next(new restify.BadRequestError('No subscription with name \'' + subscriptionName + '\''));
+      return next(
+          new restify.BadRequestError("No subscription with name '" + subscriptionName + "'"));
     }
 
     var sub = subscriptions[0];

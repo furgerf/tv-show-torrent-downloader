@@ -6,7 +6,8 @@
   "scripts": {
     "start": "supervisor server.js | node_modules/bunyan/bin/bunyan",
     "stop": "pkill node",
-    "test": "jasmine-node --verbose spec/"
+    "test": "jasmine-node --verbose spec/",
+    "lint": "jshint src/ --verbose --show-non-errors || true"
   },
   "repository": {
     "type": "git",
@@ -17,19 +18,19 @@
   "dependencies": {
     "bunyan": "*",
     "csprng": "*",
-    "jszip": "*",
     "mongodb": "*",
     "mongoose": "*",
     "promise": "*",
+    "q": "*",
     "request": "*",
     "restify": "*",
-    "sha1": "*",
-    "q": "*"
+    "sha1": "*"
   },
   "devDependencies": {
     "apidoc": "*",
     "frisby": "*",
     "istanbul": "*",
+    "jshint": "*",
     "jasmine-node": "*",
     "rewire": "*"
   }
