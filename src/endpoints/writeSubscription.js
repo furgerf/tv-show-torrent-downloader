@@ -62,13 +62,13 @@ function createNewSubscriptionFromData (data) {
  * Handles requests to POST /subscriptions.
  */
 function addSubscription (req, res, next) {
-  var data = JSON.parse(req.body);
+  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body;
 
-  if (!data.name) {
+  if (!body.name) {
     return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
   }
 
-  Q.fcall(createNewSubscriptionFromData(data).save)
+  Q.fcall(createNewSubscriptionFromData(body).save)
     .then(doc => utils.sendOkResponse('New subscription created', doc.getReturnable(),
           res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>
@@ -79,17 +79,17 @@ function addSubscription (req, res, next) {
  * Handles requests to POST /subscriptions/:subscriptionName.
  */
 function updateSubscription (req, res, next) {
-  var data = JSON.parse(req.body),  //req.body,
+  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body,
     subscriptionName = decodeURIComponent(req.params[0]);
 
-  data.name = data.name || subscriptionName;
+  body.name = body.name || subscriptionName;
 
   // retrieve existing subscription that would be updated
   database.findSubscriptionByName(subscriptionName)
     // if the subscription doesn't exist yet, create a new one
-    .then(subscription => subscription ? subscription : createNewSubscriptionFromData(data))
+    .then(subscription => subscription ? subscription : createNewSubscriptionFromData(body))
       // update the fields and save
-    .then(subscription => updateFields(subscription, data, req.log).save())
+    .then(subscription => updateFields(subscription, body, req.log).save())
     .then(subscription => utils.sendOkResponse('Subscription updated',
           subscription.getReturnable(), res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>

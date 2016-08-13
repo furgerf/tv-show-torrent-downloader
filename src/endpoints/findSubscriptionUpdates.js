@@ -105,9 +105,10 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
  * Handles requests to PUT /subscriptions/:subscriptionName/find.
  */
 function checkSubscriptionForUpdates(req, res, next) {
-  var subscriptionName = decodeURIComponent(req.params[0]),
-    torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
-    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
+  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body,
+    subscriptionName = decodeURIComponent(req.params[0]),
+    torrentSort = getTorrentSort(body ? body.torrentSort : ''),
+    maxTorrentsPerEpisode = parseInt(body ? body.maxTorrentsPerEpisode : "1", 10) || 1,
     startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {
@@ -144,10 +145,11 @@ function checkSubscriptionForUpdates(req, res, next) {
  * Handles requests to PUT /subscriptions/find.
  */
 function checkAllSubscriptionsForUpdates(req, res, next) {
-  var result,
+  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body,
+    result,
     updateCount = 0,
-    torrentSort = getTorrentSort(req.body ? req.body.torrentSort : ''),
-    maxTorrentsPerEpisode = parseInt(req.body ? req.body.maxTorrentsPerEpisode : 1, 10) || 1,
+    torrentSort = getTorrentSort(body ? body.torrentSort : ''),
+    maxTorrentsPerEpisode = parseInt(body ? body.maxTorrentsPerEpisode : "1", 10) || 1,
     startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
   // TODO: Cleanup

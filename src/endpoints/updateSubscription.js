@@ -102,10 +102,11 @@ function downloadTorrent (sub, season, episode, link, log) {
  * TODO: Simplify.
  */
 function updateSubscriptionWithTorrent (req, res, next) {
-  var subscriptionName = decodeURIComponent(req.params[0]),
-    season = parseInt(req.body.season, 10),
-    episode = parseInt(req.body.episode, 10),
-    link = req.body.link;
+  var body= typeof req.body == "string" ? JSON.parse(req.body) : req.body,
+    subscriptionName = decodeURIComponent(req.params[0]),
+    season = parseInt(body.season, 10),
+    episode = parseInt(body.episode, 10),
+    link = body.link;
 
   Subscription.find({name: subscriptionName}, function (err, subscriptions) {
     if (err) {
