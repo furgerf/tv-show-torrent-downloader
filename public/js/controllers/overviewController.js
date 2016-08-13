@@ -186,16 +186,21 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
        * @param {Date} newSubscriptionInfo.lastDownloaded - Date when the subscription was last modified.
        */
       function updateSubscriptionInfo (newSubscriptionInfo) {
-          that.subscriptions = that.subscriptions.filter(sub => sub.name != newSubscriptionInfo.name);
-          that.subscriptions.push(new app.Subscription(newSubscriptionInfo.name, new app.ShowEpisode(newSubscriptionInfo.lastSeason, newSubscriptionInfo.lastEpisode), newSubscriptionInfo.searchParameters, newSubscriptionInfo.lastDownloadTime, newSubscriptionInfo.lastUpdateCheckTime));
-          that.subscriptions.sort(function (a, b) {
-            switch (settings.getSubscriptionSort()) {
-              case "alphabetical":
-                return a.name > b.name;
-              case "lastTorrentDownload":
-                return a.lastDownloadTime < b.lastDownloadTime;
+        var sorting = {
+          alphabetical: function (a, b) {
+            return a.name > b.name;
+          },
+          lastTorrentDownload: function (a, b) {
+            if (a.lastDownloadTime == b.lastDownloadTime) {
+              return sorting.alphabetical(a, b);
             }
-          });
+            return a.lastDownloadTime < b.lastDownloadTime;
+          }
+        };
+
+        that.subscriptions = that.subscriptions.filter(sub => sub.name != newSubscriptionInfo.name);
+        that.subscriptions.push(new app.Subscription(newSubscriptionInfo.name, new app.ShowEpisode(newSubscriptionInfo.lastSeason, newSubscriptionInfo.lastEpisode), newSubscriptionInfo.searchParameters, newSubscriptionInfo.lastDownloadTime, newSubscriptionInfo.lastUpdateCheckTime));
+        that.subscriptions.sort(sorting[settings.getSubscriptionSort()]);
       }
 
       // initialization - retrieve all subscriptions
