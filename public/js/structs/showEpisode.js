@@ -4,8 +4,8 @@
   'use strict';
 
   function ShowEpisode(season, episode) {
-    this.season = season;
-    this.episode = episode;
+    this.season = typeof season == "string" ? parseInt(season, 10) : season;
+    this.episode = typeof episode == "string" ? parseInt(episode, 10) : episode;
   }
 
   // export to window

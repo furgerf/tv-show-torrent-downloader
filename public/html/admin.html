@@ -1,6 +1,14 @@
 <h1>Administration</h1>
 <h2>Configuration</h2>
 <div class="darker">
+  <h2>Web-UI</h2>
+  Sort subscriptions by:
+    <select ng-model="adminCtrl.subscriptionSort">
+      <option value="alphabetical">Alphabetical</option>
+      <option value="lastTorrentDownload">Last torrent download</option>
+    </select>
+    <button ng-click='adminCtrl.saveSubscriptionSort()'>Save</button>
+
   <h2>Server</h2>
   Server host:
     <input type="text" ng-model="adminCtrl.serverHost" placeholder="Server host IP or name">
@@ -8,7 +16,6 @@
   Server port:
     <input type="number" ng-model="adminCtrl.serverPort" placeholder="Server port">
     <button ng-click='adminCtrl.saveServerPort()'>Save</button>
-
 
   <h2>Torrents</h2>
   Maximum number of torrents per episode:
@@ -25,7 +32,6 @@
       <option value="oldest">Oldest</option>
     </select>
     <button ng-click='adminCtrl.saveTorrentSort()'>Save</button>
-    <br>
 </div>
 
 <h2>Monitoring</h2>

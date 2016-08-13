@@ -4,15 +4,24 @@
 (function (window) {
 
   function Settings(utils) {
-    const ServerHostCookieKey = 'serverHost',
+    const SubscriptionSortKey = 'subscriptionSort',
+          ServerHostCookieKey = 'serverHost',
           ServerPortCookieKey = 'serverPort',
           TorrentSortKey = 'torrentSort',
           MaxTorrentsPerEpisodeKey = 'maxTorrentsPerEpisode',
 
+          defaultSubscriptionSort = 'alphabetical',
           defaultServerHost = 'localhost',
           defaultServerPort = 8000,
           defaultTorrentSort = 'largest',
           defaultMaxTorrentsPerEpisode = 2;
+
+    this.getSubscriptionSort = function () {
+      return utils.getCookie(SubscriptionSortKey) || defaultSubscriptionSort;
+    };
+    this.setSubscriptionSort = function (torrentSort) {
+      return utils.setCookie(SubscriptionSortKey, torrentSort);
+    };
 
     this.getServerHost = function () {
       return utils.getCookie(ServerHostCookieKey) || defaultServerHost;

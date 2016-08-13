@@ -4,7 +4,7 @@
   <table ng-repeat="sub in overviewCtrl.subscriptions">
     <col width="300"></col>
 
-    <col width="400"></col>
+    <col width="500"></col>
     <col width="100"></col>
 
     <col width="100"></col>
@@ -14,7 +14,7 @@
     <col width="120"></col>
     <tr ng-class="{bad: overviewCtrl.getNumberOfDaysSinceDate(sub.lastUpdateCheck) >= 5, ok: overviewCtrl.getNumberOfDaysSinceDate(sub.lastUpdateCheck) >= 1, good: true}">
       <td class="title">{{sub.name}}</td>
-      <td colspan="2">Current episode: S{{sub.currentEpisode.season | twoDigits}}E{{sub.currentEpisode.episode | twoDigits}} (Last updated on {{sub.lastUpdateCheck | dateTime}})</td>
+      <td colspan="2">Current episode: S{{sub.currentEpisode.season | twoDigits}}E{{sub.currentEpisode.episode | twoDigits}} (Last download: {{sub.lastDownloadTime | dateTime}}, last check: {{sub.lastUpdateCheckTime | dateTime}})</td>
       <td colspan="3">{{sub.searchParameters | searchParameters}}</td>
       <td><button ng-click='overviewCtrl.findSubscriptionUpdates(sub.name)'>Find updates</button></td>
     </tr>

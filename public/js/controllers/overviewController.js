@@ -1,8 +1,8 @@
 
 /*global app, confirm, mod*/
 
-mod.controller('overviewController', ['logger', 'subscriptionHandler', '$filter',
-    function (logger, subscriptionHandler, $filter) {
+mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings', '$filter',
+    function (logger, subscriptionHandler, settings, $filter) {
       'use strict';
 
       // continuous access to caller and some important objects
@@ -183,13 +183,18 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', '$filter'
        * @param {Number} newSubscriptionInfo.lastSeason - Current season number of the subscription.
        * @param {Number} newSubscriptionInfo.lastEpisode - Current episode number of the subscription.
        * @param {String} newSubscriptionInfo.searchParameters - Search parameters of the subscription.
-       * @param {Date} newSubscriptionInfo.lastModified - Date when the subscription was last modified.
+       * @param {Date} newSubscriptionInfo.lastDownloaded - Date when the subscription was last modified.
        */
       function updateSubscriptionInfo (newSubscriptionInfo) {
           that.subscriptions = that.subscriptions.filter(sub => sub.name != newSubscriptionInfo.name);
-          that.subscriptions.push(new app.Subscription(newSubscriptionInfo.name, new app.ShowEpisode(newSubscriptionInfo.lastSeason, newSubscriptionInfo.lastEpisode), newSubscriptionInfo.searchParameters, newSubscriptionInfo.lastModified));
+          that.subscriptions.push(new app.Subscription(newSubscriptionInfo.name, new app.ShowEpisode(newSubscriptionInfo.lastSeason, newSubscriptionInfo.lastEpisode), newSubscriptionInfo.searchParameters, newSubscriptionInfo.lastDownloadTime, newSubscriptionInfo.lastUpdateCheckTime));
           that.subscriptions.sort(function (a, b) {
-            return a.name > b.name;
+            switch (settings.getSubscriptionSort()) {
+              case "alphabetical":
+                return a.name > b.name;
+              case "lastTorrentDownload":
+                return a.lastDownloadTime < b.lastDownloadTime;
+            }
           });
       }
 

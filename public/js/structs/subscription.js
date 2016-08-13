@@ -3,11 +3,12 @@
 (function (window) {
   'use strict';
 
-  function Subscription(name, currentEpisode, searchParameters, lastUpdatecheck) {
+  function Subscription(name, currentEpisode, searchParameters, lastDownloadTime, lastUpdateCheckTime) {
     this.name = name;
     this.currentEpisode = currentEpisode;
     this.searchParameters = searchParameters;
-    this.lastUpdateCheck = lastUpdatecheck;
+    this.lastDownloadTime = typeof lastDownloadTime == "string" ? new Date(lastDownloadTime) : lastDownloadTime;
+    this.lastUpdateCheckTime = typeof lastUpdateCheckTime == "string" ? new Date(lastUpdateCheckTime) : lastUpdateCheckTime;
   }
 
   // export to window
