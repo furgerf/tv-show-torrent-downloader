@@ -102,7 +102,7 @@ function downloadTorrent (sub, season, episode, link, log) {
  * TODO: Simplify.
  */
 function updateSubscriptionWithTorrent (req, res, next) {
-  var body= typeof req.body == "string" ? JSON.parse(req.body) : req.body,
+  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body,
     subscriptionName = decodeURIComponent(req.params[0]),
     season = parseInt(body.season, 10),
     episode = parseInt(body.episode, 10),
@@ -135,7 +135,8 @@ function updateSubscriptionWithTorrent (req, res, next) {
     }
 
     downloadTorrent(sub, season, episode, link, req.log)
-      .then (function () {
+      .then(() => sub.updateLastDownloadTime())
+      .then(function () {
         utils.sendOkResponse('Started torrent for new episode '
             + utils.formatEpisodeNumber(season, episode) + ' of ' + sub.name,
             null, res, next, 'http://' + req.headers.host + req.url);

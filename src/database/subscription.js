@@ -17,9 +17,9 @@ var subscriptionSchema = new mongoose.Schema({
   lastSeason: Number,
   lastEpisode: Number,
   creationTime: Date,
-  lastModified: Date,
-  lastSeasonUpdateCheck: Date,
-  lastEpisodeUpdateCheck: Date
+  lastModifiedTime: Date,
+  lastDownloadTime: Date,
+  lastUpdateCheckTime: Date,
 });
 
 /**
@@ -28,35 +28,36 @@ var subscriptionSchema = new mongoose.Schema({
  * renaming some fields.
  */
 function getReturnableSubscription() {
-  var returnable = JSON.parse(JSON.stringify(this));
-
-  // remove MongoDB id
-  delete returnable._id;
-
-  // remove Mongoose document version number
-  delete returnable.__v;
-
-  return returnable;
+  return {
+    name: this.name === undefined ? null : this.name,
+    searchParameters: this.searchParameters === undefined ? null : this.searchParameters,
+    lastSeason: this.lastSeason === undefined ? null : this.lastSeason,
+    lastEpisode: this.lastEpisode === undefined ? null : this.lastEpisode,
+    creationTime: this.creationTime === undefined ? null : this.creationTime,
+    lastModifiedTime: this.lastModifiedTime === undefined ? null : this.lastModifiedTime,
+    lastDownloadTime: this.lastDownloadTime === undefined ? null : this.lastDownloadTime,
+    lastUpdateCheckTime: this.lastUpdateCheckTime === undefined ? null : this.lastUpdateCheckTime
+  };
 }
 subscriptionSchema.methods.getReturnable = getReturnableSubscription;
 
 /**
- * Updates the last episode update check time to now and saves the subscription.
+ * Updates the last update check time to now and saves the subscription.
  */
-function updateLastEpisodeUpdateCheck() {
-  this.lastEpisodeUpdateCheck = new Date();
+function updateLastUpdateCheckTime() {
+  this.lastUpdateCheckTime = new Date();
   this.save();
 }
-subscriptionSchema.methods.updateLastEpisodeUpdateCheck = updateLastEpisodeUpdateCheck;
+subscriptionSchema.methods.updateLastUpdateCheckTime = updateLastUpdateCheckTime;
 
 /**
- * Update the last season update check time to now and saves the subscription.
+ * Update the last episode download time to now and saves the subscription.
  */
-function updateLastSeasonUpdateCheck() {
-  this.lastSeasonUpdateCheck = new Date();
+function updateLastDownloadTime() {
+  this.lastDownloadTime = new Date();
   this.save();
 }
-subscriptionSchema.methods.updateLastSeasonUpdateCheck = updateLastSeasonUpdateCheck;
+subscriptionSchema.methods.updateLastDownloadTime = updateLastDownloadTime;
 
 /**
  * Updates the last downloaded season/episode of the subscription, making
@@ -111,7 +112,7 @@ function preSaveAction(next) {
   log.debug('Running pre-save action for subscription "%s"', this.name);
 
   var currentDate = new Date();
-  this.lastModified = currentDate;
+  this.lastModifiedTime = currentDate;
 
   // if creationTime doesn't exist, add it
   if (!this.creationTime) {

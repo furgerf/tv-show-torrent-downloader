@@ -83,7 +83,7 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
       subscription.lastEpisode + 1, [], torrentSort, maxTorrentsPerEpisode)
     .then(function (newEpisodes) {
       // we just finished checking for new episodes
-      subscription.updateLastEpisodeUpdateCheck();
+      subscription.updateLastUpdateCheckTime();
 
       log &&
         log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
@@ -91,7 +91,7 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
           [], torrentSort, maxTorrentsPerEpisode)
         .then(function (episodes) {
           // we just finished checking for new episodes
-          subscription.updateLastSeasonUpdateCheck();
+          subscription.updateLastUpdateCheckTime();
 
           // merge episodes from current and new season
           newEpisodes = newEpisodes.concat(episodes);
