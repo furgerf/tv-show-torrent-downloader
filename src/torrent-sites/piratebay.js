@@ -50,6 +50,7 @@ function parseTorrentData(html, season, episode) {
   try {
     var magnetRegexp = /<a href="magnet:?/,
       torrentInfoRegexp = /.*Uploaded(.*)\,.*Size(.*)\,/,
+      extractCellContentRegexp = /<td.*>(.*)<\/td>/,
 
       torrents = [];
 
@@ -59,17 +60,19 @@ function parseTorrentData(html, season, episode) {
           queryData = url.parse(link, true),
           torrentName = queryData.query.dn,
           infoLine = lines[index + 1],
+          seederLine = lines[index + 3],
+          leecherLine = lines[index + 4],
           infos = infoLine.match(torrentInfoRegexp),
           uploadDate = parseDate(infos[1]),
           size = parseSize(infos[2]),
-          seeds = -1,
-          leechers = -1;
+          seeders = parseInt(seederLine.match(extractCellContentRegexp)[1], 10),
+          leechers = parseInt(leecherLine.match(extractCellContentRegexp)[1], 10);
 
         torrents.push({
           name: torrentName,
           season: season,
           episode: episode,
-          seeds: seeds,
+          seeders: seeders,
           leechers: leechers,
           size: size,
           uploadDate: uploadDate,

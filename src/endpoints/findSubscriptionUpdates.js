@@ -21,11 +21,11 @@ var restify = require('restify'),
  */
 function getTorrentSort(torrentSort) {
   const DEFAULT_SORT = 'largest',
-        validSorts = [ 'largest', 'smallest', 'newest', 'oldest' ];
+        validSortsLowercase = [ 'largest', 'smallest', 'newest', 'oldest', 'mostseeded' ];
 
-  var sort = (torrentSort ||DEFAULT_SORT).toString().toLowerCase();
+  var sort = (torrentSort || DEFAULT_SORT).toString().toLowerCase();
 
-  return validSorts.indexOf(sort) > -1 ? sort : DEFAULT_SORT;
+  return validSortsLowercase.indexOf(sort) > -1 ? sort : DEFAULT_SORT;
 }
 
 /**

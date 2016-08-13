@@ -40,6 +40,9 @@ function compareTorrents(t1, t2, sort) {
   if (sort === 'oldest') {
     return t1.uploadDate > t2.uploadDate;
   }
+  if (sort === 'mostseeded') {
+    return t1.seeders < t2.seeders;
+  }
 
   throw new Error('Unknown sort: ' + sort);
 }
