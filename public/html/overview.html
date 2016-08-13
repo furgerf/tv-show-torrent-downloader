@@ -1,18 +1,29 @@
 <h1>Overview</h1>
 <div class="darker">
+  <button ng-click='overviewCtrl.findAllSubscriptionUpdates()'>Find updates for all!</button>
   <table ng-repeat="sub in overviewCtrl.subscriptions">
     <col width="300"></col>
-    <col width="500"></col>
-    <col width="300"></col>
+
+    <col width="400"></col>
+    <col width="100"></col>
+
+    <col width="100"></col>
+    <col width="100"></col>
+    <col width="100"></col>
+
+    <col width="120"></col>
     <tr ng-class="{bad: overviewCtrl.getNumberOfDaysSinceDate(sub.lastUpdateCheck) >= 5, ok: overviewCtrl.getNumberOfDaysSinceDate(sub.lastUpdateCheck) >= 1, good: true}">
       <td class="title">{{sub.name}}</td>
-      <td>Current episode: S{{sub.currentEpisode.season | twoDigits}}E{{sub.currentEpisode.episode | twoDigits}} (Last updated on {{sub.lastUpdateCheck | dateTime}})</td>
-      <td>{{sub.searchParameters | searchParameters}}</td>
+      <td colspan="2">Current episode: S{{sub.currentEpisode.season | twoDigits}}E{{sub.currentEpisode.episode | twoDigits}} (Last updated on {{sub.lastUpdateCheck | dateTime}})</td>
+      <td colspan="3">{{sub.searchParameters | searchParameters}}</td>
       <td><button ng-click='overviewCtrl.findSubscriptionUpdates(sub.name)'>Find updates</button></td>
     </tr>
     <tr ng-repeat="ep in overviewCtrl.newEpisodes[sub.name] track by $index">
       <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="1">New episode S{{ep.season | twoDigits}}E{{ep.episode | twoDigits}} to download:</td>
-      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="2">{{ep.name}}, {{ep.size | fileSize}}, S{{ep.seeders}}/L{{ep.leechers}}, (Uploaded on {{ep.uploadDate | dateTime}})</td>
+      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="1">{{ep.name}}</td>
+      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="1">{{ep.size | fileSize}}</td>
+      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="1">S/L: {{ep.seeders}}/{{ep.leechers}}</td>
+      <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="2">Uploaded: {{ep.uploadDate | dateTime}}</td>
       <td ng-class="{disabled: ep.isDownloaded == true, lighter: ep.isAlternateEpisode == true, darker: true}" colspan="1"><button ng-class="{disabled: ep.isDownloaded == true, button: true}" ng-click='overviewCtrl.downloadEpisode(sub.name, ep)'>{{ep.isDownloaded ? 'Refresh' : 'Download'}}</button></td>
     </tr>
   </table>
