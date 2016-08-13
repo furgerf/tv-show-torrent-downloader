@@ -56,8 +56,7 @@ function tryTorrentSite(torrentSite, searchString,
       if (err) {
         // (we're not really interested in why wget failed)
         log.debug('Torrent request on %s failed', torrentSite.url);
-        reject(err);
-        return;
+        return reject(err);
       }
 
       resolve(stdout);

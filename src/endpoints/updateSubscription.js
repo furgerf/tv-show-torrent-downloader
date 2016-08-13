@@ -10,6 +10,16 @@ var restify = require('restify'),
   Subscription = require('./../database/subscription').Subscription;
 
 
+/**
+ * Determines whether the supplied `season` and `episode` refer to the same or next episode of the
+ * subscription.
+ *
+ * @param {Subscription} sub - Subscription against which to check.
+ * @param {Number} season - Season number to check.
+ * @param {Number} episode - Episode number to check.
+ *
+ * @returns {Boolean} True if the season/episode is the same or next episode of the subscription.
+ */
 function isNextOrSameEpisode(sub, season, episode) {
   return (
     // same season and same or next episode
@@ -18,16 +28,25 @@ function isNextOrSameEpisode(sub, season, episode) {
     || (season === sub.lastSeason + 1 && (episode === 0 || episode === 1)));
 }
 
+/**
+ * Starts the torrent with the supplied `torrentLink` and the configured torrent command.
+ *
+ * @param {String} torrentLink - Link of the torrent.
+ * @param {Bunyan.Log} log - Optional. Logger instance. Uses `console.log` instead if not supplied.
+ *
+ * @returns {Promise} Promise which resolves if starting the torrent was successful and rejects
+ *                    otherwise.
+ */
 function startTorrent(torrentLink, log) {
   var command = config.torrentCommand + " '" + torrentLink + "'";
 
   log && log.warn('Starting torrent: %s (command: %s)', torrentLink, command);
 
-  return Q.fcall(function () {
+  return Q.Promise(function (resolve, reject) {
     exec(command, function (err, stdout, stderr) {
       if (err) {
         log ? log.error(err) : console.log(err);
-        throw err;
+        return reject(err);
       }
 
       if (stderr) {
@@ -40,10 +59,25 @@ function startTorrent(torrentLink, log) {
           ? log.info('Torrent command stdout: %s', stdout)
           : console.log('Torrent command stdout: ' + stdout);
       }
+
+      resolve();
     });
   });
 }
 
+/**
+ * "Downloads" a torrent by starting the torrent download and updating the current season/episode
+ * of the subscription.
+ *
+ * @param {Subscription} sub - Subscription to which the torrent belongs.
+ * @param {Number} season - Season number of the torrent.
+ * @param {Number} episode - Episode number of the torrent.
+ * @param {String} link - Link to the torrent.
+ * @param {Bunyan.Log} log - Optional. Logger instance. Doesn't generate output if not specified.
+ *
+ * @returns {Promise} Promise which resolves if downloading the torrent was successful and rejects
+ *                    otherwise.
+ */
 function downloadTorrent (sub, season, episode, link, log) {
   return startTorrent(link, log)
     .then(function () {
@@ -63,6 +97,10 @@ function downloadTorrent (sub, season, episode, link, log) {
     });
 }
 
+/**
+ * Handles reqests to PUT /subscriptions/:subscriptionName/update.
+ * TODO: Simplify.
+ */
 function updateSubscriptionWithTorrent (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]),
     season = parseInt(req.body.season, 10),
@@ -95,7 +133,7 @@ function updateSubscriptionWithTorrent (req, res, next) {
       ));
     }
 
-    exports.downloadTorrent(sub, season, episode, link, req.log)
+    downloadTorrent(sub, season, episode, link, req.log)
       .then (function () {
         utils.sendOkResponse('Started torrent for new episode '
             + utils.formatEpisodeNumber(season, episode) + ' of ' + sub.name,
