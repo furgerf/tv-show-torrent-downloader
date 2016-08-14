@@ -18,6 +18,11 @@ mod.service('settings', ['utils',
       'use strict';
       return new app.Settings(utils);
     }]);
+mod.service('notification', [
+    function () {
+      'use strict';
+      return new app.Notification();
+    }]);
 
 mod.service('subscriptionHandler', ['$http', 'logger', 'settings',
     function ($http, logger, settings) {
