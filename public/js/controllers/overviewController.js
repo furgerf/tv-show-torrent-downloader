@@ -1,8 +1,8 @@
 
 /*global app, confirm, mod*/
 
-mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings', '$filter',
-    function (logger, subscriptionHandler, settings, $filter) {
+mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings', '$filter', 'notification',
+    function (logger, subscriptionHandler, settings, $filter, notification) {
       'use strict';
 
       // continuous access to caller and some important objects
@@ -46,7 +46,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
        * Retrieves subscription updates for all subscriptions.
        */
       that.findAllSubscriptionUpdates = function () {
-        logger.logConsole('Requesting updates for all subscriptions');
+        notification.show('Checking for updates for all subscriptions...');
         that.subscriptions.forEach(function (sub) {
           that.findSubscriptionUpdates(sub.name);
         });
@@ -80,7 +80,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
               return;
             }
 
-            logger.logConsole('Successfully started torrent download with message: ' + response.data.message);
+            notification.show('Successfully started torrent download with message: ' + response.data.message);
 
             // when we get a successful response, we assume the download was started, so we update the properties
             // so we update the properties of the episode that was downloaded
@@ -92,7 +92,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
             });
           })
         .catch(function (err) {
-          logger.logAlert('Error ' + err.status + ' while requesting download of ' + subscriptionName + ', S' + $filter('twoDigits')(episodeInfo.season) + 'E' + $filter('twoDigits')(episodeInfo.episode) + ':\n' + err.data.message);
+          notification.show('Error ' + err.status + ' while requesting download of ' + subscriptionName + ', S' + $filter('twoDigits')(episodeInfo.season) + 'E' + $filter('twoDigits')(episodeInfo.episode) + ':\n' + err.data.message);
         });
       };
 

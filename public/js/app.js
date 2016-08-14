@@ -13,10 +13,10 @@ mod.service('utils', [
       'use strict';
       return new app.Utils();
     }]);
-mod.service('settings', ['utils',
-    function (utils) {
+mod.service('settings', ['utils', 'notification',
+    function (utils, notification) {
       'use strict';
-      return new app.Settings(utils);
+      return new app.Settings(utils, notification);
     }]);
 mod.service('notification', [
     function () {
