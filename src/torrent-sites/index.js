@@ -27,6 +27,16 @@ var Q = require('q'),
     invalidParser,
   ];
 
+/**
+ * Compares two torrents according to the specified sorting method.
+ * NOTE: This should be refactored and also return -1/0/1 instead of true/false.
+ *
+ * @param {Object} t1 - Torrent 1 to compare.
+ * @param {Object} t2 - Torrent 2 to compare.
+ * @param {String} sort - Sorting method.
+ *
+ * @returns {Boolean} True if the torrents should be swapped, false if they're already in order.
+ */
 function compareTorrents(t1, t2, sort) {
   if (sort === 'largest') {
     return t1.size < t2.size;
@@ -47,6 +57,18 @@ function compareTorrents(t1, t2, sort) {
   throw new Error('Unknown sort: ' + sort);
 }
 
+/**
+ * Tries finding and parsing torrents on the specified torrent site.
+ *
+ * @param {Parser} torrentSite - Contains the torrent site base URL and parses the response data.
+ * @param {String} searchString - Additional search string.
+ * @param {Number} season - Season of the torrent to look for.
+ * @param {Number} episode - Episode of the torrent to look for.
+ * @param {String} torrentSort - Torrent sorting method.
+ * @param {Number} maxTorrentsPerEpisode - Maximum number of torrents to return.
+ *
+ * @returns {Promise} Promise that resolves to an array containing all found torrents.
+ */
 function tryTorrentSite(torrentSite, searchString,
     season, episode, torrentSort, maxTorrentsPerEpisode) {
   var url = encodeURI(torrentSite.url + searchString);
@@ -85,7 +107,22 @@ function tryTorrentSite(torrentSite, searchString,
   });
 }
 
-// NOTE: siteIndex must STAY the last parameter!!
+/**
+ * Tries to find torrents on all known torrent sites.
+ * NOTE: Currently, siteIndex must STAY the last parameter, that should be refactored.
+ *
+ * @param {String} searchString - Additional search string.
+ * @param {Number} season - Season of the torrent to look for.
+ * @param {Number} episode - Episode of the torrent to look for.
+ * @param {String} torrentSort - Torrent sorting method.
+ * @param {Number} maxTorrentsPerEpisode - Maximum number of torrents to return.
+ * @param {Number} siteIndex - Index of the torrent site to try. When called externally, this
+ *                             parameter shouldn't be specified, it's used for recursive calls
+ *                             when iterating through the different torrent sites.
+ *
+ * @returns {Promise} Promise that resolves to an array containing all found torrents or rejects
+ *                    in case all torrent sites fail.
+ */
 function findTorrents(searchString, season, episode,
   torrentSort, maxTorrentsPerEpisode, siteIndex) {
   // the caller may be external and wouldn't supply a siteIndex

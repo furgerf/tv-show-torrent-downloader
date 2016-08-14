@@ -23,9 +23,10 @@ var subscriptionSchema = new mongoose.Schema({
 });
 
 /**
- * Gets a version of the subscription that can be returned
- * to the caller. This means removing and potentially also
- * renaming some fields.
+ * Gets a version of the subscription that can be returned to the requestee. Only returns certain fields
+ * (which could also be renamed).
+ *
+ * @returns {Object} Returnable version of the subscription.
  */
 function getReturnableSubscription() {
   return {
@@ -51,7 +52,7 @@ function updateLastUpdateCheckTime() {
 subscriptionSchema.methods.updateLastUpdateCheckTime = updateLastUpdateCheckTime;
 
 /**
- * Update the last episode download time to now and saves the subscription.
+ * Updates the last download time to now and saves the subscription.
  */
 function updateLastDownloadTime() {
   this.lastDownloadTime = new Date();
@@ -61,8 +62,12 @@ subscriptionSchema.methods.updateLastDownloadTime = updateLastDownloadTime;
 
 /**
  * Updates the last downloaded season/episode of the subscription, making
- * thorough checks to ensure only valid updates are accepted. Whether the
- * season/episode update was accepted is returned as a boolean.
+ * thorough checks to ensure only valid updates are accepted.
+ *
+ * @param {Number} newSeason - Potential new "current" season of the subscription.
+ * @param {Number} newEpisode - Potential new "current" episode  of the subscription.
+ *
+ * @returns {Boolean} True if the new season/episode was accepted.
  */
 function updateLastEpisode(newSeason, newEpisode) {
   var season = typeof newSeason === 'number' ? newSeason : parseInt(newSeason, 10),
@@ -105,8 +110,8 @@ function updateLastEpisode(newSeason, newEpisode) {
 subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
 
 /**
- * Pre-save action for subscriptions. Sets last modified
- * and, if necessary, creation date.
+ * Pre-save action for subscriptions. Sets last modified and, if necessary, creation date as well
+ * as some other required fields that might be unassigned from the subscription creation.
  */
 function preSaveAction(next) {
   log.debug('Running pre-save action for subscription "%s"', this.name);
@@ -138,14 +143,29 @@ var Subscription = mongoose.model('Subscription', subscriptionSchema);
 /////////////////////////////
 // database access methods //
 /////////////////////////////
-function findSubscriptionByName (subscriptionName) {
+/**
+ * Finds one subscription that match the given name.
+ *
+ * @param {String} subscriptionName - Name of the subscription to find.
+ *
+ * @returns {Subscription} Subscription that was found in the database, or null if not found.
+ */
+function findSubscriptionByName(subscriptionName) {
   return Q.fcall(function () {
-    return Subscription.find({name: subscriptionName}).limit(1);
-  })
-  .then(docs => docs.length > 0 ? docs[0] : null);
+    return Subscription.findOne({name: subscriptionName});
+  });
 }
 
-function findAllSubscriptions (limit, offset) {
+/**
+ * Finds all subscriptions.
+ *
+ * @param {Number} limit - Optional. Maximum number of subscriptions to retrieve, defaults to return
+ *                         all subscription without limit.
+ * @param {Number} offset - Optional. Number of documents to skip, defaults to 0.
+ *
+ * @returns {Array} Array of all subscriptions that were retrieved from the database.
+ */
+function findAllSubscriptions(limit, offset) {
   return Q.fcall(function () {
     return limit
       ? Subscription.find().skip(offset || 0).limit(limit)

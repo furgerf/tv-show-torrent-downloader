@@ -8,35 +8,90 @@ function parseSize(str) {
   return utils.fileSizeToBytes(parseInt(data[1], 10), data[2]);
 }
 
-// TODO: split into two sub-functions
-function parseDate(str) {
-  var dataThisYear = str.match(/(\d{2})-(\d{2}).*;(\d{2}):(\d{2})/),
-    dataOtherYear = str.match(/(\d{2})-(\d{2}).*;(\d{4})/),
-    dataToday = str.match(/Today.*;(\d{2}):(\d{2})/),
-    date;
-
-  if (dataThisYear !== null) {
-    date = new Date(
+/**
+ * Parses a date from the current year.
+ *
+ * @param {Array}  dateThisYear - Data that was parsed from the regex.
+ * @param {String} dateThisYear[0] - Complete match.
+ * @param {String} dateThisYear[1] - Month.
+ * @param {String} dateThisYear[2] - Day.
+ * @param {String} dateThisYear[3] - Hour.
+ * @param {String} dateThisYear[4] - Minute.
+ *
+ * @returns {Date} Parsed date.
+ */
+function parseDateThisYear(dateThisYear) {
+  return new Date(
       new Date().getFullYear(),
-      parseInt(dataThisYear[1], 10) - 1,
-      parseInt(dataThisYear[2], 10),
-      parseInt(dataThisYear[3], 10),
-      parseInt(dataThisYear[4], 10)
-    );
-  } else if (dataOtherYear !== null) {
-    date = new Date(
-      parseInt(dataOtherYear[3], 10),
-      parseInt(dataOtherYear[1], 10) - 1,
-      parseInt(dataOtherYear[2], 10),
+      parseInt(dateThisYear[1], 10) - 1,
+      parseInt(dateThisYear[2], 10),
+      parseInt(dateThisYear[3], 10),
+      parseInt(dateThisYear[4], 10)
+      );
+}
+
+/**
+ * Parses a date from the last year.
+ *
+ * @param {Array}  dateOtherYear - Data that was parsed from the regex.
+ * @param {String} dateOtherYear[0] - Complete match.
+ * @param {String} dateOtherYear[1] - Month.
+ * @param {String} dateOtherYear[2] - Day.
+ * @param {String} dateOtherYear[3] - Year.
+ *
+ * @returns {Date} Parsed date.
+ */
+function parseDateLastYear(dateOtherYear) {
+  return new Date(
+      parseInt(dateOtherYear[3], 10),
+      parseInt(dateOtherYear[1], 10) - 1,
+      parseInt(dateOtherYear[2], 10),
       0,
       0
-    );
-  } else if (dataToday !== null) {
-    date = new Date();
-    date.setHours(parseInt(dataToday[1], 10));
-    date.setMinutes(parseInt(dataToday[2], 10));
-    date.setSeconds(0);
-    date.setMilliseconds(0);
+      );
+}
+
+/**
+ * Parses a date from today.
+ *
+ * @param {Array}  dateOtherYear - Data that was parsed from the regex.
+ * @param {String} dateOtherYear[0] - Complete match.
+ * @param {String} dateOtherYear[1] - Hours.
+ * @param {String} dateOtherYear[2] - Minutes.
+ *
+ * @returns {Date} Parsed date.
+ */
+function parseDateToday(dateToday) {
+  var date = new Date();
+  date.setHours(parseInt(dateToday[1], 10));
+  date.setMinutes(parseInt(dateToday[2], 10));
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+
+  return date;
+}
+
+/**
+ * Parses a date.
+ *
+ * @param {String} str - Date data that was retrieved from the torrent site.
+ *
+ * @returns {Date} Parsed date if parsed successfully, null otherwise.
+ */
+function parseDate(str) {
+  var dateThisYear = str.match(/(\d{2})-(\d{2}).*;(\d{2}):(\d{2})/),
+    dateOtherYear = str.match(/(\d{2})-(\d{2}).*;(\d{4})/),
+    dateToday = str.match(/Today.*;(\d{2}):(\d{2})/),
+    date;
+
+  if (dateThisYear !== null) {
+    date = parseDateThisYear(dateThisYear);
+  } else if (dateOtherYear !== null) {
+    date = parseDateLastYear(dateOtherYear);
+  } else if (dateToday !== null) {
+    date = parseDateToday(dateToday)
+  } else {
+    return null;
   }
 
   if (date > new Date()) {
@@ -46,6 +101,23 @@ function parseDate(str) {
   return date;
 }
 
+/**
+ * Parses the torrent data.
+ *
+ * @param {String} html - HTML response from the search.
+ * @param {Number} season - Season which was searched for.
+ * @param {Number} episode - Episode which was searched for.
+ *
+ * @returns {Object} Torrent information if parsing was successful, null otherwise. Properties:
+ *                   {String} name - Name of the torrent.
+ *                   {Number} season - Season of the torrent.
+ *                   {Number} episode - Episode of the torrent.
+ *                   {Number} seeders - Seeders of the torrent.
+ *                   {Number} leechers - Leechers of the torrent.
+ *                   {Number} size - Size in bytes of the torrent.
+ *                   {Date} uploadDate - Date when the torrent was uploaded.
+ *                   {String} link - Link to the torrent.
+ */
 function parseTorrentData(html, season, episode) {
   try {
     var magnetRegexp = /<a href="magnet:?/,
@@ -88,6 +160,11 @@ function parseTorrentData(html, season, episode) {
   }
 }
 
+/**
+ * Parser constructor.
+ *
+ * @param {String} url - Is used by the torrent-site index to build the search URL.
+ */
 function Parser (url) {
   if (!url || !url.toString()) {
     throw new ArgumentException('Must provide valid URL ending');

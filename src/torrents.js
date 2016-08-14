@@ -8,9 +8,12 @@ var config = require('./config'),
 
 /**
  * Parses the size of a torrent, depending on the torrent site's format.
- * @param str String representing the size that should be parsed
+ *
+ * @param {String} str - String representing the size that should be parsed.
+ *
+ * @returns {Number} Number of bytes of the torrent.
  */
-exports.parseSize = function (str) {
+function parseSize(str) {
   switch (config.torrentSite) {
   case pirateBayMnSite:
     return pirateBayMn.parseSize(str);
@@ -18,13 +21,16 @@ exports.parseSize = function (str) {
     log.error('Requesting unknown torrent site: "%s"', config.torrentSite);
     return -1;
   }
-};
+}
 
 /**
  * Parses the upload date of the torrent, depending on the torrent site's format.
- * @param str String representing the date that should be parsed
+ *
+ * @param {String} str - String representing the date that should be parsed.
+ *
+ * @returns {Date} Date of the torrent.
  */
-exports.parseDate = function (str) {
+function parseDate(str) {
   switch (config.torrentSite) {
   case pirateBayMnSite:
     return pirateBayMn.parseDate(str);
@@ -32,5 +38,8 @@ exports.parseDate = function (str) {
     log.error('Requesting unknown torrent site: "%s"', config.torrentSite);
     return -1; // TODO: Try to return invalid date instead (or null/undefined?)
   }
-};
+}
+
+exports.parseDate = parseDate;
+exports.parseDate = parseDate;
 
