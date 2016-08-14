@@ -38,7 +38,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
             getSubscription(subscriptionName);
           })
         .catch(function (err) {
-          logger.logAlert('Error ' + err.status + ' while requesting updates for subscription ' + subscriptionName + ':\n' + err.data.message);
+          notification.show('Error ' + err.status + ' while requesting updates for subscription ' + subscriptionName + ':\n' + (err.data || {}).message);
         });
       };
 
@@ -76,11 +76,11 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
         subscriptionHandler.downloadEpisode(subscriptionName, episodeInfo.season, episodeInfo.episode, episodeInfo.link)
           .then(function (response) {
             if (response.status !== 200) {
-              logger.logConsole('Unexpected episode download response code ' + response.status + '!\nMessage: ' + response.data.message);
+              notification.show('Unexpected episode download response code ' + response.status + '!\nMessage: ' + (response.data || {}).message);
               return;
             }
 
-            notification.show('Successfully started torrent download with message: ' + response.data.message);
+            notification.show('Successfully started torrent download with message: ' + (response.data || {}).message);
 
             // when we get a successful response, we assume the download was started, so we update the properties
             // so we update the properties of the episode that was downloaded
@@ -92,7 +92,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
             });
           })
         .catch(function (err) {
-          notification.show('Error ' + err.status + ' while requesting download of ' + subscriptionName + ', S' + $filter('twoDigits')(episodeInfo.season) + 'E' + $filter('twoDigits')(episodeInfo.episode) + ':\n' + err.data.message);
+          notification.show('Error ' + err.status + ' while requesting download of ' + subscriptionName + ', S' + $filter('twoDigits')(episodeInfo.season) + 'E' + $filter('twoDigits')(episodeInfo.episode) + ':\n' + (err.data || {}).message);
         });
       };
 
@@ -112,7 +112,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
             handleSubscriptionResponse(resp);
           })
         .catch(function (err) {
-          logger.logAlert('Error ' + err.status + ' while requesting infors for subscription ' + subscriptionName + ':\n' + err.data.message);
+          notification.show('Error ' + err.status + ' while requesting infors for subscription ' + subscriptionName + ':\n' + (err.data || {}).message);
         });
       }
 
@@ -124,11 +124,11 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
        */
       function handleSubscriptionUpdatesResponse (response, subscriptionName) {
           if (response.status !== 200) {
-            logger.logConsole('Unexpected subscription update response code ' + response.status + '!\nMessage: ' + response.data.message);
+            notification.show('Unexpected subscription update response code ' + response.status + '!\nMessage: ' + (response.data || {}).message);
             return;
           }
 
-          logger.logConsole('Handling subscription update response for ' + subscriptionName + ' with message: ' + response.data.message);
+          logger.logConsole('Handling subscription update response for ' + subscriptionName + ' with message: ' + (response.data || {}).message);
 
           var responseData = response.data.data,
             lastEpisode,
@@ -156,7 +156,7 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
        */
       function handleSubscriptionResponse (response) {
         if (response.status !== 200) {
-          logger.logConsole('Unexpected subscription response code ' + response.status + '!\nMessage: ' + response.data.message);
+          notification.show('Unexpected subscription response code ' + response.status + '!\nMessage: ' + (response.data || {}).message);
           return;
         }
 

@@ -62,7 +62,7 @@ function createNewSubscriptionFromData (data) {
  * Handles requests to POST /subscriptions.
  */
 function addSubscription (req, res, next) {
-  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body;
+  var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
   if (!body.name) {
     return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
@@ -79,7 +79,7 @@ function addSubscription (req, res, next) {
  * Handles requests to POST /subscriptions/:subscriptionName.
  */
 function updateSubscription (req, res, next) {
-  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body,
+  var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     subscriptionName = decodeURIComponent(req.params[0]);
 
   body.name = body.name || subscriptionName;

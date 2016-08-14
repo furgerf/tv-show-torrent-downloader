@@ -39,7 +39,8 @@ function getAllSubscriptions (req, res, next) {
     .then(function (subscriptions) {
       // return returnable of all retrieved subscriptions
       utils.sendOkResponse(subscriptions.length + " subscription(s) retrieved",
-          subscriptions.map(sub => sub.getReturnable()), res, next, "http://" + req.headers.host + req.url);
+          subscriptions.map(sub => sub.getReturnable()),
+          res, next, "http://" + req.headers.host + req.url);
       next();
     });
 }

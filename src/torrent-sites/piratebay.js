@@ -89,7 +89,7 @@ function parseDate(str) {
   } else if (dateOtherYear !== null) {
     date = parseDateLastYear(dateOtherYear);
   } else if (dateToday !== null) {
-    date = parseDateToday(dateToday)
+    date = parseDateToday(dateToday);
   } else {
     return null;
   }

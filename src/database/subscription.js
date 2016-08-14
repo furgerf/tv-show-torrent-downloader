@@ -23,8 +23,8 @@ var subscriptionSchema = new mongoose.Schema({
 });
 
 /**
- * Gets a version of the subscription that can be returned to the requestee. Only returns certain fields
- * (which could also be renamed).
+ * Gets a version of the subscription that can be returned to the requestee. Only returns certain
+ * fields (which could also be renamed).
  *
  * @returns {Object} Returnable version of the subscription.
  */

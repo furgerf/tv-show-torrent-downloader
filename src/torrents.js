@@ -41,5 +41,5 @@ function parseDate(str) {
 }
 
 exports.parseDate = parseDate;
-exports.parseDate = parseDate;
+exports.parseSize = parseSize;
 

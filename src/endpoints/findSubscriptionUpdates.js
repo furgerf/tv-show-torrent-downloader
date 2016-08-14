@@ -105,7 +105,7 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
  * Handles requests to PUT /subscriptions/:subscriptionName/find.
  */
 function checkSubscriptionForUpdates(req, res, next) {
-  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body,
+  var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     subscriptionName = decodeURIComponent(req.params[0]),
     torrentSort = getTorrentSort(body ? body.torrentSort : ''),
     maxTorrentsPerEpisode = parseInt(body ? body.maxTorrentsPerEpisode : "1", 10) || 1,
@@ -145,7 +145,7 @@ function checkSubscriptionForUpdates(req, res, next) {
  * Handles requests to PUT /subscriptions/find.
  */
 function checkAllSubscriptionsForUpdates(req, res, next) {
-  var body = typeof req.body == "string" ? JSON.parse(req.body) : req.body,
+  var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     result,
     updateCount = 0,
     torrentSort = getTorrentSort(body ? body.torrentSort : ''),
