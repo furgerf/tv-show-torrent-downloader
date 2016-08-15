@@ -3,6 +3,13 @@
 var url = require('url'),
   utils = require('./../common/utils');
 
+/**
+ * Parses the size of a torrent.
+ *
+ * @param {String} str - Size data that was retrieved from the torrent site.
+ *
+ * @returns {Number} Size of the torrent in bytes if `str` was parsed successfully, otherwise null.
+ */
 function parseSize(str) {
   var data = str.match(/(\d+(?:\.\d+)?).*\b(.{2}B).*/);
   return utils.fileSizeToBytes(parseInt(data[1], 10), data[2]);
