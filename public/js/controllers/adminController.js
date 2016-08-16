@@ -1,35 +1,76 @@
 
 /*global app, confirm, mod*/
 
-mod.controller('adminController', ['logger', 'settings', 'adminHandler',
-    function (logger, settings, adminHandler) {
+mod.controller('adminController', ['logger', 'settings', 'notification', 'adminHandler',
+    function (logger, settings, notification, adminHandler) {
       'use strict';
 
       // continuous access to caller and some Important Objects
-      var that = this;
+      var that = this,
+          subscriptionSortTimer,
+          serverHostTimer,
+          serverPortTimer,
+          maxTorrentsPerEpisodeTimer,
+          torrentSortTimer;
+
+      const SELECTION_SAVE_TIMEOUT = 1000,
+            TEXT_SAVE_TIMEOUT = 2000;
 
       that.disks = [];
 
       that.subscriptionSort = settings.getSubscriptionSort();
-      that.serverHost = settings.getServerHost();
-      that.serverPort = parseInt(settings.getServerPort(), 10);
-      that.torrentSort = settings.getTorrentSort();
-      that.maxTorrentsPerEpisode = parseInt(settings.getMaxTorrentsPerEpisode(), 10);
-
-      that.saveSubscriptionSort = function () {
+      subscriptionSortTimer = null;
+      that.onSubscriptionSortChanged = function () {
+        clearTimeout(subscriptionSortTimer);
+        subscriptionSortTimer = setTimeout(saveSubscriptionSort, SELECTION_SAVE_TIMEOUT);
+      };
+      function saveSubscriptionSort() {
         settings.setSubscriptionSort(that.subscriptionSort);
+        notification.show('Saved new subscription sort `' + that.subscriptionSort + '`.');
       };
-      that.saveServerHost = function () {
+
+      that.serverHost = settings.getServerHost();
+      serverHostTimer = null;
+      that.onServerHostChanged = function () {
+        clearTimeout(serverHostTimer);
+        serverHostTimer = setTimeout(saveServerHost, TEXT_SAVE_TIMEOUT);
+      };
+      function saveServerHost() {
         settings.setServerHost(that.serverHost);
+        notification.show('Saved new server host `' + that.serverHost + '`.');
       };
-      that.saveServerPort = function () {
+
+      that.serverPort = parseInt(settings.getServerPort(), 10);
+      serverPortTimer = null;
+      that.onServerPortChanged = function () {
+        clearTimeout(serverPortTimer);
+        serverPortTimer = setTimeout(saveServerPort, TEXT_SAVE_TIMEOUT);
+      };
+      function saveServerPort() {
         settings.setServerPort(that.serverPort);
+        notification.show('Saved new server port `' + that.serverPort + '`.');
       };
-      that.saveTorrentSort = function () {
-        settings.setTorrentSort(that.torrentSort);
+
+      that.maxTorrentsPerEpisode = parseInt(settings.getMaxTorrentsPerEpisode(), 10);
+      maxTorrentsPerEpisodeTimer = null;
+      that.onMaxTorrentsPerEpisodeChanged = function () {
+        clearTimeout(maxTorrentsPerEpisodeTimer);
+        maxTorrentsPerEpisodeTimer = setTimeout(saveMaxTorrentsPerEpisode, TEXT_SAVE_TIMEOUT);
       };
-      that.saveMaxTorrentsPerEpisode = function () {
+      function saveMaxTorrentsPerEpisode() {
         settings.setMaxTorrentsPerEpisode(that.maxTorrentsPerEpisode);
+        notification.show('Saved new max torrents per episode `' + that.maxTorrentsPerEpisode + '`.');
+      };
+
+      that.torrentSort = settings.getTorrentSort();
+      torrentSortTimer = null;
+      that.onTorrentSortChanged = function () {
+        clearTimeout(torrentSortTimer);
+        torrentSortTimer = setTimeout(saveTorrentSort, SELECTION_SAVE_TIMEOUT);
+      };
+      function saveTorrentSort() {
+        settings.setTorrentSort(that.torrentSort);
+        notification.show('Saved new torrent sort `' + that.torrentSort  + '`.');
       };
 
       that.getDiskUsage = function () {

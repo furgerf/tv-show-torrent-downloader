@@ -3,35 +3,30 @@
 <div class="darker">
   <h2>Web-UI</h2>
   Sort subscriptions by:
-    <select ng-model="adminCtrl.subscriptionSort">
+    <select ng-model="adminCtrl.subscriptionSort" ng-change="adminCtrl.onSubscriptionSortChanged()">
       <option value="alphabetical">Alphabetical</option>
       <option value="lastTorrentDownload">Last torrent download</option>
     </select>
-    <button ng-click='adminCtrl.saveSubscriptionSort()'>Save</button>
 
   <h2>Server</h2>
   Server host:
-    <input type="text" ng-model="adminCtrl.serverHost" placeholder="Server host IP or name">
-    <button ng-click='adminCtrl.saveServerHost()'>Save</button>
+    <input type="text" ng-model="adminCtrl.serverHost" ng-change="adminCtrl.onServerHostChanged()" placeholder="Server host IP or name">
   Server port:
-    <input type="number" ng-model="adminCtrl.serverPort" placeholder="Server port">
-    <button ng-click='adminCtrl.saveServerPort()'>Save</button>
+    <input type="number" ng-model="adminCtrl.serverPort" ng-change="adminCtrl.onServerPortChanged()" placeholder="Server port">
 
   <h2>Torrents</h2>
   Maximum number of torrents per episode:
-    <input type="number" ng-model="adminCtrl.maxTorrentsPerEpisode" placeholder="Max number of torrents per episode" min="0" max="10">
-    <button ng-click='adminCtrl.saveMaxTorrentsPerEpisode()'>Save</button>
+    <input type="number" ng-model="adminCtrl.maxTorrentsPerEpisode" ng-change="adminCtrl.onMaxTorrentsPerEpisodeChanged()" placeholder="Max number of torrents per episode" min="0" max="10">
     <br>
 
   Torrent sort criterion:
-    <select ng-model="adminCtrl.torrentSort">
+    <select ng-model="adminCtrl.torrentSort" ng-change="adminCtrl.onTorrentSortChanged()">
       <option value="mostSeeded">Most seeded</option>
       <option value="largest">Largest</option>
       <option value="smallest">Smallest</option>
       <option value="newest">Newest</option>
       <option value="oldest">Oldest</option>
     </select>
-    <button ng-click='adminCtrl.saveTorrentSort()'>Save</button>
 </div>
 
 <h2>Monitoring</h2>
