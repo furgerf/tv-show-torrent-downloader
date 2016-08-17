@@ -24,6 +24,10 @@ table {
   font-weight: bold;
   font-size: 24px;
 }
+.subtitle {
+  font-weight: bold;
+  font-size: 16px;
+}
 td {
   color: #143D29;
   border-style: inset;
