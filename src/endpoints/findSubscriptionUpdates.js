@@ -9,8 +9,7 @@ var restify = require('restify'),
 
   updateSubscription = require('../endpoints/updateSubscription'),
 
-  database = require('../database/subscription'),
-  Subscription = database.Subscription;
+  database = require('../database/subscription');
 
 /**
  * Parses the provided `torrentSort` and returns a valid torrent sorting method.
@@ -107,38 +106,33 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
 function checkSubscriptionForUpdates(req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     subscriptionName = decodeURIComponent(req.params[0]),
-    torrentSort = getTorrentSort(body ? body.torrentSort : ''),
-    maxTorrentsPerEpisode = parseInt(body ? body.maxTorrentsPerEpisode : "1", 10) || 1,
+    torrentSort = getTorrentSort(body ? body.torrentSort : req.params.torrentSort),
+    maxTorrentsPerEpisode = parseInt(body
+        ? body.maxTorrentsPerEpisode
+        : req.params.maxTorrentsPerEpisode, 10) || 1,
     startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
-  Subscription.find({name: subscriptionName}, function (err, subscriptions) {
-    if (err) {
-      req.log.error(err);
-      return next(new restify.InternalServerError('Error while retrieving subscriptions.'));
-    }
-
-    if (subscriptions.length === 0) {
-      req.log.warn('No subscription with name "%s" found', subscriptionName);
-      return next(new restify.BadRequestError(
-            "No subscription with name '" + subscriptionName + "'"));
-    }
-
-    checkSubscriptionForUpdate(subscriptions[0], torrentSort, maxTorrentsPerEpisode, req.log)
-      .then(function (data) {
-        if (startDownload) {
-          data.forEach(function (torrent) {
-            updateSubscription.downloadTorrent(subscriptions[0],
-                torrent.season, torrent.episode, torrent.link, req.log);
-          });
-        }
+  database.findSubscriptionByName(subscriptionName)
+    .then(subscription => subscription
+        ? subscription
+        : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
+    .then(function (subscription) {
+      return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
+        .then(function (data) {
+          if (startDownload) {
+            data.forEach(function (torrent) {
+              updateSubscription.downloadTorrent(subscription,
+                  torrent.season, torrent.episode, torrent.link, req.log);
+            });
+          }
 
         utils.sendOkResponse('Found ' +
             (startDownload && data.length > 0 ? 'and started download of ' : '') +
             data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
-      })
-      .fail(() => next(
-            new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
-  });
+        });
+    })
+    .fail(() => next(
+        new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
 }
 
 /**
@@ -148,12 +142,15 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     result,
     updateCount = 0,
-    torrentSort = getTorrentSort(body ? body.torrentSort : ''),
-    maxTorrentsPerEpisode = parseInt(body ? body.maxTorrentsPerEpisode : "1", 10) || 1,
+    torrentSort = getTorrentSort(body ? body.torrentSort : req.params.torrentSort),
+    maxTorrentsPerEpisode = parseInt(body
+        ? body.maxTorrentsPerEpisode
+        : req.params.maxTorrentsPerEpisode, 10) || 1,
     startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
-  // TODO: Cleanup
+  // retrieve all subscriptions
   database.findAllSubscriptions()
+    // continue when updates are found for all subscriptions
     .then(subscriptions => Q.all(subscriptions.map(function (subscription) {
       return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
         .then(function (data) {
@@ -163,6 +160,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
         });
     })))
     .then(function (data) {
+      // prepare result
       result = data.filter(function (entry) { return entry.length > 0; });
       result.forEach(function (torrents) {
         updateCount += torrents.length;
@@ -181,11 +179,10 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
         delete entry.subscription;
       });
 
+      // done
       utils.sendOkResponse('Checked ' + data.length + ' subscriptions for updates and found ' +
           (startDownload && updateCount > 0 ? 'and started download of ' : '' + updateCount) +
           ' new torrents', result, res, next, 'http://' + req.headers.host + req.url);
-      res.end();
-      return next();
     })
     .fail(() => next(
           new restify.InternalServerError('All known torrent sites appear to be unavailable.')));

@@ -1,6 +1,19 @@
 #!/bin/bash
 
-response=$(curl -X PUT localhost:8000/subscriptions/find?startDownload=true 2> /dev/null)
+if [ "$1" ]; then
+  host="$1"
+else
+  host="localhost"
+fi
+port=8000
+torrents=1
+sort='mostSeeded'
+
+route="/subscriptions/find"
+query="?startDownload=true&torrentSort=$sort&maxTorrentsPerEpisode=$torrents"
+url=$host:$port$route$query
+
+response=$(curl -X PUT $url 2> /dev/null)
 code=$(echo $response | cut -d '"' -f 4)
 message=$(echo $response | cut -d '"' -f 8)
 
