@@ -181,8 +181,9 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
 
       // done
       utils.sendOkResponse('Checked ' + data.length + ' subscriptions for updates and found ' +
-          (startDownload && updateCount > 0 ? 'and started download of ' : '' + updateCount) +
-          ' new torrents', result, res, next, 'http://' + req.headers.host + req.url);
+          updateCount + ' new torrents' +
+          (startDownload && updateCount > 0 ? ' which were downloaded' : ''),
+          result, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(
           new restify.InternalServerError('All known torrent sites appear to be unavailable.')));

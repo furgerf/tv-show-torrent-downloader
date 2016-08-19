@@ -21,7 +21,7 @@ if [ $code == "Success" ]; then
   # SUCCESS
   count=$(echo $message | cut -d ' ' -f 8)
 
-  if [ $count -gt 0 ]; then
+  if [ "$count" -gt 0 ]; then
     echo "Started $count new torrent downloads."
     echo "$code: $message"
     echo ""
