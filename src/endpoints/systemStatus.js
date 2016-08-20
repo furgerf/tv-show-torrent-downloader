@@ -19,7 +19,7 @@ function parseDiskInformation(data) {
   try {
     var split = data.replace(/\s+/g, ' ').split(' ');
     return split.length <= 5 ? null : {
-      mountPoint: split[5],
+      mountPoint: split.slice(5).join(' '),
       spaceUsed: split[2],
       spaceAvailable: split[3]
     };
