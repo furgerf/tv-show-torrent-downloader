@@ -27,11 +27,13 @@ if [ $code == "Success" ]; then
     echo ""
     echo "Complete response: $response"
   fi
-else
-  # FAILURE
-  echo "Failure while trying to update subscriptions." >&2
-  echo "$code: $message" >&2
-  echo "" >&2
-  echo "Complete response: $response" >&2
+  exit 0
 fi
+
+# FAILURE
+echo "Failure while trying to update subscriptions." >&2
+echo "$code: $message" >&2
+echo "" >&2
+echo "Complete response: $response" >&2
+exit 1
 
