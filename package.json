@@ -7,7 +7,8 @@
     "start": "supervisor server.js | node_modules/bunyan/bin/bunyan",
     "stop": "pkill node",
     "test": "jasmine-node --verbose spec/",
-    "lint": "jshint src/ --verbose --show-non-errors || true"
+    "lint": "jshint src/ --verbose --show-non-errors || true",
+    "lint-xml": "jshint src/ --verbose --show-non-errors --reporter checkstyle > gen/jshint.xml || true"
   },
   "repository": {
     "type": "git",
