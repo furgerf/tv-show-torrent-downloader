@@ -28,6 +28,8 @@ var restify = require('restify'),
     requestStarts = {},
     root = join(__dirname, 'public');
 
+process.title = 'tv-show-api';
+
 // set up server
 server.use(restify.bodyParser());
 server.use(restify.authorizationParser());
@@ -84,9 +86,6 @@ server.listen(config.api.port, config.api.host, function () {
 
   // system status
   server.get(/^\/status\/system\/disk\/?$/, systemStatus.getSystemDiskUsage);
-
-  // shutdown
-  server.get(/^\/exit$/, process.exit);
 
   // root
   server.get(/^\/$/, function (req, res, next) {
