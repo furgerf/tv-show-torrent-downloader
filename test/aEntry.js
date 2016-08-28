@@ -3,8 +3,13 @@
 // /*global describe*/
 
 var should = require('chai').should(),
-    api = require('./../src/app'),
+    config = require('./../src/common/config'),
+    api,
     server;
+
+config.writeLogfile = false;
+config.writeErrorlogfile = false;
+api = require('./../src/app');
 
 describe('entry - say hello! :-)', function () {
   beforeEach(function (done) {

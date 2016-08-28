@@ -7,9 +7,9 @@
     "start": "supervisor server.js | node_modules/bunyan/bin/bunyan",
     "stop": "pkill tv-show-api --signal SIGINT",
     "test": "mocha test/",
+    "cover": "istanbul cover --dir gen/coverage/ _mocha -- test/ || true",
     "lint": "jshint src/ --verbose --show-non-errors || true",
     "lint-test": "jshint test/ --verbose --show-non-errors || true",
-    "cover": "istanbul cover --dir gen/coverage/ _mocha -- test/ || true",
     "lint-xml": "jshint src/ --verbose --show-non-errors --reporter checkstyle > gen/jshint.xml || true"
   },
   "repository": {
