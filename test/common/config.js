@@ -1,7 +1,7 @@
 'use strict';
 
 var should = require('chai').should(),
-    config = require('../src/common/config');
+    config = require('../../src/common/config');
 
 describe('config - ensure that the expected config values are defined', function () {
   it('should contain the api address', function () {

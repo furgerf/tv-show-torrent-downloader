@@ -82,30 +82,55 @@ describe('utils - fileSizeToBytes', function () {
 });
 
 describe('utils - sendOkResponse', function () {
-  it('should only set the minimum headers when invoked without further data', function () {
-    var header = {},
+  var response,
+      next,
+      header,
       data,
-      endCalls = 0,
-      response = {
+      endCalls,
+      nextCalls;
+
+  beforeEach(function () {
+    next = () => nextCalls++;
+    header = {};
+    data = undefined;
+    endCalls = 0;
+    nextCalls = 0;
+    response = {
         statusCode: null,
         setHeader: function (key, value) { header[key] = value; },
         send: function (responseData) { data = responseData; },
         end: function () { endCalls++; }
       };
 
-    utils.sendOkResponse(response);
+    spyOn(response, 'end');
+    spyOn(response, 'send');
+    next = spyOn(next);
+    console.log("next");
+    console.log(next);
+  });
+
+  it('should only set the minimum headers when invoked without further data', function () {
+    utils.sendOkResponse('', {}, response, next);
 
     expect(response.statusCode).toBe(200);
     expect(header['Content-Type']).toBe('application/json');
 
-    expect(Object.keys(data).length).toBe(4);
-    expect(data.code).toBe('Success');
-    expect(data.message).toBe('');
-    expect(data.href).toBe('<unknown>');
-    expect(Object.keys(data.data).length).toBe(0);
+    //expect(Object.keys(data).length).toBe(4);
+    //expect(data.code).toBe('Success');
+    //expect(data.message).toBe('');
+    //expect(data.href).toBe('<unknown>');
+    //expect(Object.keys(data.data).length).toBe(0);
 
-    expect(endCalls).toBe(1);
+    expect(response.send).toHaveBeenCalledWith({
+      code: 'Success',
+      message: '',
+      href: '<unknown>',
+      data: {}
+    });
+    expect(response.end).toHaveBeenCalled();
+    expect(next).toHaveBeenCalled();
   });
+
 });
 */
 

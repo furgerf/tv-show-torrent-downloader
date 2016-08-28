@@ -88,6 +88,10 @@
     "globals"       : {         // additional predefined global variables
         "it": true,
         "describe": true,
+        "before": true,
+        "beforeEach": true,
+        "after": true,
+        "afterEach": true,
         "ArgumentException": false
     }
 }

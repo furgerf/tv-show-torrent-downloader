@@ -1,7 +1,7 @@
 'use strict';
 
 var should = require('chai').should(),
-    logger = require('../src/common/logger');
+    logger = require('../../src/common/logger');
 
 describe('logger - exports a logger', function () {
   it('should export an object that contains logging functions', function () {

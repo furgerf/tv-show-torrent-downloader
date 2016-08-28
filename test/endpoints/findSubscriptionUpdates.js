@@ -1,5 +1,6 @@
 'use strict';
 
+/*
 var rewire = require('rewire'),
   findSubscriptionUpdates = rewire('../../src/endpoints/findSubscriptionUpdates');
 
@@ -34,4 +35,5 @@ describe('endpoints/findSubscriptionUpdates', function () {
     expect(1).toBe(1);
   });
 });
+*/
 
