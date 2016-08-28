@@ -6,7 +6,7 @@
   "scripts": {
     "start": "supervisor server.js | node_modules/bunyan/bin/bunyan",
     "stop": "pkill tv-show-api --signal SIGINT",
-    "test": "mocha --verbose spec/",
+    "test": "mocha test/",
     "lint": "jshint src/ --verbose --show-non-errors || true",
     "start-covered": "istanbul cover --handle-sigint --dir gen/coverage/server server.js | node_modules/bunyan/bin/bunyan",
     "test-covered": "istanbul cover --dir gen/coverage/test/ _mocha -- foo.js || true",
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@gitlab.com:furgerf/tv-show-torrent-downloader.git"
+    "url": "https://github.com/furgerf/tv-show-torrent-downloader"
   },
   "author": "Fabian Furger",
   "license": "ISC",
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "apidoc": "*",
+    "chai": "*",
     "istanbul": "*",
     "istanbul-combine": "*",
     "jshint": "*",
