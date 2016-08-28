@@ -8,10 +8,8 @@
     "stop": "pkill tv-show-api --signal SIGINT",
     "test": "mocha test/",
     "lint": "jshint src/ --verbose --show-non-errors || true",
-    "start-covered": "istanbul cover --handle-sigint --dir gen/coverage/server server.js | node_modules/bunyan/bin/bunyan",
-    "test-covered": "istanbul cover --dir gen/coverage/test/ _mocha -- foo.js || true",
-    "combine-coverage": "istanbul-combine -d gen/coverage/combined -p detail -r html -r cobertura gen/coverage/server/coverage.json gen/coverage/test/coverage.json",
-    "cover": "(npm run start-covered; npm run combine-coverage) & sleep 1; npm run test-covered; npm stop",
+    "lint-test": "jshint test/ --verbose --show-non-errors || true",
+    "cover": "istanbul cover --dir gen/coverage/ _mocha -- test/ || true",
     "lint-xml": "jshint src/ --verbose --show-non-errors --reporter checkstyle > gen/jshint.xml || true"
   },
   "repository": {

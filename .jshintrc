@@ -86,6 +86,8 @@
 
     // Custom Globals
     "globals"       : {         // additional predefined global variables
+        "it": true,
+        "describe": true,
         "ArgumentException": false
     }
 }

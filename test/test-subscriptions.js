@@ -5,6 +5,7 @@
  * e.g. test data.
  */
 
+/*
 var rewire = require('rewire'),
   database = rewire('./../src/database/subscription'),
   Subscription = database.Subscription,
@@ -53,4 +54,5 @@ exports.getExtendedSubscription = getExtendedSubscription;
 exports.getAllSubscriptions = function () {
   return [ getMinimalSubscription(), getExtendedSubscription() ];
 };
+*/
 
