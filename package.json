@@ -34,6 +34,7 @@
   "devDependencies": {
     "apidoc": "*",
     "chai": "*",
+    "chai-spies": "*",
     "istanbul": "*",
     "istanbul-combine": "*",
     "jshint": "*",
