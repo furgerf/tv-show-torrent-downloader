@@ -7,6 +7,7 @@ var restify = require('restify'),
 
     // common files
     logger = require('./common/logger'),
+    config = require('./common/config'),
 
     // endpoint handlers
     readSubscription = require('./endpoints/readSubscription'),
@@ -89,20 +90,21 @@ server.get(/^\/$/, function (req, res, next) {
   res.redirect('/index.html', next);
 });
 
-// TODO: don't serve static files in production
-// evertything else... try public FS
-server.get(/^\/([a-zA-Z0-9_\/\.~-]*)/, function (req, res, next) {
-  var path = join(root, req.params[0]),
-  stream = fs.createReadStream(path);
+// serve static files if not in production
+if (!config.productionEnvironment) {
+  server.get(/^\/([a-zA-Z0-9_\/\.~-]*)/, function (req, res, next) {
+    var path = join(root, req.params[0]),
+    stream = fs.createReadStream(path);
 
-  stream.on('error', function (err) {
-    req.log.error('Error while trying to access %s: %s', path, err);
-    return next(new restify.NotFoundError());
+    stream.on('error', function (err) {
+      req.log.error('Error while trying to access %s: %s', path, err);
+      return next(new restify.NotFoundError());
+    });
+
+    req.log.debug('Accessing path %s', path);
+    stream.pipe(res);
   });
-
-  req.log.debug('Accessing path %s', path);
-  stream.pipe(res);
-});
+}
 
 exports.listen = function () {
   return server.listen.apply(server, arguments);

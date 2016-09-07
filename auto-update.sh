@@ -17,7 +17,7 @@ response=$(curl -X PUT $url 2> /dev/null)
 code=$(echo $response | cut -d '"' -f 4)
 message=$(echo $response | cut -d '"' -f 8)
 
-if [ $code == "Success" ]; then
+if [ -n "$code" ] && [ "$code" == "Success" ]; then
   # SUCCESS
   count=$(echo $message | cut -d ' ' -f 8)
 
@@ -32,6 +32,15 @@ fi
 
 # FAILURE
 echo "Failure while trying to update subscriptions." >&2
+if [ -z "$code" ]; then
+  code="<No code>"
+fi
+if [ -z "$message" ]; then
+  message="<No message>"
+fi
+if [ -z "$response" ]; then
+  response="<No response>"
+fi
 echo "$code: $message" >&2
 echo "" >&2
 echo "Complete response: $response" >&2
