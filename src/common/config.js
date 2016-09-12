@@ -1,31 +1,58 @@
-// true if the server instance is running in a production environment
-exports.productionEnvironment = true;
+'use strict';
 
-// host/port configuration of the server
+function Config(api, database, torrentCommand, logging, serveStaticFiles) {
+  this.api = api;
+  this.database = database;
+  this.torrentCommand = torrentCommand;
+  this.logging = logging;
+  this.serveStaticFiles = serveStaticFiles;
+}
 
-// always start the server locally
-exports.api = {
-  host : 'localhost',
-  port : 8000
-};
+function getDebugConfig() {
+  return new Config(
+    {
+      host : 'localhost',
+      port : 8000
+    },
+    {
+      host : 'localhost',
+      port: 27017
+    },
+    'echo',
+    {
+      stdoutLoglevel: 'debug',
+      sourceLogging: true,
+      logDirectory: '/dev/null',
+      writeLogfile: false,
+      writeErrorlogfile: false
+    },
+    true);
+}
 
-// use the raspi database if we actually want to do something
-// NOTE that the torrents are still started locally though
-exports.database = {
-  host : exports.productionEnvironment ? 'localhost' : '192.168.1.31',
-  port: 27017
-};
+function getProductionConfig() {
+  return new Config(
+    {
+      host : 'localhost',
+      port : 8000
+    },
+    {
+      host : 'localhost',
+      port: 27017
+    },
+    'qbittorrent',
+    {
+      stdoutLoglevel: 'warn',
+      sourceLogging: false,
+      logDirectory: '/var/log/tv-show-torrent-downloader',
+      writeLogfile: true,
+      writeErrorlogfile: true
+    },
+    false);
+}
 
-// command to use for starting torrents - don't start torrents in non-production environment
-exports.torrentCommand = exports.productionEnvironment ? 'qbittorrent' : 'echo';
+// access debug/dev configuration
+exports.getDebugConfig = getDebugConfig;
 
-
-exports.logDirectory = '/var/log/tv-show-torrent-downloader';
-
-// stdout loglevel needn't be verbose in production (because we also write to logfile)
-exports.stdoutLoglevel = exports.productionEnvironment ? 'warn' : 'debug';
-
-// write normal/error lot to file in production
-exports.writeLogfile = exports.productionEnvironment;
-exports.writeErrorlogfile = exports.productionEnvironment;
+// access production configuration
+exports.getProductionConfig = getProductionConfig;
 

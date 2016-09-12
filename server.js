@@ -1,10 +1,19 @@
 'use strict';
 
-var app = require('./src/app'),
-    config = require('./src/common/config'),
-    logger = require('./src/common/logger').log.child({component: 'server'});
+var config = require('./src/common/config').getDebugConfig(),
+  database = require('./src/database/database'),
+  logger = require('./src/common/logger'),
+  log,
+  App = require('./src/app').App,
+  app;
 
-app.listen(config.api.port, config.api.host, function () {
-  logger.info('Started API on %s:%d', this.address().address, this.address().port);
+log = logger.createLogger(config.logging).child({component: 'server'});
+
+app = new App(config, log);
+
+database.connect(config.database);
+
+app.listen(function () {
+  log.info('Started API on %s:%d', this.address().address, this.address().port);
 });
 

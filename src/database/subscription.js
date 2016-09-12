@@ -2,7 +2,7 @@
 
 /* jshint -W040 */
 
-var log = require('./../common/logger').log.child({component: 'subscription'}),
+var log = undefined, //require('./../common/logger').child({component: 'subscription'}),
   mongoose = require('mongoose'),
   Q = require('q'),
 
@@ -79,30 +79,30 @@ function updateLastEpisode(newSeason, newEpisode) {
 
   if (season > this.lastSeason) {
     if (episode === 1) {
-      log.debug('Updating last episode of subscription %s from %s to %s',
-          this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
-          utils.formatEpisodeNumber(season, episode));
+      //log.debug('Updating last episode of subscription %s from %s to %s',
+          //this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+          //utils.formatEpisodeNumber(season, episode));
       this.lastSeason = season;
       this.lastEpisode = episode;
     } else {
-      log.warn('Attempting to change season of subscription %s and assign episode %d - aborting',
-          this.name, episode);
+      //log.warn('Attempting to change season of subscription %s and assign episode %d - aborting',
+          //this.name, episode);
       return false;
     }
   } else if (season === this.lastSeason) {
     if (episode === this.lastEpisode + 1) {
-      log.debug('Updating last episode of subscription %s from %s to %s', this.name,
-          utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
-          utils.formatEpisodeNumber(this.lastSeason, episode));
+      //log.debug('Updating last episode of subscription %s from %s to %s', this.name,
+          //utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+          //utils.formatEpisodeNumber(this.lastSeason, episode));
       this.lastEpisode = episode;
     } else {
-      log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
-          this.name, this.lastEpisode, episode);
+      //log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
+          //this.name, this.lastEpisode, episode);
       return false;
     }
   } else {
-    log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
-        this.name, this.lastSeason, season);
+    //log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
+        //this.name, this.lastSeason, season);
     return false;
   }
   return true;
@@ -114,7 +114,7 @@ subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
  * as some other required fields that might be unassigned from the subscription creation.
  */
 function preSaveAction(next) {
-  log.debug('Running pre-save action for subscription "%s"', this.name);
+  //log.debug('Running pre-save action for subscription "%s"', this.name);
 
   var currentDate = new Date();
   this.lastModifiedTime = currentDate;
@@ -129,9 +129,9 @@ function preSaveAction(next) {
   this.lastSeason = this.lastSeason || 1;
   this.lastEpisode = this.lastEpisode || 0;
 
-  log.info('about to be done with pre-save');
+  //log.info('about to be done with pre-save');
   next();
-  log.info('done with pre-save');
+  //log.info('done with pre-save');
 }
 subscriptionSchema.pre('save', preSaveAction);
 

@@ -3,28 +3,32 @@
 // /*global describe*/
 
 var should = require('chai').should(),
-    config = require('./../src/common/config'),
-    api,
-    server;
+  config = require('./../src/common/config').getDebugConfig(),
+  App = require('./../src/app').App,
+  logger = require('./../src/common/logger'),
+  server;
 
-config.writeLogfile = false;
-config.writeErrorlogfile = false;
-api = require('./../src/app');
+config.api.port = 0;
+config.logging.stdoutLoglevel = 'error';
 
 describe('entry - say hello! :-)', function () {
   beforeEach(function (done) {
-    api.listen(0, 'localhost', function () {
+    var that = this;
+    this.app =
+      new App(config, logger.createLogger(config.logging).child({component: 'test-server'}));
+
+    this.app.listen(function () {
       var url = 'http://' + this.address().address + ':' + this.address().port;
-      server = require('supertest').agent(url);
+      that.server = require('supertest').agent(url);
       done();
     });
   });
   afterEach(function (done) {
-    api.close(done);
+    this.app.close(done);
   });
 
   it('should be redirected on root', function (done) {
-    server
+    this.server
       .get('/')
       .expect('Content-type', 'application/json')
       .expect(302)
@@ -36,7 +40,7 @@ describe('entry - say hello! :-)', function () {
   });
 
   it('should should also work on a second request', function (done) {
-    server
+    this.server
       .get('/')
       .expect('Content-type', 'application/json')
       .expect(302)
