@@ -3,13 +3,20 @@
 var restify = require('restify'),
   Q = require('q'),
 
-  utils = require('../common/utils'),
+  utils = require('../../common/utils'),
+  torrentSites = require('../../torrent-sites/'),
+  updateSubscription = require('./updateSubscriptionHandler'),
+  database = require('../../database/subscription');
 
-  torrentSites = require('../torrent-sites/'),
 
-  updateSubscription = require('../endpoints/updateSubscription'),
+function FindSubscriptionUpdatesHandler(log) {
+  this.log = log;
+  this.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;
+  this.checkSubscriptionForUpdates = checkSubscriptionForUpdates;
 
-  database = require('../database/subscription');
+  this.log.info('FindSubscriptionUpdatesHandler created');
+}
+
 
 /**
  * Parses the provided `torrentSort` and returns a valid torrent sorting method.
@@ -189,6 +196,5 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
           new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
 }
 
-exports.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;
-exports.checkSubscriptionForUpdates = checkSubscriptionForUpdates;
+exports.FindSubscriptionUpdatesHandler = FindSubscriptionUpdatesHandler;
 

@@ -2,9 +2,17 @@
 
 var restify = require("restify"),
 
-  utils = require("./../common/utils"),
+  utils = require("./../../common/utils"),
+  database = require("./../../database/subscription");
 
-  database = require("./../database/subscription");
+
+function ReadSubscriptionHandler(log) {
+  this.log = log;
+  this.getSubscriptionByName = getSubscriptionByName;
+  this.getAllSubscriptions = getAllSubscriptions;
+
+  this.log.info('ReadSubscriptionHandler created');
+}
 
 
 /**
@@ -45,6 +53,5 @@ function getAllSubscriptions (req, res, next) {
     });
 }
 
-exports.getSubscriptionByName = getSubscriptionByName;
-exports.getAllSubscriptions = getAllSubscriptions;
+exports.ReadSubscriptionHandler = ReadSubscriptionHandler;
 

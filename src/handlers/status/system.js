@@ -1,10 +1,18 @@
 'use strict';
 
-var restify = require('restify'),
+var exec = require('child_process').exec,
 
-  exec = require('child_process').exec,
+  restify = require('restify'),
 
-  utils = require('./../common/utils');
+  utils = require('./../../common/utils');
+
+
+function SystemStatusHandler(log) {
+  this.log = log;
+  this.getSystemDiskUsage = getSystemDiskUsage;
+
+  this.log.info('SystemStatusHandler created');
+}
 
 
 /**
@@ -47,5 +55,5 @@ function getSystemDiskUsage(req, res, next) {
   });
 }
 
-exports.getSystemDiskUsage = getSystemDiskUsage;
+exports.SystemStatusHandler = SystemStatusHandler;
 

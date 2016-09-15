@@ -1,12 +1,22 @@
 'use strict';
 
 var restify = require('restify'),
-
-  utils = require('./../common/utils'),
-
   Q = require('q'),
-  database = require('./../database/subscription'),
+
+  utils = require('./../../common/utils'),
+
+  database = require('./../../database/subscription'),
   Subscription = database.Subscription;
+
+
+function WriteSubscriptionHandler(log) {
+  this.log = log;
+  this.addSubscription = addSubscription;
+  this.updateSubscription = updateSubscription;
+  this.deleteSubscription = deleteSubscription;
+
+  this.log.info('WriteSubscriptionHandler created');
+}
 
 
 /**
@@ -113,7 +123,5 @@ function deleteSubscription (req, res, next) {
         next(new restify.InternalServerError('Error while removing subscription: ' + error)));
 }
 
-exports.addSubscription = addSubscription;
-exports.updateSubscription = updateSubscription;
-exports.deleteSubscription = deleteSubscription;
+exports.WriteSubscriptionHandler = WriteSubscriptionHandler;
 

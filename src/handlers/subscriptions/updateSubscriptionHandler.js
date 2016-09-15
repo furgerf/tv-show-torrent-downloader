@@ -4,10 +4,17 @@ var restify = require('restify'),
   exec = require('child_process').exec,
   Q = require('q'),
 
-  config = require('./../common/config'),
-  utils = require('./../common/utils'),
+  config = require('./../../common/config'),
+  utils = require('./../../common/utils'),
+  Subscription = require('./../../database/subscription').Subscription;
 
-  Subscription = require('./../database/subscription').Subscription;
+
+function UpdateSubscriptionHandler(log) {
+  this.log = log;
+  this.updateSubscriptionWithTorrent = updateSubscriptionWithTorrent;
+
+  this.log.info('UpdateSubscriptionHandler created');
+}
 
 
 /**
@@ -151,6 +158,5 @@ function updateSubscriptionWithTorrent (req, res, next) {
   });
 }
 
-exports.downloadTorrent = downloadTorrent;
-exports.updateSubscriptionWithTorrent = updateSubscriptionWithTorrent;
+exports.UpdateSubscriptionHandler = UpdateSubscriptionHandler;
 

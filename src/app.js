@@ -6,12 +6,12 @@ var restify = require('restify'),
   fs = require('fs'),
 
   // endpoint handlers
-  readSubscription = require('./endpoints/readSubscription'),
-  writeSubscription = require('./endpoints/writeSubscription'),
-  findSubscriptionUpdates = require('./endpoints/findSubscriptionUpdates'),
-  updateSubscription = require('./endpoints/updateSubscription'),
+  ReadSubscriptionHandler = require('./handlers/subscriptions/readSubscriptionHandler').ReadSubscriptionHandler,
+  WriteSubscriptionHandler = require('./handlers/subscriptions/writeSubscriptionHandler').WriteSubscriptionHandler,
+  FindSubscriptionUpdatesHandler = require('./handlers/subscriptions/findSubscriptionUpdatesHandler').FindSubscriptionUpdatesHandler,
+  UpdateSubscriptionHandler = require('./handlers/subscriptions/updateSubscriptionHandler').UpdateSubscriptionHandler,
 
-  systemStatus = require('./endpoints/systemStatus'),
+  SystemStatusHandler = require('./handlers/status/system').SystemStatusHandler,
 
   // misc variables
   connectionCount = 0,
@@ -29,7 +29,15 @@ function getServer(log, serveStaticFiles) {
   var server = restify.createServer({
     name: 'TV show downloader REST server',
     log: log
-  });
+  }),
+
+  // instantiate handlers
+  readSubscriptionHandler = new ReadSubscriptionHandler(log.child({component: 'ReadSubscriptionHandler'})),
+  writeSubscriptionHandler = new WriteSubscriptionHandler(log.child({component: 'WriteSubscriptionHandler'})),
+  findSubscriptionUpdatesHandler = new FindSubscriptionUpdatesHandler(log.child({component: 'FindSubscriptionUpdatesHandler'})),
+  updateSubscriptionHandler = new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'})),
+
+  systemStatusHandler = new SystemStatusHandler(log.child({component: 'SystemStatusHandler'}));
 
   // hooks for connection logging and allowing CORS
   server.pre(function (req, res, next) {
@@ -66,26 +74,26 @@ function getServer(log, serveStaticFiles) {
 
   // subscriptions
   // retrieve all/specific subscription info
-  server.get(/^\/subscriptions\/?$/, readSubscription.getAllSubscriptions);
-  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, readSubscription.getSubscriptionByName);
+  server.get(/^\/subscriptions\/?$/, readSubscriptionHandler.getAllSubscriptions);
+  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, readSubscriptionHandler.getSubscriptionByName);
 
   // add/update/delete subscription
-  server.post(/^\/subscriptions\/?$/, writeSubscription.addSubscription);
-  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscription.updateSubscription);
-  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscription.deleteSubscription);
+  server.post(/^\/subscriptions\/?$/, writeSubscriptionHandler.addSubscription);
+  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscriptionHandler.updateSubscription);
+  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscriptionHandler.deleteSubscription);
 
   // check all/specific subscription for update
   server.put(/^\/subscriptions\/find\/?$/,
-    findSubscriptionUpdates.checkAllSubscriptionsForUpdates);
+    findSubscriptionUpdatesHandler.checkAllSubscriptionsForUpdates);
   server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/,
-    findSubscriptionUpdates.checkSubscriptionForUpdates);
+    findSubscriptionUpdatesHandler.checkSubscriptionForUpdates);
 
   // update specific subscription with torrent
   server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/,
-    updateSubscription.updateSubscriptionWithTorrent);
+    updateSubscriptionHandler.updateSubscriptionWithTorrent);
 
   // system status
-  server.get(/^\/status\/system\/disk\/?$/, systemStatus.getSystemDiskUsage);
+  server.get(/^\/status\/system\/disk\/?$/, systemStatusHandler.getSystemDiskUsage);
 
   // root
   server.get(/^\/$/, function (req, res, next) {
@@ -120,7 +128,7 @@ function App(config, log) {
   this.server = getServer(log, config.serveStaticFiles);
 
   this.listen = function (callback) {
-    this.server.listen(config.api.port, config.api.host, callback);
+    return this.server.listen(config.api.port, config.api.host, callback);
   };
 
   this.close = function (callback) {
