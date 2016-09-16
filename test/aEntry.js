@@ -6,6 +6,7 @@ var should = require('chai').should(),
   config = require('./../src/common/config').getDebugConfig(),
   App = require('./../src/app').App,
   logger = require('./../src/common/logger'),
+  supertest = require('supertest'),
   server;
 
 config.api.port = 0;
@@ -19,7 +20,7 @@ describe('entry - say hello! :-)', function () {
 
     this.app.listen(function () {
       var url = 'http://' + this.address().address + ':' + this.address().port;
-      that.server = require('supertest').agent(url);
+      that.server = supertest.agent(url);
       done();
     });
   });

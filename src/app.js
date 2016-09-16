@@ -11,7 +11,7 @@ var restify = require('restify'),
   FindSubscriptionUpdatesHandler = require('./handlers/subscriptions/findSubscriptionUpdatesHandler').FindSubscriptionUpdatesHandler,
   UpdateSubscriptionHandler = require('./handlers/subscriptions/updateSubscriptionHandler').UpdateSubscriptionHandler,
 
-  SystemStatusHandler = require('./handlers/status/system').SystemStatusHandler,
+  SystemStatusHandler = require('./handlers/status/systemStatusHandler').SystemStatusHandler,
 
   // misc variables
   connectionCount = 0,
@@ -22,6 +22,12 @@ var restify = require('restify'),
     return join(path.join('/'), 'public');
   })();
 
+/*
+global.rootRequire = function(name) {
+    return require(__dirname + '/' + name);
+};
+*/
+
 process.title = 'tv-show-api';
 
 function getServer(log, serveStaticFiles) {
@@ -29,15 +35,7 @@ function getServer(log, serveStaticFiles) {
   var server = restify.createServer({
     name: 'TV show downloader REST server',
     log: log
-  }),
-
-  // instantiate handlers
-  readSubscriptionHandler = new ReadSubscriptionHandler(log.child({component: 'ReadSubscriptionHandler'})),
-  writeSubscriptionHandler = new WriteSubscriptionHandler(log.child({component: 'WriteSubscriptionHandler'})),
-  findSubscriptionUpdatesHandler = new FindSubscriptionUpdatesHandler(log.child({component: 'FindSubscriptionUpdatesHandler'})),
-  updateSubscriptionHandler = new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'})),
-
-  systemStatusHandler = new SystemStatusHandler(log.child({component: 'SystemStatusHandler'}));
+  });
 
   // hooks for connection logging and allowing CORS
   server.pre(function (req, res, next) {
@@ -74,26 +72,26 @@ function getServer(log, serveStaticFiles) {
 
   // subscriptions
   // retrieve all/specific subscription info
-  server.get(/^\/subscriptions\/?$/, readSubscriptionHandler.getAllSubscriptions);
-  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, readSubscriptionHandler.getSubscriptionByName);
+  server.get(/^\/subscriptions\/?$/, this.readSubscriptionHandler.getAllSubscriptions);
+  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, this.readSubscriptionHandler.getSubscriptionByName);
 
   // add/update/delete subscription
-  server.post(/^\/subscriptions\/?$/, writeSubscriptionHandler.addSubscription);
-  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscriptionHandler.updateSubscription);
-  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, writeSubscriptionHandler.deleteSubscription);
+  server.post(/^\/subscriptions\/?$/, this.writeSubscriptionHandler.addSubscription);
+  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, this.writeSubscriptionHandler.updateSubscription);
+  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, this.writeSubscriptionHandler.deleteSubscription);
 
   // check all/specific subscription for update
   server.put(/^\/subscriptions\/find\/?$/,
-    findSubscriptionUpdatesHandler.checkAllSubscriptionsForUpdates);
+    this.findSubscriptionUpdatesHandler.checkAllSubscriptionsForUpdates);
   server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/,
-    findSubscriptionUpdatesHandler.checkSubscriptionForUpdates);
+    this.findSubscriptionUpdatesHandler.checkSubscriptionForUpdates);
 
   // update specific subscription with torrent
   server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/,
-    updateSubscriptionHandler.updateSubscriptionWithTorrent);
+    this.updateSubscriptionHandler.updateSubscriptionWithTorrent);
 
   // system status
-  server.get(/^\/status\/system\/disk\/?$/, systemStatusHandler.getSystemDiskUsage);
+  server.get(/^\/status\/system\/disk\/?$/, (req, res, next) => this.systemStatusHandler.getSystemDiskUsage(req, res, next));
 
   // root
   server.get(/^\/$/, function (req, res, next) {
@@ -120,12 +118,18 @@ function getServer(log, serveStaticFiles) {
   return server;
 }
 
-function App(config, log) {
+function App(config, log, systemStatusHandler) {
+  this.readSubscriptionHandler = new ReadSubscriptionHandler(log.child({component: 'ReadSubscriptionHandler'}));
+  this.writeSubscriptionHandler = new WriteSubscriptionHandler(log.child({component: 'WriteSubscriptionHandler'}));
+  this.findSubscriptionUpdatesHandler = new FindSubscriptionUpdatesHandler(log.child({component: 'FindSubscriptionUpdatesHandler'}));
+  this.updateSubscriptionHandler = new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'}));
+  this.systemStatusHandler = new SystemStatusHandler(log.child({component: 'SystemStatusHandler'}));
+
   log.info('App created with configuration', config);
 
   this.config = config;
 
-  this.server = getServer(log, config.serveStaticFiles);
+  this.server = getServer.call(this, log, config.serveStaticFiles);
 
   this.listen = function (callback) {
     return this.server.listen(config.api.port, config.api.host, callback);

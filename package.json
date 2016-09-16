@@ -40,6 +40,7 @@
     "jshint": "*",
     "mocha": "*",
     "rewire": "*",
+    "sinon": "*",
     "supertest": "*"
   }
 }
