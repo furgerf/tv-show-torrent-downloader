@@ -2,7 +2,7 @@
 
 /* jshint -W040 */
 
-var log = undefined, //require('./../common/logger').child({component: 'subscription'}),
+var log, //require('./../common/logger').child({component: 'subscription'}),
   mongoose = require('mongoose'),
   Q = require('q'),
 

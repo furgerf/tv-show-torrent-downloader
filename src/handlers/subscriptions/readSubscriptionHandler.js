@@ -5,16 +5,6 @@ var restify = require("restify"),
   utils = require("./../../common/utils"),
   database = require("./../../database/subscription");
 
-
-function ReadSubscriptionHandler(log) {
-  this.log = log;
-  this.getSubscriptionByName = getSubscriptionByName;
-  this.getAllSubscriptions = getAllSubscriptions;
-
-  this.log.info('ReadSubscriptionHandler created');
-}
-
-
 /**
  * Handles reqests to GET /subscriptions/:subscriptionName.
  */
@@ -51,6 +41,21 @@ function getAllSubscriptions (req, res, next) {
           res, next, "http://" + req.headers.host + req.url);
       next();
     });
+}
+
+/**
+ * Creates an instance of ReadSubscriptionHandler.
+ *
+ * @constructor
+ *
+ * @param {Bunyan.Log} log - Logger instance.
+ */
+function ReadSubscriptionHandler(log) {
+  this.log = log;
+  this.getSubscriptionByName = getSubscriptionByName;
+  this.getAllSubscriptions = getAllSubscriptions;
+
+  this.log.info('ReadSubscriptionHandler created');
 }
 
 exports.ReadSubscriptionHandler = ReadSubscriptionHandler;

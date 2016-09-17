@@ -10,7 +10,7 @@ var Q = require('q'),
 
   pirateBay = require('./piratebay'),
 
-  log = undefined, //require('./../common/logger').child({component: 'torrent-sites'}),
+  log, //require('./../common/logger').child({component: 'torrent-sites'}),
 
   pirateBayMn = new pirateBay.Parser('thepiratebay.mn'),
   pirateBaySe = new pirateBay.Parser('thepiratebay.se'),

@@ -8,17 +8,6 @@ var restify = require('restify'),
   database = require('./../../database/subscription'),
   Subscription = database.Subscription;
 
-
-function WriteSubscriptionHandler(log) {
-  this.log = log;
-  this.addSubscription = addSubscription;
-  this.updateSubscription = updateSubscription;
-  this.deleteSubscription = deleteSubscription;
-
-  this.log.info('WriteSubscriptionHandler created');
-}
-
-
 /**
  * Updates the allowed fields of the subscription with the provided data. Only the fields that are
  * allowed to be modified by the user and are actually specified are updated.
@@ -66,7 +55,6 @@ function createNewSubscriptionFromData (data) {
   };
   return new Subscription(newSubscriptionData);
 }
-
 
 /**
  * Handles requests to POST /subscriptions.
@@ -121,6 +109,22 @@ function deleteSubscription (req, res, next) {
           subscriptionName + '".', {}, res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>
         next(new restify.InternalServerError('Error while removing subscription: ' + error)));
+}
+
+/**
+ * Creates an instance of WriteSubscriptionHandler.
+ *
+ * @constructor
+ *
+ * @param {Bunyan.Log} log - Logger instance.
+ */
+function WriteSubscriptionHandler(log) {
+  this.log = log;
+  this.addSubscription = addSubscription;
+  this.updateSubscription = updateSubscription;
+  this.deleteSubscription = deleteSubscription;
+
+  this.log.info('WriteSubscriptionHandler created');
 }
 
 exports.WriteSubscriptionHandler = WriteSubscriptionHandler;

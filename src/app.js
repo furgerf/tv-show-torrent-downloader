@@ -6,10 +6,14 @@ var restify = require('restify'),
   fs = require('fs'),
 
   // endpoint handlers
-  ReadSubscriptionHandler = require('./handlers/subscriptions/readSubscriptionHandler').ReadSubscriptionHandler,
-  WriteSubscriptionHandler = require('./handlers/subscriptions/writeSubscriptionHandler').WriteSubscriptionHandler,
-  FindSubscriptionUpdatesHandler = require('./handlers/subscriptions/findSubscriptionUpdatesHandler').FindSubscriptionUpdatesHandler,
-  UpdateSubscriptionHandler = require('./handlers/subscriptions/updateSubscriptionHandler').UpdateSubscriptionHandler,
+  ReadSubscriptionHandler =
+  require('./handlers/subscriptions/readSubscriptionHandler').ReadSubscriptionHandler,
+  WriteSubscriptionHandler =
+  require('./handlers/subscriptions/writeSubscriptionHandler').WriteSubscriptionHandler,
+  FindSubscriptionUpdatesHandler =
+  require('./handlers/subscriptions/findSubscriptionUpdatesHandler').FindSubscriptionUpdatesHandler,
+  UpdateSubscriptionHandler =
+  require('./handlers/subscriptions/updateSubscriptionHandler').UpdateSubscriptionHandler,
 
   SystemStatusHandler = require('./handlers/status/systemStatusHandler').SystemStatusHandler,
 
@@ -58,40 +62,52 @@ function getServer(log, serveStaticFiles) {
 
   // request handling cleanup
   server.on('after', function (req, res, route) {
-    var duration = new Date().getTime() - requestStarts[req.id()].getTime();
+    var duration = new Date().getTime() - requestStarts[req.id()].getTime(),
+      routeName = route ? route.name : '<unknown route>';
     delete requestStarts[req.id()];
 
-    req.log.warn({res: res}, 'Finished handling request to %s in %d ms', (route ? route.name : '<unknown route>'), duration);
+    req.log.warn({res: res}, 'Finished handling request to %s in %d ms', routeName, duration);
   });
 
   // exception hook
   server.on('uncaughtException', function (req, res, route, error) {
-    req.log.error(error, 'Uncaught exception while accessing %s', (route ? route.name : '<unknown route>'));
+    var routeName = route ? route.name : '<unknown route>';
+    req.log.error(error, 'Uncaught exception while accessing %s', routeName);
     res.send(new restify.InternalServerError('%s (%s)', error.name || '', error.message || error));
   });
 
+  // declare handlers: rather than directly mapping requests to the handler functions,
+  // they're mapped to a function that calls the app's respective Handler object's handler function
+  // this has two consequences: the handlers can be changed from the outside (eg in tests) and
+  // the requests handler functions have access to the handler object's context
   // subscriptions
   // retrieve all/specific subscription info
-  server.get(/^\/subscriptions\/?$/, this.readSubscriptionHandler.getAllSubscriptions);
-  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, this.readSubscriptionHandler.getSubscriptionByName);
+  server.get(/^\/subscriptions\/?$/,
+    (req, res, next) => this.readSubscriptionHandler.getAllSubscriptions(req, res, next));
+  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/,
+    (req, res, next) => this.readSubscriptionHandler.getSubscriptionByName(req, res, next));
 
   // add/update/delete subscription
-  server.post(/^\/subscriptions\/?$/, this.writeSubscriptionHandler.addSubscription);
-  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, this.writeSubscriptionHandler.updateSubscription);
-  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, this.writeSubscriptionHandler.deleteSubscription);
+  server.post(/^\/subscriptions\/?$/,
+    (req, res, next) => this.writeSubscriptionHandler.addSubscription(req, res, next));
+  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/,
+    (req, res, next) => this.writeSubscriptionHandler.updateSubscription(req, res, next));
+  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/,
+    (req, res, next) => this.writeSubscriptionHandler.deleteSubscription(req, res, next));
 
   // check all/specific subscription for update
-  server.put(/^\/subscriptions\/find\/?$/,
-    this.findSubscriptionUpdatesHandler.checkAllSubscriptionsForUpdates);
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/,
-    this.findSubscriptionUpdatesHandler.checkSubscriptionForUpdates);
+  server.put(/^\/subscriptions\/find\/?$/, (req, res, next) =>
+    this.findSubscriptionUpdatesHandler.checkAllSubscriptionsForUpdates(req, res, next));
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, (req, res, next) =>
+    this.findSubscriptionUpdatesHandler.checkSubscriptionForUpdates(req, res, next));
 
   // update specific subscription with torrent
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/,
-    this.updateSubscriptionHandler.updateSubscriptionWithTorrent);
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/, (req, res, next) =>
+    this.updateSubscriptionHandler.updateSubscriptionWithTorrent(req, res, next));
 
   // system status
-  server.get(/^\/status\/system\/disk\/?$/, (req, res, next) => this.systemStatusHandler.getSystemDiskUsage(req, res, next));
+  server.get(/^\/status\/system\/disk\/?$/,
+    (req, res, next) => this.systemStatusHandler.getSystemDiskUsage(req, res, next));
 
   // root
   server.get(/^\/$/, function (req, res, next) {
@@ -118,12 +134,17 @@ function getServer(log, serveStaticFiles) {
   return server;
 }
 
-function App(config, log, systemStatusHandler) {
-  this.readSubscriptionHandler = new ReadSubscriptionHandler(log.child({component: 'ReadSubscriptionHandler'}));
-  this.writeSubscriptionHandler = new WriteSubscriptionHandler(log.child({component: 'WriteSubscriptionHandler'}));
-  this.findSubscriptionUpdatesHandler = new FindSubscriptionUpdatesHandler(log.child({component: 'FindSubscriptionUpdatesHandler'}));
-  this.updateSubscriptionHandler = new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'}));
-  this.systemStatusHandler = new SystemStatusHandler(log.child({component: 'SystemStatusHandler'}));
+function App(config, log) {
+  this.readSubscriptionHandler =
+    new ReadSubscriptionHandler(log.child({component: 'ReadSubscriptionHandler'}));
+  this.writeSubscriptionHandler =
+    new WriteSubscriptionHandler(log.child({component: 'WriteSubscriptionHandler'}));
+  this.findSubscriptionUpdatesHandler =
+    new FindSubscriptionUpdatesHandler(log.child({component: 'FindSubscriptionUpdatesHandler'}));
+  this.updateSubscriptionHandler =
+    new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'}));
+  this.systemStatusHandler =
+    new SystemStatusHandler(log.child({component: 'SystemStatusHandler'}));
 
   log.info('App created with configuration', config);
 

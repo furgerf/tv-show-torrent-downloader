@@ -8,15 +8,6 @@ var restify = require('restify'),
   utils = require('./../../common/utils'),
   Subscription = require('./../../database/subscription').Subscription;
 
-
-function UpdateSubscriptionHandler(log) {
-  this.log = log;
-  this.updateSubscriptionWithTorrent = updateSubscriptionWithTorrent;
-
-  this.log.info('UpdateSubscriptionHandler created');
-}
-
-
 /**
  * Determines whether the supplied `season` and `episode` refer to the same or next episode of the
  * subscription.
@@ -156,6 +147,20 @@ function updateSubscriptionWithTorrent (req, res, next) {
           );
     });
   });
+}
+
+/**
+ * Creates an instance of UpdateSubscriptionHandler.
+ *
+ * @constructor
+ *
+ * @param {Bunyan.Log} log - Logger instance.
+ */
+function UpdateSubscriptionHandler(log) {
+  this.log = log;
+  this.updateSubscriptionWithTorrent = updateSubscriptionWithTorrent;
+
+  this.log.info('UpdateSubscriptionHandler created');
 }
 
 exports.UpdateSubscriptionHandler = UpdateSubscriptionHandler;

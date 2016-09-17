@@ -8,16 +8,6 @@ var restify = require('restify'),
   updateSubscription = require('./updateSubscriptionHandler'),
   database = require('../../database/subscription');
 
-
-function FindSubscriptionUpdatesHandler(log) {
-  this.log = log;
-  this.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;
-  this.checkSubscriptionForUpdates = checkSubscriptionForUpdates;
-
-  this.log.info('FindSubscriptionUpdatesHandler created');
-}
-
-
 /**
  * Parses the provided `torrentSort` and returns a valid torrent sorting method.
  *
@@ -194,6 +184,21 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
     })
     .fail(() => next(
           new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
+}
+
+/**
+ * Creates an instance of FindSubscriptionUpdatesHandler.
+ *
+ * @constructor
+ *
+ * @param {Bunyan.Log} log - Logger instance.
+ */
+function FindSubscriptionUpdatesHandler(log) {
+  this.log = log;
+  this.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;
+  this.checkSubscriptionForUpdates = checkSubscriptionForUpdates;
+
+  this.log.info('FindSubscriptionUpdatesHandler created');
 }
 
 exports.FindSubscriptionUpdatesHandler = FindSubscriptionUpdatesHandler;

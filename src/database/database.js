@@ -7,7 +7,7 @@ function connect(databaseConfig) {
   // TODO: Find out how to check and, if required, establish a connection before
   // each database interaction
   mongoose.connect(databaseAddress);
-};
+}
 
 exports.connect = connect;
 

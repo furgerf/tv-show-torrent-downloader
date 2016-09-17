@@ -2,7 +2,7 @@
 
 // /*global describe*/
 
-var should = require('chai').should(),
+var expect = require('chai').expect,
   config = require('./../src/common/config').getDebugConfig(),
   App = require('./../src/app').App,
   logger = require('./../src/common/logger'),
@@ -34,20 +34,20 @@ describe('entry - say hello! :-)', function () {
       .expect('Content-type', 'application/json')
       .expect(302)
       .end(function (err, res) {
-        should.not.exist(err);
-        should.not.exist(res.result);
+        expect(err).to.not.exist;
+        expect(res.result).to.not.exist;
         done();
       });
   });
 
-  it('should should also work on a second request', function (done) {
+  it('should also work on a second request', function (done) {
     this.server
       .get('/')
       .expect('Content-type', 'application/json')
       .expect(302)
       .end(function (err, res) {
-        should.not.exist(err);
-        should.not.exist(res.result);
+        expect(err).to.not.exist;
+        expect(res.result).to.not.exist;
         done();
       });
   });
