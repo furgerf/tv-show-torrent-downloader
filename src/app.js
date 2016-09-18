@@ -4,6 +4,7 @@
 var restify = require('restify'),
   join = require('path').join,
   fs = require('fs'),
+  events = require('events'),
 
   // endpoint handlers
   ReadSubscriptionHandler = require('./handlers/subscriptions/readSubscriptionHandler'),
@@ -30,6 +31,7 @@ global.rootRequire = function(name) {
 */
 
 process.title = 'tv-show-api';
+events.EventEmitter.defaultMaxListeners = 0;
 
 function getServer(log, serveStaticFiles) {
   // set up server
