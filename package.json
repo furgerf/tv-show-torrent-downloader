@@ -1,6 +1,6 @@
 {
   "name": "tv-show-torrent-downloader",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Downloads new episodes of TV shows using torrents.",
   "main": "server.js",
   "scripts": {
