@@ -8,6 +8,8 @@ var log, //require('./../common/logger').child({component: 'subscription'}),
 
   utils = require('./../common/utils');
 
+mongoose.Promise = Q.Promise;
+
 /**
  * Mongoose schema definition for the subscription of a tv show.
  */
@@ -44,6 +46,7 @@ subscriptionSchema.methods.getReturnable = getReturnableSubscription;
 
 /**
  * Updates the last update check time to now and saves the subscription.
+ * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 function updateLastUpdateCheckTime() {
   this.lastUpdateCheckTime = new Date();
@@ -53,6 +56,7 @@ subscriptionSchema.methods.updateLastUpdateCheckTime = updateLastUpdateCheckTime
 
 /**
  * Updates the last download time to now and saves the subscription.
+ * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 function updateLastDownloadTime() {
   this.lastDownloadTime = new Date();

@@ -11,7 +11,7 @@ log = logger.createLogger(config.logging).child({component: 'server'});
 
 app = new App(config, log);
 
-database.connect(config.database);
+database.connect(config.database, log.child({component: 'database'}));
 
 app.listen(function () {
   log.info('Started API on %s:%d', this.address().address, this.address().port);
