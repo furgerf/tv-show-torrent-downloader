@@ -59,5 +59,5 @@ function SystemStatusHandler(log) {
   this.log.info('SystemStatusHandler created');
 }
 
-exports.SystemStatusHandler = SystemStatusHandler;
+module.exports = SystemStatusHandler;
 

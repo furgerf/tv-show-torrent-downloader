@@ -24,13 +24,43 @@ var subscriptionSchema = new mongoose.Schema({
   lastUpdateCheckTime: Date,
 });
 
+
+/**
+ * Finds one subscription that match the given name.
+ *
+ * @param {String} subscriptionName - Name of the subscription to find.
+ *
+ * @returns {Subscription} Subscription that was found in the database, or null if not found.
+ */
+function findSubscriptionByName(subscriptionName) {
+  return Q.fcall(() => this.findOne({name: subscriptionName}));
+}
+subscriptionSchema.statics.findSubscriptionByName = findSubscriptionByName;
+
+/**
+ * Finds all subscriptions.
+ *
+ * @param {Number} limit - Optional. Maximum number of subscriptions to retrieve, defaults to return
+ *                         all subscription without limit.
+ * @param {Number} offset - Optional. Number of documents to skip, defaults to 0.
+ *
+ * @returns {Array} Array of all subscriptions that were retrieved from the database.
+ */
+function findAllSubscriptions(limit, offset) {
+  return Q.fcall(() => limit
+    ? this.find().skip(offset || 0).limit(limit)
+    : this.find().skip(offset || 0));
+}
+subscriptionSchema.statics.findAllSubscriptions = findAllSubscriptions;
+
+
 /**
  * Gets a version of the subscription that can be returned to the requestee. Only returns certain
  * fields (which could also be renamed).
  *
  * @returns {Object} Returnable version of the subscription.
  */
-function getReturnableSubscription() {
+function getReturnable() {
   return {
     name: this.name === undefined ? null : this.name,
     searchParameters: this.searchParameters === undefined ? null : this.searchParameters,
@@ -42,7 +72,7 @@ function getReturnableSubscription() {
     lastUpdateCheckTime: this.lastUpdateCheckTime === undefined ? null : this.lastUpdateCheckTime
   };
 }
-subscriptionSchema.methods.getReturnable = getReturnableSubscription;
+subscriptionSchema.methods.getReturnable = getReturnable;
 
 /**
  * Updates the last update check time to now and saves the subscription.
@@ -142,46 +172,7 @@ subscriptionSchema.pre('save', preSaveAction);
 // create and export model
 // TODO: avoid recompiling (else unit tests can't work)
 // TODO: find out whether it is really necessary to export it
-var Subscription = mongoose.model('Subscription', subscriptionSchema);
-
-/////////////////////////////
-// database access methods //
-/////////////////////////////
-/**
- * Finds one subscription that match the given name.
- *
- * @param {String} subscriptionName - Name of the subscription to find.
- *
- * @returns {Subscription} Subscription that was found in the database, or null if not found.
- */
-function findSubscriptionByName(subscriptionName) {
-  return Q.fcall(function () {
-    return Subscription.findOne({name: subscriptionName});
-  });
-}
-
-/**
- * Finds all subscriptions.
- *
- * @param {Number} limit - Optional. Maximum number of subscriptions to retrieve, defaults to return
- *                         all subscription without limit.
- * @param {Number} offset - Optional. Number of documents to skip, defaults to 0.
- *
- * @returns {Array} Array of all subscriptions that were retrieved from the database.
- */
-function findAllSubscriptions(limit, offset) {
-  return Q.fcall(function () {
-    return limit
-      ? Subscription.find().skip(offset || 0).limit(limit)
-      : Subscription.find().skip(offset || 0);
-  });
-}
-
-
-exports.Subscription = Subscription;
-
-exports.findSubscriptionByName = findSubscriptionByName;
-exports.findAllSubscriptions = findAllSubscriptions;
+module.exports = mongoose.model('Subscription', subscriptionSchema);
 
 /* jshint +W040 */
 

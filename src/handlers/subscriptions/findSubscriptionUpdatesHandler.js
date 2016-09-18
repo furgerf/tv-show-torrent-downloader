@@ -5,8 +5,8 @@ var restify = require('restify'),
 
   utils = require('../../common/utils'),
   torrentSites = require('../../torrent-sites/'),
-  updateSubscription = require('./updateSubscriptionHandler'),
-  database = require('../../database/subscription');
+  UpdateSubscription = require('./updateSubscriptionHandler'),
+  Subscription = require('../../database/subscription');
 
 /**
  * Parses the provided `torrentSort` and returns a valid torrent sorting method.
@@ -109,7 +109,7 @@ function checkSubscriptionForUpdates(req, res, next) {
         : req.params.maxTorrentsPerEpisode, 10) || 1,
     startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
-  database.findSubscriptionByName(subscriptionName)
+  Subscription.findSubscriptionByName(subscriptionName)
     .then(subscription => subscription
         ? subscription
         : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
@@ -118,7 +118,7 @@ function checkSubscriptionForUpdates(req, res, next) {
         .then(function (data) {
           if (startDownload) {
             data.forEach(function (torrent) {
-              updateSubscription.downloadTorrent(subscription,
+              UpdateSubscription.downloadTorrent(subscription,
                   torrent.season, torrent.episode, torrent.link, req.log);
             });
           }
@@ -146,7 +146,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
     startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
   // retrieve all subscriptions
-  database.findAllSubscriptions()
+  Subscription.findAllSubscriptions()
     // continue when updates are found for all subscriptions
     .then(subscriptions => Q.all(subscriptions.map(function (subscription) {
       return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
@@ -168,7 +168,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
       result.forEach(function (entry) {
         if (startDownload) {
           entry.forEach(function (torrent) {
-            updateSubscription.downloadTorrent(entry.subscription,
+            UpdateSubscription.downloadTorrent(entry.subscription,
                 torrent.season, torrent.episode, torrent.link, req.log);
           });
         }
@@ -201,5 +201,5 @@ function FindSubscriptionUpdatesHandler(log) {
   this.log.info('FindSubscriptionUpdatesHandler created');
 }
 
-exports.FindSubscriptionUpdatesHandler = FindSubscriptionUpdatesHandler;
+module.exports = FindSubscriptionUpdatesHandler;
 

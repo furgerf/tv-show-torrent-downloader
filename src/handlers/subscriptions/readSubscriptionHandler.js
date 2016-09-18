@@ -3,7 +3,7 @@
 var restify = require("restify"),
 
   utils = require("./../../common/utils"),
-  database = require("./../../database/subscription");
+  Subscription = require("./../../database/subscription");
 
 /**
  * Handles reqests to GET /subscriptions/:subscriptionName.
@@ -12,7 +12,7 @@ function getSubscriptionByName (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]);
 
   // retrieve subscriptions
-  database.findSubscriptionByName(subscriptionName)
+  Subscription.findSubscriptionByName(subscriptionName)
     .then(function (subscription) {
       if (!subscription) {
         return next(
@@ -33,7 +33,7 @@ function getAllSubscriptions (req, res, next) {
     limit = parseInt(req.params.limit, 10) || 20;
 
   // retrieve subs
-  database.findAllSubscriptions(limit, offset)
+  Subscription.findAllSubscriptions(limit, offset)
     .then(function (subscriptions) {
       // return returnable of all retrieved subscriptions
       utils.sendOkResponse(subscriptions.length + " subscription(s) retrieved",
@@ -58,5 +58,5 @@ function ReadSubscriptionHandler(log) {
   this.log.info('ReadSubscriptionHandler created');
 }
 
-exports.ReadSubscriptionHandler = ReadSubscriptionHandler;
+module.exports = ReadSubscriptionHandler;
 

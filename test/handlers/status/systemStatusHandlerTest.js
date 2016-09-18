@@ -15,12 +15,12 @@ config.logging.stdoutLoglevel = 'error';
 
 describe('SystemStatusHandler', function () {
   beforeEach(function () {
-    this.rewiredHandlerModule = rewire(root + 'handlers/status/systemStatusHandler');
+    this.RewiredSystemStatusHandler = rewire(root + 'handlers/status/systemStatusHandler');
   });
 
   describe('parseDiskInformation', function () {
     beforeEach(function () {
-      this.parseDiskInformation = this.rewiredHandlerModule.__get__('parseDiskInformation');
+      this.parseDiskInformation = this.RewiredSystemStatusHandler.__get__('parseDiskInformation');
     });
 
     it('should be able to handle invalid data', function () {
@@ -66,11 +66,11 @@ describe('SystemStatusHandler', function () {
         };
 
       // injec mocked exec
-      this.rewiredHandlerModule.__set__('exec', execMock);
+      this.RewiredSystemStatusHandler.__set__('exec', execMock);
 
       // create app and replace handler
       this.app = new App(config, log);
-      this.app.systemStatusHandler = new this.rewiredHandlerModule.SystemStatusHandler(log);
+      this.app.systemStatusHandler = new this.RewiredSystemStatusHandler(log);
 
       // start server
       this.app.listen(function () {

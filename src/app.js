@@ -6,16 +6,13 @@ var restify = require('restify'),
   fs = require('fs'),
 
   // endpoint handlers
-  ReadSubscriptionHandler =
-  require('./handlers/subscriptions/readSubscriptionHandler').ReadSubscriptionHandler,
-  WriteSubscriptionHandler =
-  require('./handlers/subscriptions/writeSubscriptionHandler').WriteSubscriptionHandler,
+  ReadSubscriptionHandler = require('./handlers/subscriptions/readSubscriptionHandler'),
+  WriteSubscriptionHandler = require('./handlers/subscriptions/writeSubscriptionHandler'),
   FindSubscriptionUpdatesHandler =
-  require('./handlers/subscriptions/findSubscriptionUpdatesHandler').FindSubscriptionUpdatesHandler,
-  UpdateSubscriptionHandler =
-  require('./handlers/subscriptions/updateSubscriptionHandler').UpdateSubscriptionHandler,
+  require('./handlers/subscriptions/findSubscriptionUpdatesHandler'),
+  UpdateSubscriptionHandler = require('./handlers/subscriptions/updateSubscriptionHandler'),
 
-  SystemStatusHandler = require('./handlers/status/systemStatusHandler').SystemStatusHandler,
+  SystemStatusHandler = require('./handlers/status/systemStatusHandler'),
 
   // misc variables
   connectionCount = 0,

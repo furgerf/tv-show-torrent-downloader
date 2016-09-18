@@ -6,8 +6,7 @@ var expect = require('chai').expect,
   sinon = require('sinon'),
   Q = require('q'),
 
-  database = require(root + 'database/subscription'),
-  Subscription = database.Subscription;
+  Subscription = require(root + 'database/subscription');
 
 describe('database/subscription', function () {
   describe('validate schema', function () {
@@ -105,7 +104,7 @@ describe('database/subscription', function () {
           new Date(),
           'foobar',
         ];
-      return Q.allSettled(testNames.map(name => database.findSubscriptionByName(name)))
+      return Q.allSettled(testNames.map(name => Subscription.findSubscriptionByName(name)))
         .then(function (result) {
           testNames.forEach(function (name) {
             sinon.assert.calledWith(Subscription.findOne, {name: name});
@@ -118,7 +117,7 @@ describe('database/subscription', function () {
 
       this.findOneStub.withArgs({name: 'foobar'}).returns(databaseResult);
 
-      return database.findSubscriptionByName('foobar')
+      return Subscription.findSubscriptionByName('foobar')
       .then(result => expect(result).to.equal(databaseResult));
     });
 
@@ -140,7 +139,7 @@ describe('database/subscription', function () {
     it('should make the expected database call when invoked without arguments', function () {
       var that = this;
 
-      return database.findAllSubscriptions()
+      return Subscription.findAllSubscriptions()
         .then(function (result) {
           sinon.assert.called(that.findStub);
           sinon.assert.calledWith(that.skipStub, 0);
@@ -151,7 +150,7 @@ describe('database/subscription', function () {
     it('should make the expected database call when invoked with a limit', function () {
       var that = this;
 
-      return database.findAllSubscriptions(123)
+      return Subscription.findAllSubscriptions(123)
         .then(function (result) {
           sinon.assert.called(that.findStub);
           sinon.assert.calledWith(that.skipStub, 0);
@@ -162,7 +161,7 @@ describe('database/subscription', function () {
     it('should make the expected database call when invoked with an offset', function () {
       var that = this;
 
-      return database.findAllSubscriptions(undefined, 123)
+      return Subscription.findAllSubscriptions(undefined, 123)
         .then(function (result) {
           sinon.assert.called(that.findStub);
           sinon.assert.calledWith(that.skipStub, 123);
@@ -173,7 +172,7 @@ describe('database/subscription', function () {
     it('should make the expected database call when invoked with limit and offset', function () {
       var that = this;
 
-      return database.findAllSubscriptions(123, 456)
+      return Subscription.findAllSubscriptions(123, 456)
         .then(function (result) {
           sinon.assert.called(that.findStub);
           sinon.assert.calledWith(that.skipStub, 456);

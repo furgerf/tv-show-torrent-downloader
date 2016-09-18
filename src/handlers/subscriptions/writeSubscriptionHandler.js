@@ -5,8 +5,7 @@ var restify = require('restify'),
 
   utils = require('./../../common/utils'),
 
-  database = require('./../../database/subscription'),
-  Subscription = database.Subscription;
+  Subscription = require('./../../database/subscription');
 
 /**
  * Updates the allowed fields of the subscription with the provided data. Only the fields that are
@@ -83,7 +82,7 @@ function updateSubscription (req, res, next) {
   body.name = body.name || subscriptionName;
 
   // retrieve existing subscription that would be updated
-  database.findSubscriptionByName(subscriptionName)
+  Subscription.findSubscriptionByName(subscriptionName)
     // if the subscription doesn't exist yet, create a new one
     .then(subscription => subscription ? subscription : createNewSubscriptionFromData(body))
       // update the fields and save
@@ -100,7 +99,7 @@ function updateSubscription (req, res, next) {
 function deleteSubscription (req, res, next) {
   var subscriptionName = decodeURIComponent(req.params[0]);
 
-  database.findSubscriptionByName(subscriptionName)
+  Subscription.findSubscriptionByName(subscriptionName)
     .then(subscription => subscription
         ? subscription
         : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
@@ -127,5 +126,5 @@ function WriteSubscriptionHandler(log) {
   this.log.info('WriteSubscriptionHandler created');
 }
 
-exports.WriteSubscriptionHandler = WriteSubscriptionHandler;
+module.exports = WriteSubscriptionHandler;
 

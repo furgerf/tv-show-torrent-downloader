@@ -6,7 +6,7 @@ var restify = require('restify'),
 
   config = require('./../../common/config'),
   utils = require('./../../common/utils'),
-  Subscription = require('./../../database/subscription').Subscription;
+  Subscription = require('./../../database/subscription');
 
 /**
  * Determines whether the supplied `season` and `episode` refer to the same or next episode of the
@@ -163,5 +163,5 @@ function UpdateSubscriptionHandler(log) {
   this.log.info('UpdateSubscriptionHandler created');
 }
 
-exports.UpdateSubscriptionHandler = UpdateSubscriptionHandler;
+module.exports = UpdateSubscriptionHandler;
 
