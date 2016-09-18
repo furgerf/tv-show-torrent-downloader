@@ -3,9 +3,11 @@
 const root = './../../src/';
 
 var expect = require('chai').expect,
+  sinon = require('sinon'),
   Q = require('q'),
 
-  Subscription = require(root + 'database/subscription').Subscription;
+  database = require(root + 'database/subscription'),
+  Subscription = database.Subscription;
 
 describe('database/subscription', function () {
   describe('validate schema', function () {
@@ -88,6 +90,100 @@ describe('database/subscription', function () {
 
   describe('preSaveAction', function () {
     it('should modify the subscription as expected');
+  });
+
+  describe('findSubscriptionByName', function () {
+    beforeEach(function () {
+      this.findOneStub = sinon.stub(Subscription, 'findOne');
+    });
+
+    it('should make the expected database calls', function () {
+      var testNames = [
+          undefined,
+          null,
+          123,
+          new Date(),
+          'foobar',
+        ];
+      return Q.allSettled(testNames.map(name => database.findSubscriptionByName(name)))
+        .then(function (result) {
+          testNames.forEach(function (name) {
+            sinon.assert.calledWith(Subscription.findOne, {name: name});
+          });
+        });
+    });
+
+    it('should return a promise that resolves to the data from the database', function () {
+      var databaseResult = 123;
+
+      this.findOneStub.withArgs({name: 'foobar'}).returns(databaseResult);
+
+      return database.findSubscriptionByName('foobar')
+      .then(result => expect(result).to.equal(databaseResult));
+    });
+
+    afterEach(function () {
+      this.findOneStub.restore();
+    });
+  });
+
+  describe('findAllSubscriptions', function () {
+    beforeEach(function () {
+      this.findStub = sinon.stub(Subscription, 'find');
+      this.skipStub = sinon.stub();
+      this.limitStub = sinon.stub();
+
+      this.findStub.returns({skip: this.skipStub});
+      this.skipStub.returns({limit: this.limitStub});
+    });
+
+    it('should make the expected database call when invoked without arguments', function () {
+      var that = this;
+
+      return database.findAllSubscriptions()
+        .then(function (result) {
+          sinon.assert.called(that.findStub);
+          sinon.assert.calledWith(that.skipStub, 0);
+          sinon.assert.notCalled(that.limitStub);
+        });
+    });
+
+    it('should make the expected database call when invoked with a limit', function () {
+      var that = this;
+
+      return database.findAllSubscriptions(123)
+        .then(function (result) {
+          sinon.assert.called(that.findStub);
+          sinon.assert.calledWith(that.skipStub, 0);
+          sinon.assert.calledWith(that.limitStub, 123);
+        });
+    });
+
+    it('should make the expected database call when invoked with an offset', function () {
+      var that = this;
+
+      return database.findAllSubscriptions(undefined, 123)
+        .then(function (result) {
+          sinon.assert.called(that.findStub);
+          sinon.assert.calledWith(that.skipStub, 123);
+          sinon.assert.notCalled(that.limitStub);
+        });
+    });
+
+    it('should make the expected database call when invoked with limit and offset', function () {
+      var that = this;
+
+      return database.findAllSubscriptions(123, 456)
+        .then(function (result) {
+          sinon.assert.called(that.findStub);
+          sinon.assert.calledWith(that.skipStub, 456);
+          sinon.assert.calledWith(that.limitStub, 123);
+        });
+    });
+
+    afterEach(function () {
+      this.findStub.restore();
+    });
   });
 });
 
