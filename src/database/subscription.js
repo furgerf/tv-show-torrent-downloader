@@ -2,8 +2,7 @@
 
 /* jshint -W040 */
 
-var log, //require('./../common/logger').child({component: 'subscription'}),
-  mongoose = require('mongoose'),
+var mongoose = require('mongoose'),
   Q = require('q'),
 
   utils = require('./../common/utils');
@@ -24,6 +23,92 @@ var subscriptionSchema = new mongoose.Schema({
   lastUpdateCheckTime: Date,
 });
 
+/**
+ * Checks whether the database is currently connected.
+ *
+ * @returns {Boolean} True if the database is currently connected.
+ */
+function isConnected() {
+  return mongoose.connection.readyState === 1;
+}
+
+/**
+ * Ensures that the database is connected if necessary.
+ *
+ * @returns {Promise} A promise that resolves if the database is connected and rejects if
+ *                    the database connection couldn't be established.
+ */
+function ensureConnected() {
+  return Q.fcall(function () {
+    if (!this.useDatabase) {
+      return;
+    }
+
+    if (!this.isInitialized) {
+      throw new Error('Cannot establish database connection: Not initialized');
+    }
+
+    if (isConnected()) {
+      return;
+    }
+
+    return mongoose.connect(this.databaseAddress);
+  }.bind(this));
+}
+subscriptionSchema.statics.ensureConnected = ensureConnected;
+
+/**
+ * Initializes the database connection. This must be called before any other database functionality
+ * is used, even if no real database access is requested.
+ *
+ * @param {Bunyan.Log} log - Logger instance.
+ * @param {Object} databaseConfiguration - Database configuration object. Specify falsy (leave un-
+ *                                         defined) if no database connection should be established.
+ * @param {String} databaseConfiguration.host - Host of the database instance.
+ * @param {Number} databaseConfiguration.port - Port of the database instance.
+ */
+function initialize(log, databaseConfiguration) {
+  if (!log) {
+    console.log('ERROR: Cannot initialize Subscription without log, aborting!');
+    return;
+  }
+
+  this.log = log;
+
+  // we may not want to connect to a real database - check whether we received
+  // db config, if yes, then we do want to connect to a database
+  this.useDatabase = !!databaseConfiguration;
+
+  if (this.useDatabase) {
+    var databaseAddress =
+      'mongodb://' + databaseConfiguration.host + ':' + databaseConfiguration.port + '/tv-shows';
+
+    this.databaseAddress = databaseAddress;
+    this.log.info('Using real database at %s', this.databaseAddress);
+
+    mongoose.connection.on('connected', function () {
+      log.info('Connected to MongoDB at %s', databaseAddress);
+    });
+    mongoose.connection.on('error', function (err) {
+      log.error('MongoDB error: %s', err);
+    });
+    mongoose.connection.on('disconnected', function () {
+      log.warn('Connection to MongoDB lost', databaseAddress);
+    });
+    process.on('SIGINT', function () {
+      mongoose.collection.close(function () {
+        log.info('Application is terminating: closing MongoDB connection');
+        process.exit(0);
+      });
+    });
+  } else {
+    this.log.warn('NOT using real database!');
+  }
+
+  this.isInitialized = true;
+  this.log.info('Subscription initialized');
+}
+subscriptionSchema.statics.initialize = initialize;
 
 /**
  * Finds one subscription that match the given name.
@@ -33,7 +118,8 @@ var subscriptionSchema = new mongoose.Schema({
  * @returns {Subscription} Subscription that was found in the database, or null if not found.
  */
 function findSubscriptionByName(subscriptionName) {
-  return Q.fcall(() => this.findOne({name: subscriptionName}));
+  return this.ensureConnected()
+    .then(() => this.findOne({name: subscriptionName}));
 }
 subscriptionSchema.statics.findSubscriptionByName = findSubscriptionByName;
 
@@ -47,9 +133,10 @@ subscriptionSchema.statics.findSubscriptionByName = findSubscriptionByName;
  * @returns {Array} Array of all subscriptions that were retrieved from the database.
  */
 function findAllSubscriptions(limit, offset) {
-  return Q.fcall(() => limit
-    ? this.find().skip(offset || 0).limit(limit)
-    : this.find().skip(offset || 0));
+  return this.ensureConnected()
+    .then(() => limit
+      ? this.find().skip(offset || 0).limit(limit)
+      : this.find().skip(offset || 0));
 }
 subscriptionSchema.statics.findAllSubscriptions = findAllSubscriptions;
 
@@ -79,8 +166,11 @@ subscriptionSchema.methods.getReturnable = getReturnable;
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 function updateLastUpdateCheckTime() {
-  this.lastUpdateCheckTime = new Date();
-  this.save();
+  return this.ensureConnected()
+    .then(function () {
+      this.lastUpdateCheckTime = new Date();
+      this.save();
+    });
 }
 subscriptionSchema.methods.updateLastUpdateCheckTime = updateLastUpdateCheckTime;
 
@@ -89,8 +179,11 @@ subscriptionSchema.methods.updateLastUpdateCheckTime = updateLastUpdateCheckTime
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 function updateLastDownloadTime() {
-  this.lastDownloadTime = new Date();
-  this.save();
+  return this.ensureConnected()
+    .then(function () {
+      this.lastDownloadTime = new Date();
+      this.save();
+    });
 }
 subscriptionSchema.methods.updateLastDownloadTime = updateLastDownloadTime;
 
@@ -113,30 +206,30 @@ function updateLastEpisode(newSeason, newEpisode) {
 
   if (season > this.lastSeason) {
     if (episode === 1) {
-      //log.debug('Updating last episode of subscription %s from %s to %s',
-          //this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
-          //utils.formatEpisodeNumber(season, episode));
+      log.debug('Updating last episode of subscription %s from %s to %s',
+          this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+          utils.formatEpisodeNumber(season, episode));
       this.lastSeason = season;
       this.lastEpisode = episode;
     } else {
-      //log.warn('Attempting to change season of subscription %s and assign episode %d - aborting',
-          //this.name, episode);
+      log.warn('Attempting to change season of subscription %s and assign episode %d - aborting',
+          this.name, episode);
       return false;
     }
   } else if (season === this.lastSeason) {
     if (episode === this.lastEpisode + 1) {
-      //log.debug('Updating last episode of subscription %s from %s to %s', this.name,
-          //utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
-          //utils.formatEpisodeNumber(this.lastSeason, episode));
+      log.debug('Updating last episode of subscription %s from %s to %s', this.name,
+          utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+          utils.formatEpisodeNumber(this.lastSeason, episode));
       this.lastEpisode = episode;
     } else {
-      //log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
-          //this.name, this.lastEpisode, episode);
+      log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
+          this.name, this.lastEpisode, episode);
       return false;
     }
   } else {
-    //log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
-        //this.name, this.lastSeason, season);
+    log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
+        this.name, this.lastSeason, season);
     return false;
   }
   return true;
@@ -148,30 +241,32 @@ subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
  * as some other required fields that might be unassigned from the subscription creation.
  */
 function preSaveAction(next) {
-  //log.debug('Running pre-save action for subscription "%s"', this.name);
+  // TODO: Verify it's working...
+  return this.ensureConnected()
+    .then(function () {
+      this.log.debug('Running pre-save action for subscription "%s"', this.name);
 
-  var currentDate = new Date();
-  this.lastModifiedTime = currentDate;
+      var currentDate = new Date();
+      this.lastModifiedTime = currentDate;
 
-  // if creationTime doesn't exist, add it
-  if (!this.creationTime) {
-    this.creationTime = currentDate;
-  }
+      // if creationTime doesn't exist, add it
+      if (!this.creationTime) {
+        this.creationTime = currentDate;
+      }
 
-  this.searchParameters = this.searchParameters || '';
+      this.searchParameters = this.searchParameters || '';
 
-  this.lastSeason = this.lastSeason || 1;
-  this.lastEpisode = this.lastEpisode || 0;
+      this.lastSeason = this.lastSeason || 1;
+      this.lastEpisode = this.lastEpisode || 0;
 
-  //log.info('about to be done with pre-save');
-  next();
-  //log.info('done with pre-save');
+      //log.info('about to be done with pre-save');
+      next();
+      //log.info('done with pre-save');
+    });
 }
 subscriptionSchema.pre('save', preSaveAction);
 
 // create and export model
-// TODO: avoid recompiling (else unit tests can't work)
-// TODO: find out whether it is really necessary to export it
 module.exports = mongoose.model('Subscription', subscriptionSchema);
 
 /* jshint +W040 */

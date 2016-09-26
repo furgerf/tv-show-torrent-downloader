@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var restify = require("restify"),
 
@@ -22,6 +22,9 @@ function getSubscriptionByName (req, res, next) {
       // sub with requested name found, return returnable
       utils.sendOkResponse("Subscription with name '" + subscriptionName + "' retrieved.",
           subscription.getReturnable(), res, next, "http://" + req.headers.host + req.url);
+    })
+    .fail(function (err) {
+      next(new restify.InternalServerError(err ? err.name + ': ' + err.message : '?'));
     });
 }
 
@@ -40,6 +43,9 @@ function getAllSubscriptions (req, res, next) {
           subscriptions.map(sub => sub.getReturnable()),
           res, next, "http://" + req.headers.host + req.url);
       next();
+    })
+    .fail(function (err) {
+      next(new restify.InternalServerError(err ? err.name + ': ' + err.message : '?'));
     });
 }
 
