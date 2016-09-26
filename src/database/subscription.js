@@ -5,7 +5,9 @@
 var mongoose = require('mongoose'),
   Q = require('q'),
 
-  utils = require('./../common/utils');
+  utils = require('./../common/utils'),
+
+  initializedDatabaseInstance;
 
 mongoose.Promise = Q.Promise;
 
@@ -106,6 +108,7 @@ function initialize(log, databaseConfiguration) {
   }
 
   this.isInitialized = true;
+  initializedDatabaseInstance = this;
   this.log.info('Subscription initialized');
 }
 subscriptionSchema.statics.initialize = initialize;
@@ -206,29 +209,29 @@ function updateLastEpisode(newSeason, newEpisode) {
 
   if (season > this.lastSeason) {
     if (episode === 1) {
-      log.debug('Updating last episode of subscription %s from %s to %s',
+      this.log.debug('Updating last episode of subscription %s from %s to %s',
           this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
           utils.formatEpisodeNumber(season, episode));
       this.lastSeason = season;
       this.lastEpisode = episode;
     } else {
-      log.warn('Attempting to change season of subscription %s and assign episode %d - aborting',
+      this.log.warn('Attempted to change season of subscription %s and assign episode %d: aborting',
           this.name, episode);
       return false;
     }
   } else if (season === this.lastSeason) {
     if (episode === this.lastEpisode + 1) {
-      log.debug('Updating last episode of subscription %s from %s to %s', this.name,
+      this.log.debug('Updating last episode of subscription %s from %s to %s', this.name,
           utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
           utils.formatEpisodeNumber(this.lastSeason, episode));
       this.lastEpisode = episode;
     } else {
-      log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
+      this.log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
           this.name, this.lastEpisode, episode);
       return false;
     }
   } else {
-    log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
+    this.log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
         this.name, this.lastSeason, season);
     return false;
   }
@@ -241,27 +244,32 @@ subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
  * as some other required fields that might be unassigned from the subscription creation.
  */
 function preSaveAction(next) {
+  // remember `this` for access in the promise callback
+  // also, we have no database context so we fall back to the initialized database instance
+  var that = this,
+    database = initializedDatabaseInstance;
+
   // TODO: Verify it's working...
-  return this.ensureConnected()
+  return database.ensureConnected()
     .then(function () {
-      this.log.debug('Running pre-save action for subscription "%s"', this.name);
+      database.log.debug('Running pre-save action for subscription "%s"', that.name);
 
       var currentDate = new Date();
-      this.lastModifiedTime = currentDate;
+      that.lastModifiedTime = currentDate;
 
       // if creationTime doesn't exist, add it
-      if (!this.creationTime) {
-        this.creationTime = currentDate;
+      if (!that.creationTime) {
+        that.creationTime = currentDate;
       }
 
-      this.searchParameters = this.searchParameters || '';
+      that.searchParameters = that.searchParameters || '';
 
-      this.lastSeason = this.lastSeason || 1;
-      this.lastEpisode = this.lastEpisode || 0;
+      that.lastSeason = that.lastSeason || 1;
+      that.lastEpisode = that.lastEpisode || 0;
 
-      //log.info('about to be done with pre-save');
+      database.log.info('about to be done with pre-save');
       next();
-      //log.info('done with pre-save');
+      database.log.info('done with pre-save');
     });
 }
 subscriptionSchema.pre('save', preSaveAction);
