@@ -78,13 +78,125 @@ describe('database/subscription', function () {
   });
 
   describe('getReturnableSubscription', function () {
-    it('should only return some specific data');
+    it('should only return some specific data', function () {
+      var now = new Date(),
+        subscriptions = [
+          {name: 'foo'},
+          {foo: 'bar'},
+          {
+            name: 'foobar',
+            searchParameters: 'bar',
+            lastSeason: 12,
+            lastEpisode: 34,
+            creationTime: now,
+            lastModifiedTime: now,
+            lastDownloadTime: now,
+            lastUpdateCheckTime: now
+          }
+        ].map(data => new Subscription(data)),
+        returnables = [
+          {
+            name: 'foo',
+            searchParameters: null,
+            lastSeason: null,
+            lastEpisode: null,
+            creationTime: null,
+            lastModifiedTime: null,
+            lastDownloadTime: null,
+            lastUpdateCheckTime: null,
+          },
+          {
+            name: null,
+            searchParameters: null,
+            lastSeason: null,
+            lastEpisode: null,
+            creationTime: null,
+            lastModifiedTime: null,
+            lastDownloadTime: null,
+            lastUpdateCheckTime: null,
+          },
+          {
+            name: 'foobar',
+            searchParameters: 'bar',
+            lastSeason: 12,
+            lastEpisode: 34,
+            creationTime: now,
+            lastModifiedTime: now,
+            lastDownloadTime: now,
+            lastUpdateCheckTime: now
+          }
+        ];
+
+      subscriptions[0].foo = 123;
+      subscriptions[1].bar = 123;
+      subscriptions[2].foobar  = 123;
+
+      subscriptions.forEach(function (sub, index) {
+        expect(sub.getReturnable()).to.eql(returnables[index]);
+      })
+    });
   });
 
   describe('updateLastEpisode', function () {
-    it('should reject invalid arguments');
-    it('should reject invalid update attempts');
-    it('should accept valid update attempts');
+    beforeEach(function () {
+      this.testee = new Subscription(
+        {
+          name: 'testee',
+          lastSeason: 2,
+          lastEpisode: 3
+        }
+      );
+
+      this.testee.log = sinon.stub(
+        {
+          debug: function () {},
+          info: function () {},
+          warn: function () {},
+          error: function () {}
+        }
+      );
+    });
+
+    it('should reject invalid arguments', function () {
+      expect(this.testee.updateLastEpisode()).to.be.false;
+      expect(this.testee.updateLastEpisode(123)).to.be.false;
+      expect(this.testee.updateLastEpisode(null, 123)).to.be.false;
+      expect(this.testee.updateLastEpisode(123, 'foo')).to.be.false;
+      expect(this.testee.updateLastEpisode('bar', 123)).to.be.false;
+
+      expect(this.testee.lastSeason).to.eql(2);
+      expect(this.testee.lastEpisode).to.eql(3);
+    });
+
+    it('should reject invalid update attempts', function () {
+      expect(this.testee.updateLastEpisode(1, 2), 'Do not allow season decrease').to.be.false;
+      expect(this.testee.updateLastEpisode(2, 2), 'Do not allow episode decrease').to.be.false;
+
+      expect(this.testee.updateLastEpisode(2, 3), 'Do not allow same season/episode').to.be.false;
+
+      expect(this.testee.updateLastEpisode(2, 5), 'Do not allow skipping episodes').to.be.false;
+      expect(this.testee.updateLastEpisode(4, 1), 'Do not allow skipping season season').to.be.false;
+
+      expect(this.testee.updateLastEpisode(3, 0), 'Do not allow new season if episode is not 1').to.be.false;
+      expect(this.testee.updateLastEpisode(3, 2), 'Do not allow new season if episode is not 1').to.be.false;
+
+      expect(this.testee.lastSeason).to.eql(2);
+      expect(this.testee.lastEpisode).to.eql(3);
+    });
+
+    it('should accept valid update attempts', function () {
+      expect(this.testee.updateLastEpisode(2, 4), 'Allow episode increase by one').to.be.true;
+      expect(this.testee.lastSeason).to.eql(2);
+      expect(this.testee.lastEpisode).to.eql(4);
+
+      expect(this.testee.updateLastEpisode(2, 5), 'Allow episode increase by one').to.be.true;
+      expect(this.testee.lastSeason).to.eql(2);
+      expect(this.testee.lastEpisode).to.eql(5);
+
+      expect(this.testee.updateLastEpisode(3, 1), 'Allow season increase by one').to.be.true;
+      expect(this.testee.lastSeason).to.eql(3);
+      expect(this.testee.lastEpisode).to.eql(1);
+    });
   });
 
   describe('preSaveAction', function () {

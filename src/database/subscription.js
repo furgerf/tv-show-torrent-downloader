@@ -207,7 +207,7 @@ function updateLastEpisode(newSeason, newEpisode) {
     return false;
   }
 
-  if (season > this.lastSeason) {
+  if (season === this.lastSeason + 1) {
     if (episode === 1) {
       this.log.debug('Updating last episode of subscription %s from %s to %s',
           this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
@@ -231,7 +231,7 @@ function updateLastEpisode(newSeason, newEpisode) {
       return false;
     }
   } else {
-    this.log.warn('Attempting to decrease last season of subscription %s from %d to %d - aborting',
+    this.log.warn('Attempting to set invalid season of subscription %s from %d to %d - aborting',
         this.name, this.lastSeason, season);
     return false;
   }
