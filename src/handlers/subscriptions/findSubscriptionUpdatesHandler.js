@@ -4,7 +4,6 @@ var restify = require('restify'),
   Q = require('q'),
 
   utils = require('../../common/utils'),
-  torrentSites = require('../../torrent-sites/'),
   UpdateSubscription = require('./updateSubscriptionHandler'),
   Subscription = require('../../database/subscription');
 
@@ -40,7 +39,7 @@ function getTorrentSort(torrentSort) {
  */
 function checkForMultipleEpisodes(subscription, season, episode,
     torrents, torrentSort, maxTorrentsPerEpisode) {
-  return torrentSites.findTorrents(subscription.name + ' '
+  return this.torrentSiteManager.findTorrents(subscription.name + ' '
       + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
       season, episode, torrentSort, maxTorrentsPerEpisode)
     .then(function (newTorrents) {
@@ -191,9 +190,11 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
  *
  * @constructor
  *
+ * @param {TorrentSiteManager} torrentSiteManager - TorrentSiteManager instance.
  * @param {Bunyan.Log} log - Logger instance.
  */
-function FindSubscriptionUpdatesHandler(log) {
+function FindSubscriptionUpdatesHandler(torrentSiteManager, log) {
+  this.torrentSiteManager = torrentSiteManager;
   this.log = log;
   this.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;
   this.checkSubscriptionForUpdates = checkSubscriptionForUpdates;

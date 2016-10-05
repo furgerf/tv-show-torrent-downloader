@@ -14,6 +14,8 @@ var restify = require('restify'),
 
   SystemStatusHandler = require('./handlers/status/systemStatusHandler'),
 
+  TorrentSiteManager = require('./torrent-sites/torrentSiteManager'),
+
   // misc variables
   connectionCount = 0,
   requestStarts = {},
@@ -132,12 +134,15 @@ function getServer(log, serveStaticFiles) {
 }
 
 function App(config, log) {
+  var torrentSiteManager = new TorrentSiteManager(log.child({component: 'TorrentSiteManager'}));
+
   this.readSubscriptionHandler =
     new ReadSubscriptionHandler(log.child({component: 'ReadSubscriptionHandler'}));
   this.writeSubscriptionHandler =
     new WriteSubscriptionHandler(log.child({component: 'WriteSubscriptionHandler'}));
   this.findSubscriptionUpdatesHandler =
-    new FindSubscriptionUpdatesHandler(log.child({component: 'FindSubscriptionUpdatesHandler'}));
+    new FindSubscriptionUpdatesHandler(torrentSiteManager,
+      log.child({component: 'FindSubscriptionUpdatesHandler'}));
   this.updateSubscriptionHandler =
     new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'}));
   this.systemStatusHandler =

@@ -8,24 +8,7 @@
 var Q = require('q'),
   exec = require('child_process').exec,
 
-  pirateBay = require('./piratebay'),
-
-  log, //require('./../common/logger').child({component: 'torrent-sites'}),
-
-  pirateBayMn = new pirateBay.Parser('thepiratebay.mn'),
-  pirateBaySe = new pirateBay.Parser('thepiratebay.se'),
-  pirateBayPe = new pirateBay.Parser('pirateproxy.pe'),
-  pirateBayAhoy = new pirateBay.Parser('ahoy.one'),
-  pirateBayPatatje = new pirateBay.Parser('tpb.patatje.eu'),
-  invalidParser = new pirateBay.Parser('foobar'),
-  allSites = [
-    pirateBayPatatje,
-    pirateBayAhoy,
-    pirateBayPe,
-    pirateBaySe,
-    pirateBayMn,
-    invalidParser,
-  ];
+  pirateBay = require('./piratebay');
 
 /**
  * Compares two torrents according to the specified sorting method.
@@ -73,14 +56,14 @@ function tryTorrentSite(torrentSite, searchString,
     season, episode, torrentSort, maxTorrentsPerEpisode) {
   var url = encodeURI(torrentSite.url + searchString);
 
-  //log.info('Checking torrent site (URL %s)', url);
+  this.log.info('Checking torrent site (URL %s)', url);
 
   return Q.Promise(function (resolve, reject) {
     exec('wget -nv -O- ' + url, function (err, stdout) {
       // ignore stderr, it's fine if wget/the current torrent site failed
       if (err) {
         // (we're not really interested in why wget failed)
-        //log.debug('Torrent request on %s failed', torrentSite.url);
+        this.log.debug('Torrent request on %s failed', torrentSite.url);
         return reject(err);
       }
 
@@ -90,7 +73,7 @@ function tryTorrentSite(torrentSite, searchString,
   .then(function (siteData) {
     var torrents = torrentSite.parseTorrentData(siteData, season, episode);
 
-    //log.debug('URL "%s" contains %d torrents', url, torrents.length);
+    this.log.debug('URL "%s" contains %d torrents', url, torrents.length);
 
     if (!torrents || !torrents.length) {
       return [];
@@ -100,7 +83,7 @@ function tryTorrentSite(torrentSite, searchString,
     torrents.sort(function (a, b) { return compareTorrents(a, b, torrentSort); });
     torrents = torrents.slice(0, maxTorrentsPerEpisode);
 
-    //log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
+    this.log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
 
     // return newly-found torrent
     return torrents;
@@ -134,25 +117,55 @@ function findTorrents(searchString, season, episode,
   // 2. reject if none was found and all sites have been tried
   return Q.fcall(function () {
     // trying the "current" torrent site
-    return tryTorrentSite(allSites[siteIndex++], searchString,
+    return tryTorrentSite(this.allSites[siteIndex++], searchString,
       season, episode, torrentSort, maxTorrentsPerEpisode)
       .fail(function () {
         // torrent search failed
         // check whether we have more sites to try
-        if (siteIndex === allSites.length) {
+        if (siteIndex === this.allSites.length) {
           // no more sites, reject
-          //log.info("Couldn't find torrent so far and have no more sites to try, aborting...");
+          this.log.info("Couldn't find torrent so far and have no more sites to try, aborting...");
           throw new Error('Failed to fetch torrent data from all known sites');
         }
         // we have more sites to try, do so recursively
         // resolve the current promise because we don't know yet whether we'll find torrents
         // (rejecting means we couldn't find any torrents)
-        //log.info("Failed fetching torrent data from site, trying next one...");
+        this.log.info("Failed fetching torrent data from site, trying next one...");
         return findTorrents(searchString, season, episode, torrentSort,
               maxTorrentsPerEpisode, siteIndex);
       });
   });
 }
 
-exports.findTorrents = findTorrents;
+
+/**
+ * Creates an instance of TorrentSiteManager.
+ *
+ * @constructor
+ *
+ * @param {Bunyan.Log} log - Logger instance.
+ */
+function TorrentSiteManager(log) {
+  var pirateBayMn = new pirateBay.Parser('thepiratebay.mn'),
+    pirateBaySe = new pirateBay.Parser('thepiratebay.se'),
+    pirateBayPe = new pirateBay.Parser('pirateproxy.pe'),
+    pirateBayAhoy = new pirateBay.Parser('ahoy.one'),
+    pirateBayPatatje = new pirateBay.Parser('tpb.patatje.eu'),
+    invalidParser = new pirateBay.Parser('foobar');
+
+  this.log = log;
+  this.findTorrents = findTorrents;
+  this.allSites = [
+    pirateBayPatatje,
+    pirateBayAhoy,
+    pirateBayPe,
+    pirateBaySe,
+    pirateBayMn,
+    invalidParser,
+  ];
+
+  this.log.info('TorrentSiteManager created');
+}
+
+module.exports = TorrentSiteManager;
 
