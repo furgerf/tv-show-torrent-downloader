@@ -20,6 +20,12 @@ var restify = require('restify'),
 function updateFields (subscription, data, log) {
   log && log.info('Updating subscription %s with:', subscription, data);
 
+  if (!subscription || !data) {
+    log && log.warn('Aborting because subscription ' + subscription + ' or data ' + data +
+      ' are not valid');
+    return subscription;
+  }
+
   if (data.name !== undefined) {
     subscription.name = data.name;
   }
@@ -45,6 +51,11 @@ function updateFields (subscription, data, log) {
  * @returns {Subscription} The newly-created subscription.
  */
 function createNewSubscriptionFromData (data) {
+  // make sure we have a name
+  if (!data || !data.name) {
+    return null;
+  }
+
   // we only let the user assign some fields...
   var newSubscriptionData = {
     name: data.name,
@@ -61,7 +72,7 @@ function createNewSubscriptionFromData (data) {
 function addSubscription (req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
-  if (!body.name) {
+  if (!body || !body.name) {
     return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
   }
 

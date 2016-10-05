@@ -3,7 +3,6 @@
 const root = './../../../src/';
 
 var expect = require('chai').expect,
-  sinon = require('sinon'),
   supertest = require('supertest'),
   rewire = require('rewire'),
   config = require(root + 'common/config').getDebugConfig(),
