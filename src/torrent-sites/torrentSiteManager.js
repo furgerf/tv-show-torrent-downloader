@@ -41,6 +41,32 @@ function compareTorrents(t1, t2, sort) {
 }
 
 /**
+ * Selects torrents based on the provided criteria.
+ *
+ * @param {Array} torrents - Array of torrents.
+ * @param {String} torrentSort - Torrent sorting method.
+ * @param {Number} maxTorrentsPerEpisode - Maximum number of torrents to return.
+ *
+ * @returns {Array} Array of selected torrents.
+ */
+function selectTorrents(torrents, torrentSort, maxTorrentsPerEpisode) {
+  this.log.debug('URL "%s" contains %d torrents', url, torrents.length);
+
+  if (!torrents || !torrents.length) {
+    return [];
+  }
+
+  // select the torrents to return: sort + slice
+  torrents.sort(function (a, b) { return compareTorrents(a, b, torrentSort); });
+  torrents = torrents.slice(0, maxTorrentsPerEpisode);
+
+  this.log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
+
+  // return newly-found torrent
+  return torrents;
+}
+
+/**
  * Tries finding and parsing torrents on the specified torrent site.
  *
  * @param {Parser} torrentSite - Contains the torrent site base URL and parses the response data.
@@ -56,6 +82,8 @@ function tryTorrentSite(torrentSite, searchString,
     season, episode, torrentSort, maxTorrentsPerEpisode) {
   var url = encodeURI(torrentSite.url + searchString);
 
+  var that = this;
+
   this.log.info('Checking torrent site (URL %s)', url);
 
   return Q.Promise(function (resolve, reject) {
@@ -70,24 +98,8 @@ function tryTorrentSite(torrentSite, searchString,
       resolve(stdout);
     });
   })
-  .then(function (siteData) {
-    var torrents = torrentSite.parseTorrentData(siteData, season, episode);
-
-    this.log.debug('URL "%s" contains %d torrents', url, torrents.length);
-
-    if (!torrents || !torrents.length) {
-      return [];
-    }
-
-    // select the torrents to return: sort + slice
-    torrents.sort(function (a, b) { return compareTorrents(a, b, torrentSort); });
-    torrents = torrents.slice(0, maxTorrentsPerEpisode);
-
-    this.log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
-
-    // return newly-found torrent
-    return torrents;
-  });
+  .then(data => torrentSite.parseTorrentData(data, season, episode))
+  .then(torrents => that.selectTorrents(torrents, torrentSort, maxTorrentsPerEpisode));
 }
 
 /**
@@ -108,6 +120,8 @@ function tryTorrentSite(torrentSite, searchString,
  */
 function findTorrents(searchString, season, episode,
   torrentSort, maxTorrentsPerEpisode, siteIndex) {
+  var that = this;
+
   // the caller may be external and wouldn't supply a siteIndex
   // so we make sure that we start at zero if it wasn't supplied
   siteIndex = siteIndex || 0;
@@ -117,21 +131,21 @@ function findTorrents(searchString, season, episode,
   // 2. reject if none was found and all sites have been tried
   return Q.fcall(function () {
     // trying the "current" torrent site
-    return tryTorrentSite(this.allSites[siteIndex++], searchString,
+    return tryTorrentSite(that.allSites[siteIndex++], searchString,
       season, episode, torrentSort, maxTorrentsPerEpisode)
       .fail(function () {
         // torrent search failed
         // check whether we have more sites to try
-        if (siteIndex === this.allSites.length) {
+        if (siteIndex === that.allSites.length) {
           // no more sites, reject
-          this.log.info("Couldn't find torrent so far and have no more sites to try, aborting...");
+          that.log.info("Couldn't find torrent so far and have no more sites to try, aborting...");
           throw new Error('Failed to fetch torrent data from all known sites');
         }
         // we have more sites to try, do so recursively
         // resolve the current promise because we don't know yet whether we'll find torrents
         // (rejecting means we couldn't find any torrents)
-        this.log.info("Failed fetching torrent data from site, trying next one...");
-        return findTorrents(searchString, season, episode, torrentSort,
+        that.log.info('Failed fetching torrent data from site, trying next one...');
+        return that.findTorrents(searchString, season, episode, torrentSort,
               maxTorrentsPerEpisode, siteIndex);
       });
   });
