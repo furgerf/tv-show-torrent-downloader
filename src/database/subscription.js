@@ -42,12 +42,12 @@ function isConnected() {
  */
 function ensureConnected() {
   return Q.fcall(function () {
-    if (!this.useDatabase) {
-      return;
-    }
-
     if (!this.isInitialized) {
       throw new Error('Cannot establish database connection: Not initialized');
+    }
+
+    if (!this.useDatabase) {
+      return;
     }
 
     if (isConnected()) {

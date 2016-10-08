@@ -17,7 +17,15 @@ config.logging.stdoutLoglevel = 'error';
 describe('ReadSubscriptionHandler', function () {
   describe('requests', function () {
     before(function () {
-      var that = this;
+      var that = this,
+        logStub = sinon.stub(
+          {
+            debug: function () {},
+            info: function () {},
+            warn: function () {},
+            error: function () {}
+          }
+        );
 
       // prepare sample data
       this.sampleSubscriptionData = [
@@ -76,6 +84,8 @@ describe('ReadSubscriptionHandler', function () {
           return sub.name === arg.name;
         })[0];
       });
+
+      Subscription.initialize(logStub);
     });
 
     beforeEach(function (done) {

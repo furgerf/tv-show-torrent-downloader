@@ -9,6 +9,18 @@ var expect = require('chai').expect,
   Subscription = require(root + 'database/subscription');
 
 describe('database/subscription', function () {
+  before(function () {
+    var logStub = sinon.stub(
+      {
+        debug: function () {},
+        info: function () {},
+        warn: function () {},
+        error: function () {}
+      }
+    );
+    Subscription.initialize(logStub);
+  });
+
   describe('validate schema', function () {
     it('should reject invalid schemas', function () {
       return Q.allSettled([
