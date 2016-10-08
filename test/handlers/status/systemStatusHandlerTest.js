@@ -53,58 +53,60 @@ describe('SystemStatusHandler', function () {
     });
   });
 
-  describe('GET /system/status/disk', function () {
-    beforeEach(function (done) {
-      // prepare data
-      var that = this,
-        log = logger.createLogger(config.logging).child({component: 'test-server'}),
-        execMock = function (command, callback) {
-          return command === 'df -x tmpfs -x devtmpfs | tail -n +2'
-            ? callback(null,  '/dev/sda1       165G  119G   38G  76% /\n\n/dev/sdb2       766G  730G   36G  96% /foo')
-            : callback('Unexpected invocation');
-        };
+  describe('requests', function () {
+    describe('GET /system/status/disk', function () {
+      beforeEach(function (done) {
+        // prepare data
+        var that = this,
+          log = logger.createLogger(config.logging).child({component: 'test-server'}),
+          execMock = function (command, callback) {
+            return command === 'df -x tmpfs -x devtmpfs | tail -n +2'
+              ? callback(null,  '/dev/sda1       165G  119G   38G  76% /\n\n/dev/sdb2       766G  730G   36G  96% /foo')
+              : callback('Unexpected invocation');
+          };
 
-      // injec mocked exec
-      this.RewiredSystemStatusHandler.__set__('exec', execMock);
+        // injec mocked exec
+        this.RewiredSystemStatusHandler.__set__('exec', execMock);
 
-      // create app and replace handler
-      this.app = new App(config, log);
-      this.app.systemStatusHandler = new this.RewiredSystemStatusHandler(log);
+        // create app and replace handler
+        this.app = new App(config, log);
+        this.app.systemStatusHandler = new this.RewiredSystemStatusHandler(log);
 
-      // start server
-      this.app.listen(function () {
-        var url = 'http://' + this.address().address + ':' + this.address().port;
-        that.server = supertest.agent(url);
-        done();
-      });
-    });
-    afterEach(function (done) {
-      this.app.close(done);
-    });
-
-    it('should correctly return sample data', function (done) {
-      this.server
-        .get('/status/system/disk')
-        .expect('Content-type', 'application/json')
-        .expect(200)
-        .end(function (err, res) {
-          expect(err).to.not.exist;
-          expect(res.result).to.not.exist;
-          expect(res.body.code).to.equal('Success');
-          expect(res.body.data).to.eql([
-            {
-              mountPoint: "/",
-              spaceUsed: "119G",
-              spaceAvailable: "38G"
-            },
-            {
-              mountPoint: "/foo",
-              spaceUsed: "730G",
-              spaceAvailable: "36G"
-            },
-          ]);
+        // start server
+        this.app.listen(function () {
+          var url = 'http://' + this.address().address + ':' + this.address().port;
+          that.server = supertest.agent(url);
           done();
         });
+      });
+      afterEach(function (done) {
+        this.app.close(done);
+      });
+
+      it('should correctly return sample data', function (done) {
+        this.server
+          .get('/status/system/disk')
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.result).to.not.exist;
+            expect(res.body.code).to.equal('Success');
+            expect(res.body.data).to.eql([
+              {
+                mountPoint: "/",
+                spaceUsed: "119G",
+                spaceAvailable: "38G"
+              },
+              {
+                mountPoint: "/foo",
+                spaceUsed: "730G",
+                spaceAvailable: "36G"
+              },
+            ]);
+            done();
+          });
+      });
     });
   });
 });

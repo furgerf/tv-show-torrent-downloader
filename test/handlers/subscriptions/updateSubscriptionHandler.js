@@ -10,8 +10,10 @@ describe('UpdateSubscriptionHandler', function () {
   describe('downloadTorrent', function () {
     it('should be implemented');
   });
-  describe('PUT /subscriptions/:subscriptionName/update', function () {
-    it('should be implemented');
+  describe('requests', function () {
+    describe('PUT /subscriptions/:subscriptionName/update', function () {
+      it('should be implemented');
+    });
   });
 });
 
