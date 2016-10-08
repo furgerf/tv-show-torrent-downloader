@@ -8,7 +8,7 @@
 var Q = require('q'),
   exec = require('child_process').exec,
 
-  pirateBay = require('./piratebay');
+  PirateBay = require('./piratebay');
 
 /**
  * Compares two torrents according to the specified sorting method.
@@ -160,12 +160,12 @@ function findTorrents(searchString, season, episode,
  * @param {Bunyan.Log} log - Logger instance.
  */
 function TorrentSiteManager(log) {
-  var pirateBayMn = new pirateBay.Parser('thepiratebay.mn'),
-    pirateBaySe = new pirateBay.Parser('thepiratebay.se'),
-    pirateBayPe = new pirateBay.Parser('pirateproxy.pe'),
-    pirateBayAhoy = new pirateBay.Parser('ahoy.one'),
-    pirateBayPatatje = new pirateBay.Parser('tpb.patatje.eu'),
-    invalidParser = new pirateBay.Parser('foobar');
+  var pirateBayMn = new PirateBay('thepiratebay.mn'),
+    pirateBaySe = new PirateBay('thepiratebay.se'),
+    pirateBayPe = new PirateBay('pirateproxy.pe'),
+    pirateBayAhoy = new PirateBay('ahoy.one'),
+    pirateBayPatatje = new PirateBay('tpb.patatje.eu'),
+    invalidParser = new PirateBay('foobar');
 
   this.log = log;
   this.findTorrents = findTorrents;

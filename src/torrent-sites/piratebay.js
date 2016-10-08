@@ -181,5 +181,5 @@ function Parser (url) {
   this.parseTorrentData = parseTorrentData;
 }
 
-exports.Parser = Parser;
+module.exports = Parser;
 
