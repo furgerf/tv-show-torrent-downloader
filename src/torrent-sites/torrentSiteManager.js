@@ -160,12 +160,12 @@ function findTorrents(searchString, season, episode,
  * @param {Bunyan.Log} log - Logger instance.
  */
 function TorrentSiteManager(log) {
-  var pirateBayMn = new PirateBay('thepiratebay.mn'),
-    pirateBaySe = new PirateBay('thepiratebay.se'),
-    pirateBayPe = new PirateBay('pirateproxy.pe'),
-    pirateBayAhoy = new PirateBay('ahoy.one'),
-    pirateBayPatatje = new PirateBay('tpb.patatje.eu'),
-    invalidParser = new PirateBay('foobar');
+  var pirateBayMn = new PirateBay('thepiratebay.mn', log),
+    pirateBaySe = new PirateBay('thepiratebay.se', log),
+    pirateBayPe = new PirateBay('pirateproxy.pe', log),
+    pirateBayAhoy = new PirateBay('ahoy.one', log),
+    pirateBayPatatje = new PirateBay('tpb.patatje.eu', log),
+    invalidParser = new PirateBay('foobar', log);
 
   this.log = log;
   this.findTorrents = findTorrents;

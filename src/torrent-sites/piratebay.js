@@ -19,7 +19,7 @@ function parseSize(str) {
  * Parses a date from the current year.
  *
  * @param {Array}  dateThisYear - Data that was parsed from the regex.
- * @param {String} dateThisYear[0] - Complete match.
+ * @param {String} dateThisYear[0] - Complete match - ignored.
  * @param {String} dateThisYear[1] - Month.
  * @param {String} dateThisYear[2] - Day.
  * @param {String} dateThisYear[3] - Hour.
@@ -41,7 +41,7 @@ function parseDateThisYear(dateThisYear) {
  * Parses a date from the last year.
  *
  * @param {Array}  dateOtherYear - Data that was parsed from the regex.
- * @param {String} dateOtherYear[0] - Complete match.
+ * @param {String} dateOtherYear[0] - Complete match - ignored.
  * @param {String} dateOtherYear[1] - Month.
  * @param {String} dateOtherYear[2] - Day.
  * @param {String} dateOtherYear[3] - Year.
@@ -62,7 +62,7 @@ function parseDateLastYear(dateOtherYear) {
  * Parses a date from today.
  *
  * @param {Array}  dateOtherYear - Data that was parsed from the regex.
- * @param {String} dateOtherYear[0] - Complete match.
+ * @param {String} dateOtherYear[0] - Complete match - ignored.
  * @param {String} dateOtherYear[1] - Hours.
  * @param {String} dateOtherYear[2] - Minutes.
  *
@@ -162,22 +162,24 @@ function parseTorrentData(html, season, episode) {
 
     return torrents;
   } catch (err) {
-    console.log('Torrent parsing error: ' + err);
+    this.log.warn('Torrent parsing error: ' + err);
     return null;
   }
 }
 
 /**
- * Parser constructor.
+ * Parser constructor. Throws an error if no `url` is provided.
  *
  * @param {String} url - Is used by the torrent-site index to build the search URL.
+ * @param {Bunyan.Log} log - Logger instance.
  */
-function Parser (url) {
+function Parser (url, log) {
   if (!url || !url.toString()) {
-    throw new ArgumentException('Must provide valid URL ending');
+    throw new Error('Must provide valid URL');
   }
 
   this.url = 'http://' + url + '/search/';
+  this.log = log;
   this.parseTorrentData = parseTorrentData;
 }
 
