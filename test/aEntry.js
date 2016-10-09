@@ -1,12 +1,12 @@
 'use strict';
 
-// /*global describe*/
-
 var expect = require('chai').expect,
-  config = require('./../src/common/config').getDebugConfig(),
-  App = require('./../src/app').App,
-  logger = require('./../src/common/logger'),
   supertest = require('supertest'),
+
+  App = require('./../src/app').App,
+  config = require('./../src/common/config').getDebugConfig(),
+  utils = require('./test-utils'),
+
   server;
 
 config.api.port = 0;
@@ -17,7 +17,7 @@ describe('entry', function () {
     beforeEach(function (done) {
       var that = this;
       this.app =
-        new App(config, logger.createLogger(config.logging).child({component: 'test-server'}));
+        new App(config, utils.fakeLog);
 
       this.app.listen(function () {
         var url = 'http://' + this.address().address + ':' + this.address().port;
@@ -25,6 +25,7 @@ describe('entry', function () {
         done();
       });
     });
+
     afterEach(function (done) {
       this.app.close(done);
     });

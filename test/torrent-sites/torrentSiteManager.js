@@ -7,21 +7,11 @@ var expect = require('chai').expect,
   sinon = require('sinon'),
   Q = require('q'),
 
+  utils = require('../test-utils'),
   TorrentSiteManager = rewire(root + 'torrent-sites/torrentSiteManager');
 
 
 describe('torrent-sites/torrentSiteManager', function () {
-  before(function () {
-    this.logStub = sinon.stub(
-      {
-        debug: function () {},
-        info: function () {},
-        warn: function () {},
-        error: function () {}
-      }
-    );
-  });
-
   describe('compareTorrents', function () {
     before(function () {
       var now = new Date(),
@@ -109,7 +99,7 @@ describe('torrent-sites/torrentSiteManager', function () {
       this.tryTorrentSiteStub = sinon.stub();
       TorrentSiteManager.__set__('tryTorrentSite', this.tryTorrentSiteStub);
 
-      this.testee = new TorrentSiteManager(this.logStub);
+      this.testee = new TorrentSiteManager(utils.fakeLog);
 
       this.searchString = 'foobar';
       this.seasonToCheck = 12;

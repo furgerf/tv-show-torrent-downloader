@@ -7,29 +7,16 @@ var expect = require('chai').expect,
   Q = require('q'),
   supertest = require('supertest'),
   rewire = require('rewire'),
+
+  utils = require('../../test-utils'),
+  App = require(root + 'app').App,
   config = require(root + 'common/config').getDebugConfig(),
-  logger = require(root + 'common/logger'),
   Subscription = require(root + 'database/subscription'),
-  RewiredHandler = rewire(root + 'handlers/subscriptions/writeSubscriptionHandler'),
-  App = require(root + 'app').App;
+  RewiredWriteSubscriptionHandler = rewire(root + 'handlers/subscriptions/writeSubscriptionHandler');
 
 config.api.port = 0;
-config.logging.stdoutLoglevel = 'error';
 
 describe('WriteSubscriptionHandler', function () {
-  before(function () {
-    this.logStub = sinon.stub(
-      {
-        debug: function () {},
-        info: function () {},
-        warn: function () {},
-        error: function () {}
-      }
-    );
-
-    //Subscription.initialize(this.logStub);
-  });
-
   describe('updateFields', function () {
     before(function () {
       // prepare test data
@@ -53,7 +40,7 @@ describe('WriteSubscriptionHandler', function () {
       this.originalTestSubscription._id = this.testSubscription._id;
 
       // extract tested function
-      this.updateFields = RewiredHandler.__get__('updateFields');
+      this.updateFields = RewiredWriteSubscriptionHandler.__get__('updateFields');
     });
 
     it('should return the original subscription if the data is not valid', function () {
@@ -117,7 +104,7 @@ describe('WriteSubscriptionHandler', function () {
   describe('createNewSubscriptionFromData', function () {
     before(function () {
       // extract tested function
-      this.createNewSubscriptionFromData = RewiredHandler.__get__('createNewSubscriptionFromData');
+      this.createNewSubscriptionFromData = RewiredWriteSubscriptionHandler.__get__('createNewSubscriptionFromData');
     });
 
     it('should return null if the subscription data is invalid', function () {
@@ -164,8 +151,7 @@ describe('WriteSubscriptionHandler', function () {
 
   describe('requests', function () {
     beforeEach(function (done) {
-      var that = this,
-        log = logger.createLogger(config.logging).child({component: 'test-server'});
+      var that = this;
 
       /*
       // reset stubs
@@ -176,12 +162,12 @@ describe('WriteSubscriptionHandler', function () {
       */
 
       // prepare app
-      this.app = new App(config, log);
+      this.app = new App(config, utils.fakeLog);
 
       /*
       this.ensureConnectedStub = sinon.stub(Subscription, 'ensureConnected');
       this.ensureConnectedStub.returns(Q.fcall(() => null));
-      Subscription.initialize(this.logStub);
+      Subscription.initialize(utils.fakeLog);
 
       //this.subscriptionStub = sinon.stub();
       this.subscriptionSaveStub = sinon.stub();
@@ -201,9 +187,9 @@ describe('WriteSubscriptionHandler', function () {
       this.subscriptionStub.prototype.getReturnable = sinon.stub();
       */
 
-      RewiredHandler.__set__('Subscription', Subscription);
+      RewiredWriteSubscriptionHandler.__set__('Subscription', Subscription);
 
-      this.app.writeSubscriptionHandler = new RewiredHandler(log);
+      this.app.writeSubscriptionHandler = new RewiredWriteSubscriptionHandler(utils.fakeLog);
 
       // start server
       this.app.listen(function () {

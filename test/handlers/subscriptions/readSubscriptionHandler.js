@@ -6,26 +6,19 @@ var expect = require('chai').expect,
   sinon = require('sinon'),
   supertest = require('supertest'),
   rewire = require('rewire'),
+
+  App = require(root + 'app').App,
   config = require(root + 'common/config').getDebugConfig(),
-  logger = require(root + 'common/logger'),
+  utils = require('../../test-utils'),
   Subscription = require(root + 'database/subscription'),
-  App = require(root + 'app').App;
+  RewiredReadSubscriptionHandler = rewire(root + 'handlers/subscriptions/readSubscriptionHandler');
 
 config.api.port = 0;
-config.logging.stdoutLoglevel = 'error';
 
 describe('ReadSubscriptionHandler', function () {
   describe('requests', function () {
     before(function () {
-      var that = this,
-        logStub = sinon.stub(
-          {
-            debug: function () {},
-            info: function () {},
-            warn: function () {},
-            error: function () {}
-          }
-        );
+      var that = this;
 
       // prepare sample data
       this.sampleSubscriptionData = [
@@ -85,12 +78,11 @@ describe('ReadSubscriptionHandler', function () {
         })[0];
       });
 
-      Subscription.initialize(logStub);
+      Subscription.initialize(utils.fakeLog);
     });
 
     beforeEach(function (done) {
-      var that = this,
-        log = logger.createLogger(config.logging).child({component: 'test-server'});
+      var that = this;
 
       // reset stubs
       this.findStub.reset();
@@ -99,11 +91,10 @@ describe('ReadSubscriptionHandler', function () {
       this.findOneStub.reset();
 
       // prepare app
-      this.app = new App(config, log);
+      this.app = new App(config, utils.fakeLog);
 
-      this.RewiredHandler = rewire(root + 'handlers/subscriptions/readSubscriptionHandler');
-      this.RewiredHandler.__set__('Subscription', Subscription);
-      this.app.readSubscriptionHandler = new this.RewiredHandler(log);
+      RewiredReadSubscriptionHandler.__set__('Subscription', Subscription);
+      this.app.readSubscriptionHandler = new RewiredReadSubscriptionHandler(utils.fakeLog);
 
       // start server
       this.app.listen(function () {

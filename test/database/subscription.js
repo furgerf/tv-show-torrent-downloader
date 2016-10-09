@@ -6,19 +6,12 @@ var expect = require('chai').expect,
   sinon = require('sinon'),
   Q = require('q'),
 
+  utils = require(root + '../test/test-utils'),
   Subscription = require(root + 'database/subscription');
 
 describe('database/subscription', function () {
   before(function () {
-    var logStub = sinon.stub(
-      {
-        debug: function () {},
-        info: function () {},
-        warn: function () {},
-        error: function () {}
-      }
-    );
-    Subscription.initialize(logStub);
+    Subscription.initialize(utils.fakeLog);
   });
 
   describe('validate schema', function () {
@@ -158,15 +151,7 @@ describe('database/subscription', function () {
           lastEpisode: 3
         }
       );
-
-      this.testee.log = sinon.stub(
-        {
-          debug: function () {},
-          info: function () {},
-          warn: function () {},
-          error: function () {}
-        }
-      );
+      this.testee.log = utils.fakeLog;
     });
 
     it('should reject invalid arguments', function () {

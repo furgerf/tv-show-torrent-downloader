@@ -5,21 +5,18 @@ const root = './../../../src/';
 var expect = require('chai').expect,
   supertest = require('supertest'),
   rewire = require('rewire'),
+
+  App = require(root + 'app').App,
   config = require(root + 'common/config').getDebugConfig(),
-  logger = require(root + 'common/logger'),
-  App = require(root + 'app').App;
+  utils = require(root + '../test/test-utils'),
+  RewiredSystemStatusHandler = rewire(root + 'handlers/status/systemStatusHandler');
 
 config.api.port = 0;
-config.logging.stdoutLoglevel = 'error';
 
 describe('SystemStatusHandler', function () {
-  beforeEach(function () {
-    this.RewiredSystemStatusHandler = rewire(root + 'handlers/status/systemStatusHandler');
-  });
-
   describe('parseDiskInformation', function () {
     beforeEach(function () {
-      this.parseDiskInformation = this.RewiredSystemStatusHandler.__get__('parseDiskInformation');
+      this.parseDiskInformation = RewiredSystemStatusHandler.__get__('parseDiskInformation');
     });
 
     it('should be able to handle invalid data', function () {
@@ -56,21 +53,27 @@ describe('SystemStatusHandler', function () {
   describe('requests', function () {
     describe('GET /system/status/disk', function () {
       beforeEach(function (done) {
-        // prepare data
-        var that = this,
-          log = logger.createLogger(config.logging).child({component: 'test-server'}),
-          execMock = function (command, callback) {
+        var that = this;
+
+        // prepare data - return sample data on the first call, if the correct command is used
+        // throw an exception on the second call
+        this.fakeExec = function (command, callback) {
+          that.calls = that.calls || 0;
+          if (that.calls > 0) {
+            throw new Error('Fake exec failed!');
+          }
+          that.calls++;
             return command === 'df -x tmpfs -x devtmpfs | tail -n +2'
               ? callback(null,  '/dev/sda1       165G  119G   38G  76% /\n\n/dev/sdb2       766G  730G   36G  96% /foo')
               : callback('Unexpected invocation');
           };
 
-        // injec mocked exec
-        this.RewiredSystemStatusHandler.__set__('exec', execMock);
+        // injec fake exec
+        RewiredSystemStatusHandler.__set__('exec', this.fakeExec);
 
         // create app and replace handler
-        this.app = new App(config, log);
-        this.app.systemStatusHandler = new this.RewiredSystemStatusHandler(log);
+        this.app = new App(config, utils.fakeLog);
+        this.app.systemStatusHandler = new RewiredSystemStatusHandler(utils.fakeLog);
 
         // start server
         this.app.listen(function () {
@@ -79,6 +82,7 @@ describe('SystemStatusHandler', function () {
           done();
         });
       });
+
       afterEach(function (done) {
         this.app.close(done);
       });
@@ -104,6 +108,19 @@ describe('SystemStatusHandler', function () {
                 spaceAvailable: "36G"
               },
             ]);
+            done();
+          });
+      });
+
+      it('should be able to deal with a failing command', function (done) {
+        this.server
+          .get('/status/system/disk')
+          .expect('Content-type', 'application/json')
+          .expect(500)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.result).to.not.exist;
+            expect(res.body.code).to.equal('InternalServerError');
             done();
           });
       });
