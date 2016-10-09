@@ -59,14 +59,19 @@ describe('SystemStatusHandler', function () {
         // throw an exception on the second call
         this.fakeExec = function (command, callback) {
           that.calls = that.calls || 0;
-          if (that.calls > 0) {
+          that.calls++;
+
+          if (that.calls > 2) {
+            return callback('This is an error');
+          }
+          if (that.calls > 1) {
             throw new Error('Fake exec failed!');
           }
-          that.calls++;
-            return command === 'df -x tmpfs -x devtmpfs | tail -n +2'
-              ? callback(null,  '/dev/sda1       165G  119G   38G  76% /\n\n/dev/sdb2       766G  730G   36G  96% /foo')
-              : callback('Unexpected invocation');
-          };
+
+          return command === 'df -x tmpfs -x devtmpfs | tail -n +2'
+            ? callback(null,  '/dev/sda1       165G  119G   38G  76% /\n\n/dev/sdb2       766G  730G   36G  96% /foo')
+            : callback('Unexpected invocation');
+        };
 
         // injec fake exec
         RewiredSystemStatusHandler.__set__('exec', this.fakeExec);
@@ -112,7 +117,20 @@ describe('SystemStatusHandler', function () {
           });
       });
 
-      it('should be able to deal with a failing command', function (done) {
+      it('should be able to deal with a failing command - exception', function (done) {
+        this.server
+          .get('/status/system/disk')
+          .expect('Content-type', 'application/json')
+          .expect(500)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.result).to.not.exist;
+            expect(res.body.code).to.equal('InternalServerError');
+            done();
+          });
+      });
+
+      it('should be able to deal with a failing command - error object', function (done) {
         this.server
           .get('/status/system/disk')
           .expect('Content-type', 'application/json')
