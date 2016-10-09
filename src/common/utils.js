@@ -5,7 +5,7 @@
  *
  * @param {Number} num - Number which should be formatted as a two-digit number.
  *
- * @returns {String} String containing the two digits.
+ * @returns {String} String containing the two digits or undefined if `num` is no valid number.
  */
 function twoDigitNumber(num) {
   var n = typeof num === 'number' ? num : parseInt(num, 10);
@@ -18,7 +18,7 @@ function twoDigitNumber(num) {
  * @param {Number} season - Number of the season.
  * @param {Number} episode - Number of the episode.
  *
- * @returns {String} Formatted episode.
+ * @returns {String} Formatted episode or undefined if either `season` or `episode` are not valid.
  */
 exports.formatEpisodeNumber = function (season, episode) {
   var formattedSeason = twoDigitNumber(season),
@@ -36,7 +36,7 @@ exports.formatEpisodeNumber = function (season, episode) {
  * @param {Number} num - Number of the file size.
  * @param {String} unit - Unit of the file size.
  *
- * @returns {Number} Size converted to bytes.
+ * @returns {Number} Size converted to bytes or undefined if either `num` or `unit` is invalid..
  */
 exports.fileSizeToBytes = function (num, unit) {
   const factors = {
@@ -59,7 +59,7 @@ exports.fileSizeToBytes = function (num, unit) {
 
 /**
  * Sends a response to the request which was handled successfully and calls next() to
- * show that the handler is done handling the request.
+ * show that the handler is done handling the request. NOTE: No sort of type validation is done!
  *
  * @param {String} message - Message that describes how the request was handled
  * @param {Object} data - Response data
