@@ -39,7 +39,7 @@ function getTorrentSort(torrentSort) {
  */
 function checkForMultipleEpisodes(subscription, season, episode,
     torrents, torrentSort, maxTorrentsPerEpisode) {
-  return this.torrentSiteManager.findTorrents(subscription.name + ' '
+  return torrentSiteManager.findTorrents(subscription.name + ' '
       + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
       season, episode, torrentSort, maxTorrentsPerEpisode)
     .then(function (newTorrents) {
@@ -101,17 +101,17 @@ function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpi
  */
 function checkSubscriptionForUpdates(req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
-    subscriptionName = decodeURIComponent(req.params[0]),
+    subName = decodeURIComponent(req.params[0]),
     torrentSort = getTorrentSort(body ? body.torrentSort : req.params.torrentSort),
     maxTorrentsPerEpisode = parseInt(body
         ? body.maxTorrentsPerEpisode
         : req.params.maxTorrentsPerEpisode, 10) || 1,
     startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
 
-  Subscription.findSubscriptionByName(subscriptionName)
+  Subscription.findSubscriptionByName(subName)
     .then(subscription => subscription
         ? subscription
-        : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
+        : next(new restify.BadRequestError("No subscription with name '" + subName + "'.")))
     .then(function (subscription) {
       return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
         .then(function (data) {
