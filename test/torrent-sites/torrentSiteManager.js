@@ -7,7 +7,7 @@ var expect = require('chai').expect,
   sinon = require('sinon'),
   Q = require('q'),
 
-  utils = require('../test-utils'),
+  testUtils = require('../test-utils'),
   TorrentSiteManager = rewire(root + 'torrent-sites/torrentSiteManager');
 
 
@@ -99,7 +99,7 @@ describe('torrent-sites/torrentSiteManager', function () {
       this.tryTorrentSiteStub = sinon.stub();
       TorrentSiteManager.__set__('tryTorrentSite', this.tryTorrentSiteStub);
 
-      this.testee = new TorrentSiteManager(utils.fakeLog);
+      this.testee = new TorrentSiteManager(testUtils.getFakeLog());
 
       this.searchString = 'foobar';
       this.seasonToCheck = 12;

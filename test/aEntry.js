@@ -5,19 +5,18 @@ var expect = require('chai').expect,
 
   App = require('./../src/app').App,
   config = require('./../src/common/config').getDebugConfig(),
-  utils = require('./test-utils'),
+  testUtils = require('./test-utils'),
 
   server;
 
 config.api.port = 0;
-config.logging.stdoutLoglevel = 'error';
 
 describe('entry', function () {
   describe('accessing root', function () {
     beforeEach(function (done) {
       var that = this;
       this.app =
-        new App(config, utils.fakeLog);
+        new App(config, testUtils.getFakeLog());
 
       this.app.listen(function () {
         var url = 'http://' + this.address().address + ':' + this.address().port;

@@ -5,7 +5,7 @@ const root = './../../src/';
 var expect = require('chai').expect,
   rewire = require('rewire'),
 
-  utils = require('../test-utils'),
+  testUtils = require('../test-utils'),
   Piratebay = rewire(root + 'torrent-sites/piratebay');
 
 describe('torrent-sites/piratebay', function () {
@@ -44,7 +44,7 @@ describe('torrent-sites/piratebay', function () {
   });
 
   describe('parseTorrentData', function () {
-    var testee = new Piratebay('asdf', utils.fakeLog);
+    var testee = new Piratebay('asdf', testUtils.getFakeLog());
 
     it('should handle invalid data', function () {
       expect(testee.parseTorrentData()).to.be.null;

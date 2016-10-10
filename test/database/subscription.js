@@ -6,14 +6,10 @@ var expect = require('chai').expect,
   sinon = require('sinon'),
   Q = require('q'),
 
-  utils = require(root + '../test/test-utils'),
+  testUtils = require(root + '../test/test-utils'),
   Subscription = require(root + 'database/subscription');
 
 describe('database/subscription', function () {
-  before(function () {
-    Subscription.initialize(utils.fakeLog);
-  });
-
   describe('validate schema', function () {
     it('should reject invalid schemas', function () {
       return Q.allSettled([
@@ -151,7 +147,7 @@ describe('database/subscription', function () {
           lastEpisode: 3
         }
       );
-      this.testee.log = utils.fakeLog;
+      this.testee.log = testUtils.getFakeLog();
     });
 
     it('should reject invalid arguments', function () {
@@ -201,8 +197,11 @@ describe('database/subscription', function () {
   });
 
   describe('findSubscriptionByName', function () {
+    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription);
+    fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
+
     beforeEach(function () {
-      this.findOneStub = sinon.stub(Subscription, 'findOne');
+      fakeSubscription.findOneStub.reset();
     });
 
     it('should make the expected database calls', function () {
@@ -213,10 +212,11 @@ describe('database/subscription', function () {
           new Date(),
           'foobar',
         ];
-      return Q.allSettled(testNames.map(name => Subscription.findSubscriptionByName(name)))
+
+      return Q.allSettled(testNames.map(name => fakeSubscription.Subscription.findSubscriptionByName(name)))
         .then(function (result) {
           testNames.forEach(function (name) {
-            sinon.assert.calledWith(Subscription.findOne, {name: name});
+            sinon.assert.calledWith(fakeSubscription.Subscription.findOne, {name: name});
           });
         });
     });
@@ -224,73 +224,59 @@ describe('database/subscription', function () {
     it('should return a promise that resolves to the data from the database', function () {
       var databaseResult = 123;
 
-      this.findOneStub.withArgs({name: 'foobar'}).returns(databaseResult);
+      fakeSubscription.findOneStub.withArgs({name: 'foobar'}).returns(databaseResult);
 
-      return Subscription.findSubscriptionByName('foobar')
+      return fakeSubscription.Subscription.findSubscriptionByName('foobar')
       .then(result => expect(result).to.equal(databaseResult));
     });
 
-    afterEach(function () {
-      this.findOneStub.restore();
-    });
   });
 
   describe('findAllSubscriptions', function () {
-    beforeEach(function () {
-      this.findStub = sinon.stub(Subscription, 'find');
-      this.skipStub = sinon.stub();
-      this.limitStub = sinon.stub();
+    // the fakeSubscription needs "any" subscriptions so the limit/skip stubs get all set up
+    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, []);
+    fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
 
-      this.findStub.returns({skip: this.skipStub});
-      this.skipStub.returns({limit: this.limitStub});
+    beforeEach(function () {
+      fakeSubscription.findStub.reset();
+      fakeSubscription.skipStub.reset();
+      fakeSubscription.limitStub.reset();
     });
 
     it('should make the expected database call when invoked without arguments', function () {
-      var that = this;
-
-      return Subscription.findAllSubscriptions()
+      return fakeSubscription.Subscription.findAllSubscriptions()
         .then(function (result) {
-          sinon.assert.called(that.findStub);
-          sinon.assert.calledWith(that.skipStub, 0);
-          sinon.assert.notCalled(that.limitStub);
+          sinon.assert.called(fakeSubscription.findStub);
+          sinon.assert.calledWith(fakeSubscription.skipStub, 0);
+          sinon.assert.notCalled(fakeSubscription.limitStub);
         });
     });
 
     it('should make the expected database call when invoked with a limit', function () {
-      var that = this;
-
-      return Subscription.findAllSubscriptions(123)
+      return fakeSubscription.Subscription.findAllSubscriptions(123)
         .then(function (result) {
-          sinon.assert.called(that.findStub);
-          sinon.assert.calledWith(that.skipStub, 0);
-          sinon.assert.calledWith(that.limitStub, 123);
+          sinon.assert.called(fakeSubscription.findStub);
+          sinon.assert.calledWith(fakeSubscription.skipStub, 0);
+          sinon.assert.calledWith(fakeSubscription.limitStub, 123);
         });
     });
 
     it('should make the expected database call when invoked with an offset', function () {
-      var that = this;
-
-      return Subscription.findAllSubscriptions(undefined, 123)
+      return fakeSubscription.Subscription.findAllSubscriptions(undefined, 123)
         .then(function (result) {
-          sinon.assert.called(that.findStub);
-          sinon.assert.calledWith(that.skipStub, 123);
-          sinon.assert.notCalled(that.limitStub);
+          sinon.assert.called(fakeSubscription.findStub);
+          sinon.assert.calledWith(fakeSubscription.skipStub, 123);
+          sinon.assert.notCalled(fakeSubscription.limitStub);
         });
     });
 
     it('should make the expected database call when invoked with limit and offset', function () {
-      var that = this;
-
-      return Subscription.findAllSubscriptions(123, 456)
+      return fakeSubscription.Subscription.findAllSubscriptions(123, 456)
         .then(function (result) {
-          sinon.assert.called(that.findStub);
-          sinon.assert.calledWith(that.skipStub, 456);
-          sinon.assert.calledWith(that.limitStub, 123);
+          sinon.assert.called(fakeSubscription.findStub);
+          sinon.assert.calledWith(fakeSubscription.skipStub, 456);
+          sinon.assert.calledWith(fakeSubscription.limitStub, 123);
         });
-    });
-
-    afterEach(function () {
-      this.findStub.restore();
     });
   });
 });

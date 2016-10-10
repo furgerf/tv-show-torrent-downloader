@@ -9,7 +9,7 @@ var expect = require('chai').expect,
 
   App = require(root + 'app').App,
   config = require(root + 'common/config').getDebugConfig(),
-  utils = require('../../test-utils'),
+  testUtils = require('../../test-utils'),
   Subscription = require(root + 'database/subscription'),
   RewiredReadSubscriptionHandler = rewire(root + 'handlers/subscriptions/readSubscriptionHandler');
 
@@ -17,84 +17,64 @@ config.api.port = 0;
 
 describe('ReadSubscriptionHandler', function () {
   describe('requests', function () {
-    before(function () {
-      var that = this;
+    // prepare sample data
+    var sampleSubscriptionData = [
+      {
+        _id : '574169af750120fa451a53b8',
+        creationTime : new Date('2016-05-22T08:11:27.922Z'),
+        name : 'foo',
+        searchParameters : '720p',
+        lastSeason : 12,
+        lastEpisode : 23,
+        __v : 0,
+        lastModifiedTime : new Date('2016-09-18T14:00:15.404Z'),
+        lastUpdateCheckTime : new Date('2016-09-18T14:00:15.398Z'),
+        lastDownloadTime : new Date('2016-05-22T00:00:00.000Z')
+      },
+      {
+        _id : '574167b451d4b90f075c889c',
+        creationTime : new Date('2016-05-22T08:03:00.633Z'),
+        name : 'bar',
+        searchParameters : null,
+        lastSeason : 3,
+        lastEpisode : 3,
+        __v : 0,
+        lastModifiedTime : new Date('2016-09-26T14:00:06.135Z'),
+        lastUpdateCheckTime : new Date('2016-09-26T14:00:06.131Z'),
+        lastDownloadTime : new Date('2012-12-21T00:00:00.000Z')
+      },
+      {
+        _id : '5676ef80a2ce34bb2843ce1b',
+        creationTime : new Date('2015-12-20T18:12:16.100Z'),
+        name : 'foobar',
+        searchParameters : '1080p',
+        lastSeason : 2,
+        lastEpisode : 10,
+        __v : 0,
+        lastModifiedTime : new Date('2016-09-26T14:00:06.296Z'),
+        lastUpdateCheckTime : new Date('2016-09-26T14:00:06.290Z'),
+        lastDownloadTime : new Date('2015-12-14T00:00:00.000Z')
+      }
+    ],
+      sampleSubscriptions = sampleSubscriptionData.map(sub => new Subscription(sub)),
+      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, sampleSubscriptions);
 
-      // prepare sample data
-      this.sampleSubscriptionData = [
-        {
-          _id : '574169af750120fa451a53b8',
-          creationTime : new Date('2016-05-22T08:11:27.922Z'),
-          name : 'foo',
-          searchParameters : '720p',
-          lastSeason : 12,
-          lastEpisode : 23,
-          __v : 0,
-          lastModifiedTime : new Date('2016-09-18T14:00:15.404Z'),
-          lastUpdateCheckTime : new Date('2016-09-18T14:00:15.398Z'),
-          lastDownloadTime : new Date('2016-05-22T00:00:00.000Z')
-        },
-        {
-          _id : '574167b451d4b90f075c889c',
-          creationTime : new Date('2016-05-22T08:03:00.633Z'),
-          name : 'bar',
-          searchParameters : null,
-          lastSeason : 3,
-          lastEpisode : 3,
-          __v : 0,
-          lastModifiedTime : new Date('2016-09-26T14:00:06.135Z'),
-          lastUpdateCheckTime : new Date('2016-09-26T14:00:06.131Z'),
-          lastDownloadTime : new Date('2012-12-21T00:00:00.000Z')
-        },
-        {
-          _id : '5676ef80a2ce34bb2843ce1b',
-          creationTime : new Date('2015-12-20T18:12:16.100Z'),
-          name : 'foobar',
-          searchParameters : '1080p',
-          lastSeason : 2,
-          lastEpisode : 10,
-          __v : 0,
-          lastModifiedTime : new Date('2016-09-26T14:00:06.296Z'),
-          lastUpdateCheckTime : new Date('2016-09-26T14:00:06.290Z'),
-          lastDownloadTime : new Date('2015-12-14T00:00:00.000Z')
-        }
-      ];
-      this.sampleSubscriptions = this.sampleSubscriptionData.map(sub => new Subscription(sub));
-
-      // prepare stubs
-      this.findStub = sinon.stub(Subscription, 'find');
-      this.skipStub = sinon.stub();
-      this.limitStub = sinon.stub();
-
-      this.findStub.returns({skip: this.skipStub});
-
-      this.sampleSubscriptions.limit = this.limitStub;
-      this.skipStub.returns(this.sampleSubscriptions);
-      this.limitStub.returns(this.sampleSubscriptions);
-
-      this.findOneStub = sinon.stub(Subscription, 'findOne', function (arg) {
-        return that.sampleSubscriptions.filter(function (sub) {
-          return sub.name === arg.name;
-        })[0];
-      });
-
-      Subscription.initialize(utils.fakeLog);
-    });
+    fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
 
     beforeEach(function (done) {
       var that = this;
 
       // reset stubs
-      this.findStub.reset();
-      this.skipStub.reset();
-      this.limitStub.reset();
-      this.findOneStub.reset();
+      fakeSubscription.findStub.reset();
+      fakeSubscription.skipStub.reset();
+      fakeSubscription.limitStub.reset();
+      fakeSubscription.findOneStub.reset();
 
       // prepare app
-      this.app = new App(config, utils.fakeLog);
+      this.app = new App(config, testUtils.getFakeLog());
 
-      RewiredReadSubscriptionHandler.__set__('Subscription', Subscription);
-      this.app.readSubscriptionHandler = new RewiredReadSubscriptionHandler(utils.fakeLog);
+      RewiredReadSubscriptionHandler.__set__('Subscription', fakeSubscription.Subscription);
+      this.app.readSubscriptionHandler = new RewiredReadSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
       this.app.listen(function () {
@@ -103,6 +83,7 @@ describe('ReadSubscriptionHandler', function () {
         done();
       });
     });
+
     afterEach(function (done) {
       this.app.close(done);
     });

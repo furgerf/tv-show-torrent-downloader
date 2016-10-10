@@ -63,6 +63,8 @@ subscriptionSchema.statics.ensureConnected = ensureConnected;
  * Initializes the database connection. This must be called before any other database functionality
  * is used, even if no real database access is requested.
  *
+ * Throws an exception if no log is provided or if it was already initialized before.
+ *
  * @param {Bunyan.Log} log - Logger instance.
  * @param {Object} databaseConfiguration - Database configuration object. Specify falsy (leave un-
  *                                         defined) if no database connection should be established.
@@ -70,9 +72,12 @@ subscriptionSchema.statics.ensureConnected = ensureConnected;
  * @param {Number} databaseConfiguration.port - Port of the database instance.
  */
 function initialize(log, databaseConfiguration) {
+  if (this.isInitialized) {
+    throw new Error('Subscription is already initialized!');
+  }
+
   if (!log) {
-    console.log('ERROR: Cannot initialize Subscription without log, aborting!');
-    return;
+    throw new Error('Cannot initialize Subscription without log!');
   }
 
   this.log = log;

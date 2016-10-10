@@ -8,7 +8,7 @@ var expect = require('chai').expect,
   supertest = require('supertest'),
   rewire = require('rewire'),
 
-  utils = require('../../test-utils'),
+  testUtils = require('../../test-utils'),
   App = require(root + 'app').App,
   config = require(root + 'common/config').getDebugConfig(),
   Subscription = require(root + 'database/subscription'),
@@ -153,43 +153,12 @@ describe('WriteSubscriptionHandler', function () {
     beforeEach(function (done) {
       var that = this;
 
-      /*
-      // reset stubs
-      this.findStub.reset();
-      this.skipStub.reset();
-      this.limitStub.reset();
-      this.findOneStub.reset();
-      */
-
       // prepare app
-      this.app = new App(config, utils.fakeLog);
-
-      /*
-      this.ensureConnectedStub = sinon.stub(Subscription, 'ensureConnected');
-      this.ensureConnectedStub.returns(Q.fcall(() => null));
-      Subscription.initialize(utils.fakeLog);
-
-      //this.subscriptionStub = sinon.stub();
-      this.subscriptionSaveStub = sinon.stub();
-      //this.subscriptionSaveStub.returnsArg(0);
-      this.subscriptionSaveStub.returns(123);
-      Subscription.prototype.save = this.subscriptionSaveStub;
-      Subscription.save = this.subscriptionSaveStub;
-      Subscription.prototype.foo = 123;
-
-      this.psastub = sinon.stub();
-      this.psastub.returns(456);
-      Subscription.preSaveAction = this.psastub;
-      Subscription.prototype.preSaveAction = this.psastub;
-
-      //this.subscriptionSaveStub.returns(Q.fcall(sub => sub));
-      this.subscriptionStub.prototype.save = this.subscriptionSaveStub;
-      this.subscriptionStub.prototype.getReturnable = sinon.stub();
-      */
+      this.app = new App(config, testUtils.getFakeLog());
 
       RewiredWriteSubscriptionHandler.__set__('Subscription', Subscription);
 
-      this.app.writeSubscriptionHandler = new RewiredWriteSubscriptionHandler(utils.fakeLog);
+      this.app.writeSubscriptionHandler = new RewiredWriteSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
       this.app.listen(function () {

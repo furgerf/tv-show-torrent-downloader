@@ -8,7 +8,7 @@ var expect = require('chai').expect,
 
   App = require(root + 'app').App,
   config = require(root + 'common/config').getDebugConfig(),
-  utils = require(root + '../test/test-utils'),
+  testUtils = require(root + '../test/test-utils'),
   RewiredSystemStatusHandler = rewire(root + 'handlers/status/systemStatusHandler');
 
 config.api.port = 0;
@@ -77,8 +77,8 @@ describe('SystemStatusHandler', function () {
         RewiredSystemStatusHandler.__set__('exec', this.fakeExec);
 
         // create app and replace handler
-        this.app = new App(config, utils.fakeLog);
-        this.app.systemStatusHandler = new RewiredSystemStatusHandler(utils.fakeLog);
+        this.app = new App(config, testUtils.getFakeLog());
+        this.app.systemStatusHandler = new RewiredSystemStatusHandler(testUtils.getFakeLog());
 
         // start server
         this.app.listen(function () {
