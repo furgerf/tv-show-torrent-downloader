@@ -83,3 +83,43 @@ exports.getFakeStaticSubscription = function (realSubscription, subscriptions) {
   };
 };
 
+var sampleSubscriptionData = [
+  {
+    _id : '574169af750120fa451a53b8',
+    creationTime : new Date('2016-05-22T08:11:27.922Z'),
+    name : 'foo',
+    searchParameters : '720p',
+    lastSeason : 12,
+    lastEpisode : 23,
+    __v : 0,
+    lastModifiedTime : new Date('2016-09-18T14:00:15.404Z'),
+    lastUpdateCheckTime : new Date('2016-09-18T14:00:15.398Z'),
+    lastDownloadTime : new Date('2016-05-22T00:00:00.000Z')
+  },
+  {
+    _id : '574167b451d4b90f075c889c',
+    creationTime : new Date('2016-05-22T08:03:00.633Z'),
+    name : 'bar',
+    searchParameters : null,
+    lastSeason : 3,
+    lastEpisode : 3,
+    __v : 0,
+    lastModifiedTime : new Date('2016-09-26T14:00:06.135Z'),
+    lastUpdateCheckTime : new Date('2016-09-26T14:00:06.131Z'),
+    lastDownloadTime : new Date('2012-12-21T00:00:00.000Z')
+  },
+  {
+    _id : '5676ef80a2ce34bb2843ce1b',
+    creationTime : new Date('2015-12-20T18:12:16.100Z'),
+    name : 'foobar',
+    searchParameters : '1080p',
+    lastSeason : 2,
+    lastEpisode : 10,
+    __v : 0,
+    lastModifiedTime : new Date('2016-09-26T14:00:06.296Z'),
+    lastUpdateCheckTime : new Date('2016-09-26T14:00:06.290Z'),
+    lastDownloadTime : new Date('2015-12-14T00:00:00.000Z')
+  }
+];
+exports.getSampleSubscriptionData = function () { return sampleSubscriptionData.slice(0); };
+
