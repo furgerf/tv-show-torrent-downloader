@@ -68,7 +68,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
       subscriptionNameWithNoUpdates = sampleSubscriptions[0].name,
       subscriptionNameWithUpdatesOfSameSeason = sampleSubscriptions[1].name,
       subscriptionNameWithUpdatesOfNextSeason = sampleSubscriptions[2].name,
-      //subscriptionNameWithUpdateOfSameAndNextSeasons = sampleSubscriptions[3].name,
+      subscriptionNameWithUpdateOfSameAndNextSeasons = sampleSubscriptions[3].name,
 
       fakeParser = {
         url: '',

@@ -119,6 +119,18 @@ var sampleSubscriptionData = [
     lastModifiedTime : new Date('2016-09-26T14:00:06.296Z'),
     lastUpdateCheckTime : new Date('2016-09-26T14:00:06.290Z'),
     lastDownloadTime : new Date('2015-12-14T00:00:00.000Z')
+  },
+  {
+    _id : '5676ef80a2ce34bb2853d211',
+    creationTime : new Date('2015-12-20T18:12:34.667Z'),
+    name : 'test',
+    searchParameters : 'test',
+    lastSeason : 11,
+    lastEpisode : 22,
+    __v : 0,
+    lastModifiedTime : new Date('2015-12-20T18:12:34.667Z'),
+    lastUpdateCheckTime : new Date('2015-12-20T18:12:34.667Z'),
+    lastDownloadTime : new Date('2015-12-20T18:12:34.667Z')
   }
 ];
 exports.getSampleSubscriptionData = function () { return sampleSubscriptionData.slice(0); };
