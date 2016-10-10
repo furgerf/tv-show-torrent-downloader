@@ -50,17 +50,23 @@ function compareTorrents(t1, t2, sort) {
  * @returns {Array} Array of selected torrents.
  */
 function selectTorrents(torrents, torrentSort, maxTorrentsPerEpisode) {
-  this.log.debug('URL "%s" contains %d torrents', url, torrents.length);
-
   if (!torrents || !torrents.length) {
+    this.log.debug('No torrents to select');
     return [];
   }
 
   // select the torrents to return: sort + slice
+  var initialTorrentCount = torrents.length;
   torrents.sort(function (a, b) { return compareTorrents(a, b, torrentSort); });
   torrents = torrents.slice(0, maxTorrentsPerEpisode);
 
-  this.log.debug('Selected the %d %s torrents to return', torrents.length, torrentSort);
+  if (initialTorrentCount !== torrents.length) {
+    this.log.debug('Selecting the %d %s out of %d torrents to return',
+      torrents.length, torrentSort, initialTorrentCount);
+  } else {
+    this.log.debug('Selecting all %d (<= %d) torrents to return',
+      torrents.length, maxTorrentsPerEpisode);
+  }
 
   // return newly-found torrent
   return torrents;
@@ -82,8 +88,6 @@ function tryTorrentSite(torrentSite, searchString,
     season, episode, torrentSort, maxTorrentsPerEpisode) {
   var url = encodeURI(torrentSite.url + searchString);
 
-  var that = this;
-
   this.log.info('Checking torrent site (URL %s)', url);
 
   return Q.Promise(function (resolve, reject) {
@@ -99,7 +103,7 @@ function tryTorrentSite(torrentSite, searchString,
     });
   })
   .then(data => torrentSite.parseTorrentData(data, season, episode))
-  .then(torrents => that.selectTorrents(torrents, torrentSort, maxTorrentsPerEpisode));
+  .then(torrents => selectTorrents(torrents, torrentSort, maxTorrentsPerEpisode));
 }
 
 /**

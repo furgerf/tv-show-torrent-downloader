@@ -39,7 +39,7 @@ function getTorrentSort(torrentSort) {
  */
 function checkForMultipleEpisodes(subscription, season, episode,
     torrents, torrentSort, maxTorrentsPerEpisode) {
-  return torrentSiteManager.findTorrents(subscription.name + ' '
+  return this.torrentSiteManager.findTorrents(subscription.name + ' '
       + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
       season, episode, torrentSort, maxTorrentsPerEpisode)
     .then(function (newTorrents) {
