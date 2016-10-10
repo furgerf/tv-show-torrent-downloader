@@ -15,33 +15,31 @@ config.api.port = 0;
 
 describe('SystemStatusHandler', function () {
   describe('parseDiskInformation', function () {
-    beforeEach(function () {
-      this.parseDiskInformation = RewiredSystemStatusHandler.__get__('parseDiskInformation');
-    });
+    var parseDiskInformation = RewiredSystemStatusHandler.__get__('parseDiskInformation');
 
     it('should be able to handle invalid data', function () {
-      expect(this.parseDiskInformation()).to.be.null;
-      expect(this.parseDiskInformation(null)).to.be.null;
-      expect(this.parseDiskInformation(123)).to.be.null;
-      expect(this.parseDiskInformation('')).to.be.null;
-      expect(this.parseDiskInformation('asdf')).to.be.null;
-      expect(this.parseDiskInformation('fo o b a r')).to.be.null;
+      expect(parseDiskInformation()).to.be.null;
+      expect(parseDiskInformation(null)).to.be.null;
+      expect(parseDiskInformation(123)).to.be.null;
+      expect(parseDiskInformation('')).to.be.null;
+      expect(parseDiskInformation('asdf')).to.be.null;
+      expect(parseDiskInformation('fo o b a r')).to.be.null;
     });
 
     it('should be able to parse valid data', function () {
-      expect(this.parseDiskInformation('type size used avail use% mountpoint')).to.eql(
+      expect(parseDiskInformation('type size used avail use% mountpoint')).to.eql(
         {
           mountPoint: 'mountpoint',
           spaceUsed: 'used',
           spaceAvailable: 'avail'
         });
-      expect(this.parseDiskInformation('type    size  used   avail    use%   mountpoint')).to.eql(
+      expect(parseDiskInformation('type    size  used   avail    use%   mountpoint')).to.eql(
         {
           mountPoint: 'mountpoint',
           spaceUsed: 'used',
           spaceAvailable: 'avail'
         });
-      expect(this.parseDiskInformation('type size used avail use% mount point with spaces')).to.eql(
+      expect(parseDiskInformation('type size used avail use% mount point with spaces')).to.eql(
         {
           mountPoint: 'mount point with spaces',
           spaceUsed: 'used',
@@ -56,7 +54,8 @@ describe('SystemStatusHandler', function () {
         var that = this;
 
         // prepare data - return sample data on the first call, if the correct command is used
-        // throw an exception on the second call
+        // throw an exception on the second call - there's no way around doing it like that because
+        // all calls are exactly the same
         this.fakeExec = function (command, callback) {
           that.calls = that.calls || 0;
           that.calls++;
