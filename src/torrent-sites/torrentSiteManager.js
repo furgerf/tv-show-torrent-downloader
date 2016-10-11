@@ -21,6 +21,10 @@ var Q = require('q'),
  * @returns {Boolean} True if the torrents should be swapped, false if they're already in order.
  */
 function compareTorrents(t1, t2, sort) {
+  if (!t1 || typeof t1 !== 'object' || !t2 || typeof t2 !== 'object' || typeof sort !== 'string') {
+    throw new Error('Invalid arguments, t1 and t2 must be objects');
+  }
+
   if (sort === 'largest') {
     return t1.size < t2.size;
   }
