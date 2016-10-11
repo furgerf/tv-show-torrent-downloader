@@ -138,6 +138,48 @@ describe('database/subscription', function () {
     });
   });
 
+  describe('updateLastUpdateCheckTime', function () {
+    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
+
+    it('should successfully update the lastUpdateCheckTime', function (done) {
+      var oldLastUpdateCheckTime = testee.lastUpdateCheckTime;
+
+      testee.updateLastUpdateCheckTime()
+      .then(function () {
+        var afterUpdateTime = new Date(),
+          newLastUpdateCheckTime = testee.lastUpdateCheckTime;
+
+        expect(newLastUpdateCheckTime).to.be.above(oldLastUpdateCheckTime);
+        expect(afterUpdateTime - newLastUpdateCheckTime).to.be.below(20);
+
+        // TODO: Stub testee.save and verify that it's been called
+
+        done();
+      });
+    });
+  });
+
+  describe('updateLastDownloadTime', function () {
+    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
+
+    it('should successfully update the lastDownloadTime', function (done) {
+      var oldLastDownloadTime = testee.lastDownloadTime;
+
+      testee.updateLastDownloadTime()
+      .then(function () {
+        var afterUpdateTime = new Date(),
+          newLastDownloadTime = testee.lastDownloadTime;
+
+        expect(newLastDownloadTime).to.be.above(oldLastDownloadTime);
+        expect(afterUpdateTime - newLastDownloadTime).to.be.below(20);
+
+        // TODO: Stub testee.save and verify that it's been called
+
+        done();
+      });
+    });
+  });
+
   describe('isValidUpdateToNewSeason', function () {
     beforeEach(function () {
       this.testee = new Subscription(

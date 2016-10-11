@@ -169,8 +169,8 @@ subscriptionSchema.methods.getReturnable = function () {
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
-  return this.ensureConnected()
-    .then(function () {
+  return initializedDatabaseInstance.ensureConnected()
+    .then(() => {
       this.lastUpdateCheckTime = new Date();
       this.save();
     });
@@ -181,8 +181,8 @@ subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastDownloadTime = function () {
-  return this.ensureConnected()
-    .then(function () {
+  return initializedDatabaseInstance.ensureConnected()
+    .then(() => {
       this.lastDownloadTime = new Date();
       this.save();
     });
