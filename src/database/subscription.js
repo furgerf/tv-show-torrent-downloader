@@ -40,7 +40,7 @@ function isConnected() {
  * @returns {Promise} A promise that resolves if the database is connected and rejects if
  *                    the database connection couldn't be established.
  */
-function ensureConnected() {
+subscriptionSchema.statics.ensureConnected = function () {
   return Q.fcall(function () {
     if (!this.isInitialized) {
       throw new Error('Cannot establish database connection: Not initialized');
@@ -56,8 +56,7 @@ function ensureConnected() {
 
     return mongoose.connect(this.databaseAddress);
   }.bind(this));
-}
-subscriptionSchema.statics.ensureConnected = ensureConnected;
+};
 
 /**
  * Initializes the database connection. This must be called before any other database functionality
@@ -71,7 +70,7 @@ subscriptionSchema.statics.ensureConnected = ensureConnected;
  * @param {String} databaseConfiguration.host - Host of the database instance.
  * @param {Number} databaseConfiguration.port - Port of the database instance.
  */
-function initialize(log, databaseConfiguration) {
+subscriptionSchema.statics.initialize = function (log, databaseConfiguration) {
   if (this.isInitialized) {
     throw new Error('Subscription is already initialized!');
   }
@@ -115,8 +114,7 @@ function initialize(log, databaseConfiguration) {
   this.isInitialized = true;
   initializedDatabaseInstance = this;
   this.log.info('Subscription initialized');
-}
-subscriptionSchema.statics.initialize = initialize;
+};
 
 /**
  * Finds one subscription that match the given name.
@@ -125,11 +123,10 @@ subscriptionSchema.statics.initialize = initialize;
  *
  * @returns {Subscription} Subscription that was found in the database, or null if not found.
  */
-function findSubscriptionByName(subscriptionName) {
+subscriptionSchema.statics.findSubscriptionByName = function (subscriptionName) {
   return this.ensureConnected()
     .then(() => this.findOne({name: subscriptionName}));
-}
-subscriptionSchema.statics.findSubscriptionByName = findSubscriptionByName;
+};
 
 /**
  * Finds all subscriptions.
@@ -140,13 +137,12 @@ subscriptionSchema.statics.findSubscriptionByName = findSubscriptionByName;
  *
  * @returns {Array} Array of all subscriptions that were retrieved from the database.
  */
-function findAllSubscriptions(limit, offset) {
+subscriptionSchema.statics.findAllSubscriptions = function (limit, offset) {
   return this.ensureConnected()
     .then(() => limit
       ? this.find().skip(offset || 0).limit(limit)
       : this.find().skip(offset || 0));
-}
-subscriptionSchema.statics.findAllSubscriptions = findAllSubscriptions;
+};
 
 
 /**
@@ -155,100 +151,116 @@ subscriptionSchema.statics.findAllSubscriptions = findAllSubscriptions;
  *
  * @returns {Object} Returnable version of the subscription.
  */
-function getReturnable() {
+subscriptionSchema.methods.getReturnable = function () {
   return {
-    name: this.name === undefined ? null : this.name,
-    searchParameters: this.searchParameters === undefined ? null : this.searchParameters,
-    lastSeason: this.lastSeason === undefined ? null : this.lastSeason,
-    lastEpisode: this.lastEpisode === undefined ? null : this.lastEpisode,
+    name: this.name,
+    searchParameters: this.searchParameters,
+    lastSeason: this.lastSeason,
+    lastEpisode: this.lastEpisode,
     creationTime: this.creationTime === undefined ? null : this.creationTime,
     lastModifiedTime: this.lastModifiedTime === undefined ? null : this.lastModifiedTime,
     lastDownloadTime: this.lastDownloadTime === undefined ? null : this.lastDownloadTime,
     lastUpdateCheckTime: this.lastUpdateCheckTime === undefined ? null : this.lastUpdateCheckTime
   };
-}
-subscriptionSchema.methods.getReturnable = getReturnable;
+};
 
 /**
  * Updates the last update check time to now and saves the subscription.
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
-function updateLastUpdateCheckTime() {
+subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
   return this.ensureConnected()
     .then(function () {
       this.lastUpdateCheckTime = new Date();
       this.save();
     });
-}
-subscriptionSchema.methods.updateLastUpdateCheckTime = updateLastUpdateCheckTime;
+};
 
 /**
  * Updates the last download time to now and saves the subscription.
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
-function updateLastDownloadTime() {
+subscriptionSchema.methods.updateLastDownloadTime = function () {
   return this.ensureConnected()
     .then(function () {
       this.lastDownloadTime = new Date();
       this.save();
     });
-}
-subscriptionSchema.methods.updateLastDownloadTime = updateLastDownloadTime;
+};
+
+/**
+ * Checks whether the provided new season/episode would be a valid update to a new season for the
+ * current subscription.
+ *
+ * @param {Number} newSeason - Potential new "current" season of the subscription.
+ * @param {Number} newEpisode - Potential new "current" episode  of the subscription.
+ *
+ * @returns True if the season update is valid, false otherwise.
+ */
+subscriptionSchema.methods.isValidUpdateToNewSeason = function (newSeason, newEpisode) {
+  return newSeason === this.lastSeason + 1 && newEpisode === 1;
+};
+
+/**
+ * Checks whether the provided new season/episode would be a valid update to a new episode of the
+ * same season for the current subscription.
+ *
+ * @param {Number} newSeason - Potential new "current" season of the subscription.
+ * @param {Number} newEpisode - Potential new "current" episode  of the subscription.
+ *
+ * @returns True if the episode update is valid, false otherwise.
+ */
+subscriptionSchema.methods.isValidUpdateInSameSeason = function (newSeason, newEpisode) {
+  return newSeason === this.lastSeason && newEpisode === this.lastEpisode + 1;
+};
 
 /**
  * Updates the last downloaded season/episode of the subscription, making
  * thorough checks to ensure only valid updates are accepted.
  *
- * @param {Number} newSeason - Potential new "current" season of the subscription.
- * @param {Number} newEpisode - Potential new "current" episode  of the subscription.
+ * @param {Number} season - Potential new "current" season of the subscription.
+ * @param {Number} episode - Potential new "current" episode  of the subscription.
  *
  * @returns {Boolean} True if the new season/episode was accepted.
  */
-function updateLastEpisode(newSeason, newEpisode) {
-  var season = typeof newSeason === 'number' ? newSeason : parseInt(newSeason, 10),
-    episode = typeof newEpisode === 'number' ? newEpisode : parseInt(newEpisode, 10);
-
+subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
   if (Number.isNaN(season) || Number.isNaN(episode)) {
     return false;
   }
 
-  if (season === this.lastSeason + 1) {
-    if (episode === 1) {
-      this.log.debug('Updating last episode of subscription %s from %s to %s',
-          this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
-          utils.formatEpisodeNumber(season, episode));
-      this.lastSeason = season;
-      this.lastEpisode = episode;
-    } else {
-      this.log.warn('Attempted to change season of subscription %s and assign episode %d: aborting',
-          this.name, episode);
-      return false;
-    }
-  } else if (season === this.lastSeason) {
-    if (episode === this.lastEpisode + 1) {
-      this.log.debug('Updating last episode of subscription %s from %s to %s', this.name,
-          utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
-          utils.formatEpisodeNumber(this.lastSeason, episode));
-      this.lastEpisode = episode;
-    } else {
-      this.log.warn('Attempting to set last episode of subscription %s from %d to %d - aborting',
-          this.name, this.lastEpisode, episode);
-      return false;
-    }
-  } else {
-    this.log.warn('Attempting to set invalid season of subscription %s from %d to %d - aborting',
-        this.name, this.lastSeason, season);
-    return false;
+  if (this.isValidUpdateToNewSeason(season, episode)) {
+    this.log.debug('Updating last episode of subscription %s from %s to %s',
+      this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+      utils.formatEpisodeNumber(season, episode));
+
+    this.lastSeason = season;
+    this.lastEpisode = episode;
+
+    return true;
   }
-  return true;
-}
-subscriptionSchema.methods.updateLastEpisode = updateLastEpisode;
+
+  if (this.isValidUpdateInSameSeason(season, episode)) {
+    this.log.debug('Updating last episode of subscription %s from %s to %s', this.name,
+      utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+      utils.formatEpisodeNumber(this.lastSeason, episode));
+
+    this.lastEpisode = episode;
+
+    return true;
+  }
+
+  this.log.warn('Attempting invalid season/episode update of subscription %s from %s to %s',
+    this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
+    utils.formatEpisodeNumber(season, episode));
+
+  return false;
+};
 
 /**
  * Pre-save action for subscriptions. Sets last modified and, if necessary, creation date as well
  * as some other required fields that might be unassigned from the subscription creation.
  */
-function preSaveAction(next) {
+subscriptionSchema.pre('save', function preSaveAction (next) {
   // remember `this` for access in the promise callback
   // also, we have no database context so we fall back to the initialized database instance
   var that = this,
@@ -276,8 +288,7 @@ function preSaveAction(next) {
       next();
       database.log.info('done with pre-save');
     });
-}
-subscriptionSchema.pre('save', preSaveAction);
+});
 
 // create and export model
 module.exports = mongoose.model('Subscription', subscriptionSchema);

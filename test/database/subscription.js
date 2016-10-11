@@ -98,19 +98,19 @@ describe('database/subscription', function () {
         returnables = [
           {
             name: 'foo',
-            searchParameters: null,
-            lastSeason: null,
-            lastEpisode: null,
+            searchParameters: undefined,
+            lastSeason: undefined,
+            lastEpisode: undefined,
             creationTime: null,
             lastModifiedTime: null,
             lastDownloadTime: null,
             lastUpdateCheckTime: null,
           },
           {
-            name: null,
-            searchParameters: null,
-            lastSeason: null,
-            lastEpisode: null,
+            name: undefined,
+            searchParameters: undefined,
+            lastSeason: undefined,
+            lastEpisode: undefined,
             creationTime: null,
             lastModifiedTime: null,
             lastDownloadTime: null,
@@ -135,6 +135,57 @@ describe('database/subscription', function () {
       subscriptions.forEach(function (sub, index) {
         expect(sub.getReturnable()).to.eql(returnables[index]);
       })
+    });
+  });
+
+  describe('isValidUpdateToNewSeason', function () {
+    beforeEach(function () {
+      this.testee = new Subscription(
+        {
+          name: 'testee',
+          lastSeason: 2,
+          lastEpisode: 3
+        }
+      );
+      this.testee.log = testUtils.getFakeLog();
+    });
+
+    it('should reject invalid season updates', function () {
+      expect(this.testee.isValidUpdateToNewSeason(2, 4)).to.be.false;
+      expect(this.testee.isValidUpdateToNewSeason(3, 0)).to.be.false;
+
+      expect(this.testee.isValidUpdateToNewSeason(1, 1)).to.be.false;
+      expect(this.testee.isValidUpdateToNewSeason(2, 1)).to.be.false;
+      expect(this.testee.isValidUpdateToNewSeason(4, 1)).to.be.false;
+    });
+
+    it('should accept a valid season update', function () {
+      expect(this.testee.isValidUpdateToNewSeason(3, 1)).to.be.true;
+    });
+  });
+
+  describe('isValidUpdateInSameSeason', function () {
+    beforeEach(function () {
+      this.testee = new Subscription(
+        {
+          name: 'testee',
+          lastSeason: 2,
+          lastEpisode: 3
+        }
+      );
+      this.testee.log = testUtils.getFakeLog();
+    });
+
+    it('should reject invalid episode updates', function () {
+      expect(this.testee.isValidUpdateInSameSeason(2, 0)).to.be.false;
+      expect(this.testee.isValidUpdateInSameSeason(2, 3)).to.be.false;
+      expect(this.testee.isValidUpdateInSameSeason(2, 5)).to.be.false;
+
+      expect(this.testee.isValidUpdateInSameSeason(3, 1)).to.be.false;
+    });
+
+    it('should accept a valid episode update', function () {
+      expect(this.testee.isValidUpdateInSameSeason(2, 4)).to.be.true;
     });
   });
 

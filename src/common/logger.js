@@ -60,7 +60,9 @@ exports.createLogger = function(logConfig) {
     streams: logStreams
   });
 
-  logMessages.forEach(logger.info);
+  logMessages.forEach(function (message) {
+    logger.info(message);
+  });
 
   return logger;
 };
