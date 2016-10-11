@@ -13,18 +13,20 @@ var restify = require('restify'),
  *
  * @param {Subscription} subscription - Subscription to update.
  * @param {Object} data - Data which updates the subscription.
- * @param {Bunyan.Log} - Optional. Logger instance.
+ * @param {Bunyan.Log} - Logger instance.
  *
  * @returns {Subscription} The updated subscription.
  */
 function updateFields (subscription, data, log) {
-  log && log.info('Updating subscription %s with:', subscription, data);
+  log = log || this.log;
 
   if (!subscription || !data) {
-    log && log.warn('Aborting because subscription ' + subscription + ' or data ' + data +
-      ' are not valid');
+    log.warn('Aborting subscription update because subscription %s or data %s are not valid',
+      subscription, data);
     return subscription;
   }
+
+  log.info('Updating subscription %s with:', subscription, data);
 
   if (data.name !== undefined) {
     subscription.name = data.name;

@@ -3,8 +3,6 @@
 const root = './../../../src/';
 
 var expect = require('chai').expect,
-  sinon = require('sinon'),
-  Q = require('q'),
   supertest = require('supertest'),
   rewire = require('rewire'),
 
@@ -18,45 +16,43 @@ config.api.port = 0;
 
 describe('WriteSubscriptionHandler', function () {
   describe('updateFields', function () {
-    before(function () {
-      // prepare test data
-      var subscriptionData,
-        subscriptionId = '123456789012345678901234';
-      this.now = new Date();
-      subscriptionData = {
-        name: 'test name',
-        searchParameters: 'test parameters',
-        lastSeason: 12,
-        lastEpisode: 34,
-        creationTime: this.now,
-        lastModifiedTime: this.now,
-        lastDownloadTime: this.now,
-        lastUpdateCheckTime: this.now
-      }
+    var subscriptionData,
+      testSubscription,
+      originalTestSubscription,
+      updateFields = RewiredWriteSubscriptionHandler.__get__('updateFields'),
+      now = new Date(),
+      fakeLog = testUtils.getFakeLog();
 
-      // create two subscriptions with the same data - including the _id!
-      this.testSubscription = new Subscription(subscriptionData);
-      this.originalTestSubscription = new Subscription(subscriptionData);
-      this.originalTestSubscription._id = this.testSubscription._id;
+    subscriptionData = {
+      name: 'test name',
+      searchParameters: 'test parameters',
+      lastSeason: 12,
+      lastEpisode: 34,
+      creationTime: now,
+      lastModifiedTime: now,
+      lastDownloadTime: now,
+      lastUpdateCheckTime: now
+    };
 
-      // extract tested function
-      this.updateFields = RewiredWriteSubscriptionHandler.__get__('updateFields');
-    });
+    // create two subscriptions with the same data - including the _id!
+    testSubscription = new Subscription(subscriptionData);
+    originalTestSubscription = new Subscription(subscriptionData);
+    originalTestSubscription._id = testSubscription._id;
 
     it('should return the original subscription if the data is not valid', function () {
-      expect(this.updateFields(this.testSubscription)._doc).to.eql(this.originalTestSubscription._doc);
-      expect(this.updateFields(this.testSubscription, 1234)._doc).to.eql(this.originalTestSubscription._doc);
-      expect(this.updateFields(this.testSubscription, 'abcd')._doc).to.eql(this.originalTestSubscription._doc);
+      expect(updateFields(testSubscription, undefined, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(updateFields(testSubscription, 1234, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(updateFields(testSubscription, 'abcd', fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
-      expect(this.updateFields()).to.eql(undefined);
-      expect(this.updateFields(null, {})).to.eql(null);
-      expect(this.updateFields(1234, {})).to.eql(1234);
-      expect(this.updateFields('abcd', {})).to.eql('abcd');
+      expect(updateFields(undefined, undefined, fakeLog)).to.eql(undefined);
+      expect(updateFields(null, {}, fakeLog)).to.eql(null);
+      expect(updateFields(1234, {}, fakeLog)).to.eql(1234);
+      expect(updateFields('abcd', {}, fakeLog)).to.eql('abcd');
     });
 
     it('should ignore extra fields', function () {
-      expect(this.updateFields(this.testSubscription, {foo: 'bar'})._doc).to.eql(this.originalTestSubscription._doc);
-      expect(this.updateFields(this.testSubscription, {bar: 1234})._doc).to.eql(this.originalTestSubscription._doc);
+      expect(updateFields(testSubscription, {foo: 'bar'}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(updateFields(testSubscription, {bar: 1234}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
     });
 
     it('should update valid fields', function () {
@@ -65,17 +61,17 @@ describe('WriteSubscriptionHandler', function () {
         newLastSeason = 56,
         newLastEpisode = 78;
 
-      this.originalTestSubscription.name = newName;
-      expect(this.updateFields(this.testSubscription, {name: newName})._doc).to.eql(this.originalTestSubscription._doc);
+      originalTestSubscription.name = newName;
+      expect(updateFields(testSubscription, {name: newName}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
-      this.originalTestSubscription.searchParameters = newSearchParameters;
-      expect(this.updateFields(this.testSubscription, {searchParameters: newSearchParameters})._doc).to.eql(this.originalTestSubscription._doc);
+      originalTestSubscription.searchParameters = newSearchParameters;
+      expect(updateFields(testSubscription, {searchParameters: newSearchParameters}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
-      this.originalTestSubscription.lastSeason = newLastSeason;
-      expect(this.updateFields(this.testSubscription, {lastSeason: newLastSeason})._doc).to.eql(this.originalTestSubscription._doc);
+      originalTestSubscription.lastSeason = newLastSeason;
+      expect(updateFields(testSubscription, {lastSeason: newLastSeason}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
-      this.originalTestSubscription.lastEpisode = newLastEpisode;
-      expect(this.updateFields(this.testSubscription, {lastEpisode: newLastEpisode})._doc).to.eql(this.originalTestSubscription._doc);
+      originalTestSubscription.lastEpisode = newLastEpisode;
+      expect(updateFields(testSubscription, {lastEpisode: newLastEpisode}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
     });
 
     it('should update multiple fields but ignore invalid ones', function () {
@@ -84,38 +80,33 @@ describe('WriteSubscriptionHandler', function () {
         newLastSeason = 56,
         newLastEpisode = 78;
 
-      this.originalTestSubscription.name = newName;
-      this.originalTestSubscription.searchParameters = newSearchParameters;
-      this.originalTestSubscription.lastSeason = newLastSeason;
-      this.originalTestSubscription.lastEpisode = newLastEpisode;
-      expect(this.updateFields(this.testSubscription,
-        {
+      originalTestSubscription.name = newName;
+      originalTestSubscription.searchParameters = newSearchParameters;
+      originalTestSubscription.lastSeason = newLastSeason;
+      originalTestSubscription.lastEpisode = newLastEpisode;
+      expect(updateFields(testSubscription, {
           name: newName,
           searchParameters: newSearchParameters,
           lastSeason: newLastSeason,
           lastEpisode: newLastEpisode,
           foo: 'asdf',
           bar: 1234
-        }
-      )._doc).to.eql(this.originalTestSubscription._doc);
+        }, fakeLog)._doc).to.eql(originalTestSubscription._doc);
     });
   });
 
   describe('createNewSubscriptionFromData', function () {
-    before(function () {
-      // extract tested function
-      this.createNewSubscriptionFromData = RewiredWriteSubscriptionHandler.__get__('createNewSubscriptionFromData');
-    });
+      var createNewSubscriptionFromData = RewiredWriteSubscriptionHandler.__get__('createNewSubscriptionFromData');
 
     it('should return null if the subscription data is invalid', function () {
-      expect(this.createNewSubscriptionFromData()).to.be.null;
-      expect(this.createNewSubscriptionFromData({})).to.be.null;
-      expect(this.createNewSubscriptionFromData({searchParameters: 'abcd'})).to.be.null;
+      expect(createNewSubscriptionFromData()).to.be.null;
+      expect(createNewSubscriptionFromData({})).to.be.null;
+      expect(createNewSubscriptionFromData({searchParameters: 'abcd'})).to.be.null;
     });
 
     it('should return a valid subscription with fallback data where not provided', function () {
       // we need to cheat here a little
-      var newSubscription = this.createNewSubscriptionFromData({name: 'foobar'})._doc;
+      var newSubscription = createNewSubscriptionFromData({name: 'foobar'})._doc;
       newSubscription._id = null;
       expect(newSubscription).to.eql(
         {
@@ -129,7 +120,7 @@ describe('WriteSubscriptionHandler', function () {
 
     it('should return a valid subscription with the provided data', function () {
       // we need to cheat here a little
-      var newSubscription = this.createNewSubscriptionFromData(
+      var newSubscription = createNewSubscriptionFromData(
         {
           name: 'test name',
           searchParameters: 'test parameters',
@@ -150,30 +141,30 @@ describe('WriteSubscriptionHandler', function () {
   });
 
   describe('requests', function () {
-    beforeEach(function (done) {
-      var that = this;
+    var server,
+      app;
 
-      // prepare app
-      this.app = new App(config, testUtils.getFakeLog());
+    beforeEach(function (done) {
+      app = new App(config, testUtils.getFakeLog());
 
       RewiredWriteSubscriptionHandler.__set__('Subscription', Subscription);
 
-      this.app.writeSubscriptionHandler = new RewiredWriteSubscriptionHandler(testUtils.getFakeLog());
+      app.writeSubscriptionHandler = new RewiredWriteSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
-      this.app.listen(function () {
+      app.listen(function () {
         var url = 'http://' + this.address().address + ':' + this.address().port;
-        that.server = supertest.agent(url);
+        server = supertest.agent(url);
         done();
       });
     });
     afterEach(function (done) {
-      this.app.close(done);
+      app.close(done);
     });
 
     describe('POST /subscriptions', function () {
       it('should return an error if no subscription name is provided', function (done) {
-        this.server
+        server
           .post('/subscriptions')
           .expect('Content-type', 'application/json')
           .expect(400)

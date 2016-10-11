@@ -27,7 +27,7 @@ describe('database/subscription', function () {
             expect(promise.state).to.equal('rejected');
             expect(promise.reason.name).to.equal('ValidationError');
           });
-        })
+        });
     });
 
     it('should cast data types where possible', function () {
@@ -74,7 +74,7 @@ describe('database/subscription', function () {
           result.forEach(function (promise) {
             expect(promise.state).to.equal('fulfilled');
           });
-        })
+        });
     });
   });
 
@@ -134,7 +134,7 @@ describe('database/subscription', function () {
 
       subscriptions.forEach(function (sub, index) {
         expect(sub.getReturnable()).to.eql(returnables[index]);
-      })
+      });
     });
   });
 
@@ -247,6 +247,35 @@ describe('database/subscription', function () {
     it('should modify the subscription as expected');
   });
 
+  describe('initialize', function () {
+    var fakeLog = testUtils.getFakeLog();
+
+    // TODO: Find out how to assert (non-)initializedness of Sunscription
+
+    beforeEach(function () {
+      this.testee = testUtils.getFakeStaticSubscription(Subscription).Subscription;
+    });
+
+    it('should throw an error when initialized without a log', function () {
+      expect(() => this.testee.initialize()).to.throw('Cannot initialize Subscription without log!');
+      expect(() => this.testee.initialize(null)).to.throw('Cannot initialize Subscription without log!');
+    });
+
+    it('should throw an error when initialized multiple times', function () {
+      // successful initialization
+      this.testee.initialize(fakeLog);
+
+      // unsuccessful initialization
+      expect(() => this.testee.initialize()).to.throw('Subscription is already initialized!');
+    });
+
+    it('should successfully initialize when not using a real database', function () {
+      this.testee.initialize(fakeLog);
+    });
+
+    it('should successfully initialize when using a real database');
+  });
+
   describe('findSubscriptionByName', function () {
     var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription);
     fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
@@ -257,15 +286,15 @@ describe('database/subscription', function () {
 
     it('should make the expected database calls', function () {
       var testNames = [
-          undefined,
-          null,
-          123,
-          new Date(),
-          'foobar',
-        ];
+        undefined,
+        null,
+        123,
+        new Date(),
+        'foobar',
+      ];
 
       return Q.allSettled(testNames.map(name => fakeSubscription.Subscription.findSubscriptionByName(name)))
-        .then(function (result) {
+        .then(function () {
           testNames.forEach(function (name) {
             sinon.assert.calledWith(fakeSubscription.Subscription.findOne, {name: name});
           });
@@ -278,7 +307,7 @@ describe('database/subscription', function () {
       fakeSubscription.findOneStub.withArgs({name: 'foobar'}).returns(databaseResult);
 
       return fakeSubscription.Subscription.findSubscriptionByName('foobar')
-      .then(result => expect(result).to.equal(databaseResult));
+        .then(result => expect(result).to.equal(databaseResult));
     });
 
   });
@@ -296,7 +325,7 @@ describe('database/subscription', function () {
 
     it('should make the expected database call when invoked without arguments', function () {
       return fakeSubscription.Subscription.findAllSubscriptions()
-        .then(function (result) {
+        .then(function () {
           sinon.assert.called(fakeSubscription.findStub);
           sinon.assert.calledWith(fakeSubscription.skipStub, 0);
           sinon.assert.notCalled(fakeSubscription.limitStub);
@@ -305,7 +334,7 @@ describe('database/subscription', function () {
 
     it('should make the expected database call when invoked with a limit', function () {
       return fakeSubscription.Subscription.findAllSubscriptions(123)
-        .then(function (result) {
+        .then(function () {
           sinon.assert.called(fakeSubscription.findStub);
           sinon.assert.calledWith(fakeSubscription.skipStub, 0);
           sinon.assert.calledWith(fakeSubscription.limitStub, 123);
@@ -314,7 +343,7 @@ describe('database/subscription', function () {
 
     it('should make the expected database call when invoked with an offset', function () {
       return fakeSubscription.Subscription.findAllSubscriptions(undefined, 123)
-        .then(function (result) {
+        .then(function () {
           sinon.assert.called(fakeSubscription.findStub);
           sinon.assert.calledWith(fakeSubscription.skipStub, 123);
           sinon.assert.notCalled(fakeSubscription.limitStub);
@@ -323,7 +352,7 @@ describe('database/subscription', function () {
 
     it('should make the expected database call when invoked with limit and offset', function () {
       return fakeSubscription.Subscription.findAllSubscriptions(123, 456)
-        .then(function (result) {
+        .then(function () {
           sinon.assert.called(fakeSubscription.findStub);
           sinon.assert.calledWith(fakeSubscription.skipStub, 456);
           sinon.assert.calledWith(fakeSubscription.limitStub, 123);

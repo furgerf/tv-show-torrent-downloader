@@ -49,6 +49,9 @@ describe('SystemStatusHandler', function () {
   });
 
   describe('requests', function () {
+    var server,
+      app;
+
     describe('GET /system/status/disk', function () {
       beforeEach(function (done) {
         var that = this;
@@ -76,23 +79,23 @@ describe('SystemStatusHandler', function () {
         RewiredSystemStatusHandler.__set__('exec', this.fakeExec);
 
         // create app and replace handler
-        this.app = new App(config, testUtils.getFakeLog());
-        this.app.systemStatusHandler = new RewiredSystemStatusHandler(testUtils.getFakeLog());
+        app = new App(config, testUtils.getFakeLog());
+        app.systemStatusHandler = new RewiredSystemStatusHandler(testUtils.getFakeLog());
 
         // start server
-        this.app.listen(function () {
+        app.listen(function () {
           var url = 'http://' + this.address().address + ':' + this.address().port;
-          that.server = supertest.agent(url);
+          server = supertest.agent(url);
           done();
         });
       });
 
       afterEach(function (done) {
-        this.app.close(done);
+        app.close(done);
       });
 
       it('should correctly return sample data', function (done) {
-        this.server
+        server
           .get('/status/system/disk')
           .expect('Content-type', 'application/json')
           .expect(200)
@@ -117,7 +120,7 @@ describe('SystemStatusHandler', function () {
       });
 
       it('should be able to deal with a failing command - exception', function (done) {
-        this.server
+        server
           .get('/status/system/disk')
           .expect('Content-type', 'application/json')
           .expect(500)
@@ -130,7 +133,7 @@ describe('SystemStatusHandler', function () {
       });
 
       it('should be able to deal with a failing command - error object', function (done) {
-        this.server
+        server
           .get('/status/system/disk')
           .expect('Content-type', 'application/json')
           .expect(500)

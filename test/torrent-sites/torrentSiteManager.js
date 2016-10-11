@@ -146,8 +146,8 @@ describe('torrent-sites/torrentSiteManager', function () {
       this.testee.findTorrents(this.searchString, this.seasonToCheck, this.episodeToCheck, this.torrentSort, this.maxTorrentsPerEpisode)
       .fail(function (err) {
         expect(that.tryTorrentSiteStub.calledTwice).to.be.true;
-        expect(that.tryTorrentSiteStub.firstCall.args).to.eql([that.testee.allSites[0], that.searchString, that.seasonToCheck, that.episodeToCheck, that.torrentSort, that.maxTorrentsPerEpisode])
-        expect(that.tryTorrentSiteStub.secondCall.args).to.eql([that.testee.allSites[1], that.searchString, that.seasonToCheck, that.episodeToCheck, that.torrentSort, that.maxTorrentsPerEpisode])
+        expect(that.tryTorrentSiteStub.firstCall.args).to.eql([that.testee.allSites[0], that.searchString, that.seasonToCheck, that.episodeToCheck, that.torrentSort, that.maxTorrentsPerEpisode]);
+        expect(that.tryTorrentSiteStub.secondCall.args).to.eql([that.testee.allSites[1], that.searchString, that.seasonToCheck, that.episodeToCheck, that.torrentSort, that.maxTorrentsPerEpisode]);
 
         expect(err.message).to.eql('Failed to fetch torrent data from all known sites');
 

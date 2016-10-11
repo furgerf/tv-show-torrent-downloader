@@ -8,7 +8,7 @@
     "stop": "pkill tv-show-api --signal SIGINT",
     "test": "mocha --check-leaks --full-trace --inline-diffs --no-exit --recursive",
     "auto-test": "mocha -w --recursive",
-    "cover": "istanbul cover --dir gen/coverage/ _mocha -- --recursive || true",
+    "cover": "istanbul cover --dir gen/coverage/ --report html _mocha -- --recursive -R progress || true",
     "cover-report": "istanbul cover --dir gen/coverage/ --report html --report cobertura _mocha -- --recursive -R xunit --reporter-options output=gen/xunit-report.xml || true",
     "lint": "jshint src/ --verbose --show-non-errors || true",
     "lint-test": "jshint test/ --verbose --show-non-errors || true",

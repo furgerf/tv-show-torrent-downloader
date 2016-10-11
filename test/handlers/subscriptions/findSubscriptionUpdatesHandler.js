@@ -3,7 +3,6 @@
 const root = './../../../src/';
 
 var expect = require('chai').expect,
-  sinon = require('sinon'),
   supertest = require('supertest'),
   rewire = require('rewire'),
 
@@ -65,6 +64,9 @@ describe('FindSubscriptionUpdatesHandler', function () {
     var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(sub => new Subscription(sub)),
       fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, sampleSubscriptions),
 
+      server,
+      app,
+
       subscriptionNameWithNoUpdates = sampleSubscriptions[0].name,
       subscriptionNameWithUpdatesOfSameSeason = sampleSubscriptions[1].name,
       subscriptionNameWithUpdatesOfNextSeason = sampleSubscriptions[2].name,
@@ -114,8 +116,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
     fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
 
     beforeEach(function (done) {
-      var that = this,
-        torrentSiteManager;
+      var torrentSiteManager;
 
       // reset stubs
       fakeSubscription.findStub.reset();
@@ -124,28 +125,28 @@ describe('FindSubscriptionUpdatesHandler', function () {
       fakeSubscription.findOneStub.reset();
 
       // prepare app
-      this.app = new App(config, testUtils.getFakeLog());
+      app = new App(config, testUtils.getFakeLog());
 
       RewiredFindSubscriptionUpdatesHandler.__set__('Subscription', fakeSubscription.Subscription);
       torrentSiteManager = new TorrentSiteManager(testUtils.getFakeLog());
       torrentSiteManager.allSites = [fakeParser];
-      this.app.findSubscriptionUpdatesHandler = new RewiredFindSubscriptionUpdatesHandler(torrentSiteManager, testUtils.getFakeLog());
+      app.findSubscriptionUpdatesHandler = new RewiredFindSubscriptionUpdatesHandler(torrentSiteManager, testUtils.getFakeLog());
 
       // start server
-      this.app.listen(function () {
+      app.listen(function () {
         var url = 'http://' + this.address().address + ':' + this.address().port;
-        that.server = supertest.agent(url);
+        server = supertest.agent(url);
         done();
       });
     });
 
     afterEach(function (done) {
-      this.app.close(done);
+      app.close(done);
     });
 
     describe('PUT /subscriptions/:subscriptionName/find', function () {
       it('should correctly handle unknown subscriptions', function (done) {
-        this.server
+        server
           .put('/subscriptions/asdf/find')
           .expect('Content-type', 'application/json')
           .expect(400)

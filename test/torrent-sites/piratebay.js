@@ -13,7 +13,7 @@ describe('torrent-sites/piratebay', function () {
 
     it('should throw an error if no URL is provided', function () {
       // must pass a function to expect that throws the exception
-      expect(function () {new Piratebay()}).to.throw(Error);
+      expect(() => new Piratebay()).to.throw(Error);
     });
   });
 

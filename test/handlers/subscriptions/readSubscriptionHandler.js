@@ -3,7 +3,6 @@
 const root = './../../../src/';
 
 var expect = require('chai').expect,
-  sinon = require('sinon'),
   supertest = require('supertest'),
   rewire = require('rewire'),
 
@@ -19,13 +18,13 @@ describe('ReadSubscriptionHandler', function () {
   describe('requests', function () {
     // prepare sample data
     var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(sub => new Subscription(sub)),
-      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, sampleSubscriptions);
+      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, sampleSubscriptions),
+      server,
+      app;
 
     fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
 
     beforeEach(function (done) {
-      var that = this;
-
       // reset stubs
       fakeSubscription.findStub.reset();
       fakeSubscription.skipStub.reset();
@@ -33,26 +32,26 @@ describe('ReadSubscriptionHandler', function () {
       fakeSubscription.findOneStub.reset();
 
       // prepare app
-      this.app = new App(config, testUtils.getFakeLog());
+      app = new App(config, testUtils.getFakeLog());
 
       RewiredReadSubscriptionHandler.__set__('Subscription', fakeSubscription.Subscription);
-      this.app.readSubscriptionHandler = new RewiredReadSubscriptionHandler(testUtils.getFakeLog());
+      app.readSubscriptionHandler = new RewiredReadSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
-      this.app.listen(function () {
+      app.listen(function () {
         var url = 'http://' + this.address().address + ':' + this.address().port;
-        that.server = supertest.agent(url);
+        server = supertest.agent(url);
         done();
       });
     });
 
     afterEach(function (done) {
-      this.app.close(done);
+      app.close(done);
     });
 
     describe('GET /subscriptions', function () {
       it('should correctly return all sample subscriptions', function (done) {
-        this.server
+        server
           .get('/subscriptions')
           .expect('Content-type', 'application/json')
           .expect(200)
@@ -109,7 +108,7 @@ describe('ReadSubscriptionHandler', function () {
 
     describe('GET /subscriptions/:subscriptionName', function () {
       it('should correctly return sample subscriptions', function (done) {
-        this.server
+        server
           .get('/subscriptions/foo')
           .expect('Content-type', 'application/json')
           .expect(200)
@@ -134,7 +133,7 @@ describe('ReadSubscriptionHandler', function () {
       });
 
       it('should correctly return sample subscriptions', function (done) {
-        this.server
+        server
           .get('/subscriptions/bar')
           .expect('Content-type', 'application/json')
           .expect(200)
@@ -159,7 +158,7 @@ describe('ReadSubscriptionHandler', function () {
       });
 
       it('should correctly return sample subscriptions', function (done) {
-        this.server
+        server
           .get('/subscriptions/foobar')
           .expect('Content-type', 'application/json')
           .expect(200)
@@ -184,7 +183,7 @@ describe('ReadSubscriptionHandler', function () {
       });
 
       it('should correctly handle unknown subscriptions', function (done) {
-        this.server
+        server
           .get('/subscriptions/asdf')
           .expect('Content-type', 'application/json')
           .expect(400)

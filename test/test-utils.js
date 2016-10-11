@@ -49,7 +49,7 @@ exports.getFakeStaticSubscription = function (realSubscription, subscriptions) {
     findOneStub,
     withSubscriptions = typeof subscriptions === 'object';
 
-  // copy real Subscription
+  // copy real Subscription - also need prototype properties!
   for (var prop in realSubscription) {
     fakeSubscription[prop] = realSubscription[prop];
   }
