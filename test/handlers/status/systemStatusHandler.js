@@ -52,7 +52,7 @@ describe('SystemStatusHandler', function () {
     var server,
       app;
 
-    describe('GET /system/status/disk', function () {
+    describe('GET /status/system/disk', function () {
       beforeEach(function (done) {
         var that = this;
 

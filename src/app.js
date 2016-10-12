@@ -13,6 +13,7 @@ var restify = require('restify'),
   UpdateSubscriptionHandler = require('./handlers/subscriptions/updateSubscriptionHandler'),
 
   SystemStatusHandler = require('./handlers/status/systemStatusHandler'),
+  VersionHandler = require('./handlers/status/versionHandler'),
 
   TorrentSiteManager = require('./torrent-sites/torrentSiteManager'),
 
@@ -57,7 +58,7 @@ function getServer(log, serveStaticFiles) {
     restify.authorizationParser(),
     restify.queryParser(),
     restify.requestLogger()
-    ]);
+  ]);
 
   // request handling cleanup
   server.on('after', function (req, res, route) {
@@ -108,6 +109,10 @@ function getServer(log, serveStaticFiles) {
   server.get(/^\/status\/system\/disk\/?$/,
     (req, res, next) => this.systemStatusHandler.getSystemDiskUsage(req, res, next));
 
+  // version
+  server.get(/^\/status\/version\/?$/,
+    (req, res, next) => this.versionHandler.getVersion(req, res, next));
+
   // root
   server.get(/^\/$/, function (req, res, next) {
     req.log.debug('Accessing root');
@@ -145,8 +150,11 @@ function App(config, log) {
       log.child({component: 'FindSubscriptionUpdatesHandler'}));
   this.updateSubscriptionHandler =
     new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'}));
+
   this.systemStatusHandler =
     new SystemStatusHandler(log.child({component: 'SystemStatusHandler'}));
+  this.versionHandler =
+    new VersionHandler(log.child({component: 'VersionHandler'}));
 
   log.info('App created with configuration', config);
 
