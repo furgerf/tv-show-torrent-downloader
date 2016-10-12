@@ -163,5 +163,5 @@ function App(config, log) {
   };
 }
 
-exports.App = App;
+module.exports = App;
 

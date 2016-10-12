@@ -3,7 +3,7 @@
 var expect = require('chai').expect,
   supertest = require('supertest'),
 
-  App = require('./../src/app').App,
+  App = require('./../src/app'),
   config = require('./../src/common/config').getDebugConfig(),
   testUtils = require('./test-utils');
 

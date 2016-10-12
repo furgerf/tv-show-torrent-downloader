@@ -6,7 +6,7 @@ var expect = require('chai').expect,
   supertest = require('supertest'),
   rewire = require('rewire'),
 
-  App = require(root + 'app').App,
+  App = require(root + 'app'),
   config = require(root + 'common/config').getDebugConfig(),
   testUtils = require('../../test-utils'),
   Subscription = require(root + 'database/subscription'),

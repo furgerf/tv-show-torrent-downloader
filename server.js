@@ -4,7 +4,7 @@ var config = require('./src/common/config').getDebugConfig(),
   Subscription = require('./src/database/subscription'),
   logger = require('./src/common/logger'),
   log,
-  App = require('./src/app').App,
+  App = require('./src/app'),
   app;
 
 log = logger.createLogger(config.logging).child({component: 'server'});

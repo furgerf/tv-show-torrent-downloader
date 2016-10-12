@@ -7,7 +7,7 @@ var expect = require('chai').expect,
   rewire = require('rewire'),
 
   testUtils = require('../../test-utils'),
-  App = require(root + 'app').App,
+  App = require(root + 'app'),
   config = require(root + 'common/config').getDebugConfig(),
   Subscription = require(root + 'database/subscription'),
   RewiredWriteSubscriptionHandler = rewire(root + 'handlers/subscriptions/writeSubscriptionHandler');
