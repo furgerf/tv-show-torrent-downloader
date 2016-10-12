@@ -73,6 +73,16 @@ mod.filter('fileSize', function () {
     return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
   };
 });
+mod.filter('formatVersion', function () {
+  return function(version) {
+    if (!version) {
+      return '(unknown)';
+    }
+
+    // TODO: Add GitHub link
+    return version.version + ' (rev. ' + version.revision + ')';
+  };
+});
 
 // routing configuration
 mod.config(['$routeProvider',

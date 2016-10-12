@@ -17,6 +17,7 @@ mod.controller('adminController', ['logger', 'settings', 'notification', 'adminH
             TEXT_SAVE_TIMEOUT = 2000;
 
       that.disks = [];
+      that.version = {};
 
       that.subscriptionSort = settings.getSubscriptionSort();
       subscriptionSortTimer = null;
@@ -90,8 +91,20 @@ mod.controller('adminController', ['logger', 'settings', 'notification', 'adminH
           });
       };
 
+      that.getVersion = function () {
+        adminHandler.getVersion()
+          .then(function (resp) {
+            that.version = resp.data.data;
+          })
+          .catch(function (resp) {
+            logger.logConsole('TODO: Handle response');
+            logger.logConsole(resp);
+          });
+      };
+
       that.refresh = function () {
         that.getDiskUsage();
+        that.getVersion();
       };
 
       that.refresh()
