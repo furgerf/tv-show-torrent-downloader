@@ -37,8 +37,7 @@ describe('VersionHandler', function () {
 
     it('should return a git revision hash', function () {
       var gitRevision = getGitRevision(),
-        revisionRegex = /^[0-9a-f]{40}$/;
-      // TODO: Replace regex in square braces with hex char
+        revisionRegex = /^[0-9a-f]{40}$/i;
 
       expect(gitRevision).to.match(revisionRegex);
     });

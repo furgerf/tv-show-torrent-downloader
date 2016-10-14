@@ -23,6 +23,7 @@
   "dependencies": {
     "bunyan": "*",
     "csprng": "*",
+    "git-rev-sync": "*",
     "mongodb": "*",
     "mongoose": "*",
     "promise": "*",

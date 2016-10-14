@@ -1,14 +1,15 @@
 'use strict';
 
-var utils = require('./../../common/utils');
+var git = require('git-rev-sync'),
+
+  utils = require('./../../common/utils');
 
 function getNpmVersion() {
   return process.env.npm_package_version; // jshint ignore: line
 }
 
 function getGitRevision() {
-  // TODO: Implement
-  return '01234567890abcdef01234567890abcdef012345';
+  return git.long();
 }
 
 /**
