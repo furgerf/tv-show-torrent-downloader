@@ -224,7 +224,7 @@ subscriptionSchema.methods.isValidUpdateInSameSeason = function (newSeason, newE
  * @returns {Boolean} True if the new season/episode was accepted.
  */
 subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
-  if (Number.isNaN(season) || Number.isNaN(episode)) {
+  if (typeof season !== 'number' || typeof episode !== 'number') {
     return false;
   }
 

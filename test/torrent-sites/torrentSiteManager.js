@@ -49,8 +49,8 @@ describe('torrent-sites/torrentSiteManager', function () {
       expect(() => compareTorrents(torrent1, 123, 'largest')).to.throw('Invalid arguments, t1 and t2 must be objects');
       expect(() => compareTorrents(123, torrent2, 'largest')).to.throw('Invalid arguments, t1 and t2 must be objects');
       expect(() => compareTorrents(123, 123, 'largest')).to.throw('Invalid arguments, t1 and t2 must be objects');
-      expect(() => compareTorrents(torrent1, torrent2, null)).to.throw('Invalid arguments, t1 and t2 must be objects');
-      expect(() => compareTorrents(torrent1, torrent2, 123)).to.throw('Invalid arguments, t1 and t2 must be objects');
+      expect(() => compareTorrents(torrent1, torrent2, null)).to.throw('Unknown sort: null');
+      expect(() => compareTorrents(torrent1, torrent2, 123)).to.throw('Unknown sort: 123');
     });
 
     it('should throw an exception on unknown sort order', function () {
@@ -86,26 +86,105 @@ describe('torrent-sites/torrentSiteManager', function () {
   });
 
   describe('selectTorrents', function () {
-    it('should reject invalid input');
+    var testee = new TorrentSiteManager(testUtils.getFakeLog());
 
-    it('should manage to return if no torrents are found');
+    it('should manage to return if no torrents are found', function () {
+      expect(testee.selectTorrents()).to.eql([]);
+      expect(testee.selectTorrents([])).to.eql([]);
+      expect(testee.selectTorrents([], 'foo', 123)).to.eql([]);
+    });
 
-    it('should select no more than the number of torrents that are expected');
+    it('should select no more than the number of torrents that are expected', function () {
+      var fakeTorrents = [
+        { foo: 'foo' },
+        { foobar: 'foobar' },
+        { bar: 'bar' }
+      ];
 
-    it('should correctly select torrents based the provided criterion');
+      expect(testee.selectTorrents(fakeTorrents, 'largest', 3)).to.eql(fakeTorrents);
+      expect(testee.selectTorrents(fakeTorrents, 'largest', 2)).to.eql(fakeTorrents.slice(0, 2));
+      expect(testee.selectTorrents(fakeTorrents, 'largest', 1)).to.eql(fakeTorrents.slice(0, 1));
+    });
+
+    it('should correctly select torrents based the provided criterion', function () {
+      var fakeTorrent1 = { name: 'foo', size: 123 },
+        fakeTorrent2 = { name: 'bar', size: 456 },
+        fakeTorrents = [ fakeTorrent1, fakeTorrent2 ];
+
+      expect(testee.selectTorrents(fakeTorrents, 'largest', 2)).to.eql([fakeTorrent2, fakeTorrent1]);
+      expect(testee.selectTorrents(fakeTorrents, 'smallest', 2)).to.eql([fakeTorrent1, fakeTorrent2]);
+      expect(testee.selectTorrents(fakeTorrents, 'largest', 1)).to.eql([fakeTorrent2]);
+      expect(testee.selectTorrents(fakeTorrents, 'smallest', 1)).to.eql([fakeTorrent1]);
+    });
   });
 
   describe('tryTorrentSite', function () {
-    it('should reject invalid input');
+    var returnErrorUrl = 'http://return.error/',
+      searchString = '',
+      wget = 'wget -nv -O- ',
+      fakeExec = function (command, callback) {
+        var actualCommand = command.slice(0, 13),
+          url = command.slice(13);
 
-    it('should reject if the command failed');
+        if (actualCommand !== wget) {
+          return callback('Unexpected invocation');
+        }
 
-    it('should resolve if the command returns data');
+        if (url === returnErrorUrl) {
+          return callback('This is an error');
+        }
+
+        return callback(null, url);
+      },
+      restoreExec = TorrentSiteManager.__set__('exec', fakeExec),
+
+      parseTorrentDataStub = sinon.stub(),
+      fakeTorrentSite = { url: 'replace-me', parseTorrentData: parseTorrentDataStub },
+
+      testee = new TorrentSiteManager(testUtils.getFakeLog()),
+      selectTorrentsStub = sinon.stub(testee, 'selectTorrents');
+
+
+    beforeEach(function () {
+      parseTorrentDataStub.reset();
+      selectTorrentsStub.reset();
+    });
+
+    after(function () {
+      restoreExec();
+      selectTorrentsStub.restore();
+    });
+
+    it('should reject if the command failed', function (done) {
+      fakeTorrentSite.url = returnErrorUrl;
+
+      testee.tryTorrentSite(fakeTorrentSite, searchString, 12, 34, 'largest', 12)
+        .fail(function (err) {
+          expect(err).to.eql('This is an error');
+          expect(parseTorrentDataStub.callCount).to.eql(0);
+          expect(selectTorrentsStub.callCount).to.eql(0);
+          done();
+        });
+    });
+
+    it('should resolve if the command returns data', function (done) {
+      fakeTorrentSite.url = 'http://foo.bar/';
+
+      testee.tryTorrentSite(fakeTorrentSite, searchString, 12, 34, 'largest', 12)
+        .then(function () {
+          expect(parseTorrentDataStub.calledOnce).to.be.true;
+          expect(parseTorrentDataStub.calledWithExactly(fakeTorrentSite.url, 12, 34)).to.be.true;
+
+          expect(selectTorrentsStub.calledOnce).to.be.true;
+          expect(selectTorrentsStub.calledWithExactly(undefined, 'largest', 12)).to.be.true;
+          done();
+        });
+    });
   });
 
   describe('findTorrents', function () {
-    var tryTorrentSiteStub = sinon.stub(),
-      testee,
+    var testee = new TorrentSiteManager(testUtils.getFakeLog()),
+      tryTorrentSiteStub = sinon.stub(testee, 'tryTorrentSite'),
 
       searchString = 'foobar',
       seasonToCheck = 12,
@@ -113,14 +192,13 @@ describe('torrent-sites/torrentSiteManager', function () {
       torrentSort = 'asdf',
       maxTorrentsPerEpisode = 56;
 
-    TorrentSiteManager.__set__('tryTorrentSite', tryTorrentSiteStub);
-    testee = new TorrentSiteManager(testUtils.getFakeLog()),
-
     beforeEach(function () {
       tryTorrentSiteStub.reset();
     });
 
-    it('should reject invalid input');
+    after(function () {
+      tryTorrentSiteStub.restore();
+    });
 
     it('should fail if the only site has no torrents', function (done) {
       // our testee should think it has 1 torrent site...
