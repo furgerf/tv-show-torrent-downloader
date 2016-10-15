@@ -38,6 +38,7 @@ function isNextOrSameEpisode(sub, season, episode) {
 function startTorrent(torrentLink, log) {
   var command = config.torrentCommand + " '" + torrentLink + "'";
 
+  // jshint validthis: true
   log = log || this.log;
 
   log.warn('Starting torrent: %s (command: %s)', torrentLink, command);

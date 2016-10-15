@@ -18,6 +18,7 @@ var restify = require('restify'),
  * @returns {Subscription} The updated subscription.
  */
 function updateFields (subscription, data, log) {
+  // jshint validthis: true
   log = log || this.log;
 
   if (!subscription || !data) {

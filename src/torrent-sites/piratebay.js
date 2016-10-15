@@ -1,7 +1,6 @@
 'use strict';
 
-var url = require('url'),
-  utils = require('./../common/utils');
+var utils = require('./../common/utils');
 
 /**
  * Parses the size of a torrent.
@@ -109,79 +108,75 @@ function parseDate(str) {
 }
 
 /**
- * Parses the torrent data.
- *
- * @param {String} html - HTML response from the search.
- * @param {Number} season - Season which was searched for.
- * @param {Number} episode - Episode which was searched for.
- *
- * @returns {Object} Torrent information if parsing was successful, null otherwise. Properties:
- *                   {String} name - Name of the torrent.
- *                   {Number} season - Season of the torrent.
- *                   {Number} episode - Episode of the torrent.
- *                   {Number} seeders - Seeders of the torrent.
- *                   {Number} leechers - Leechers of the torrent.
- *                   {Number} size - Size in bytes of the torrent.
- *                   {Date} uploadDate - Date when the torrent was uploaded.
- *                   {String} link - Link to the torrent.
- */
-function parseTorrentData(html, season, episode) {
-  try {
-    var magnetRegexp = /<a href="magnet:?/,
-      torrentInfoRegexp = /.*Uploaded(.*)\,.*Size(.*)\,/,
-      extractCellContentRegexp = /<td.*>(.*)<\/td>/,
-
-      torrents = [];
-
-    html.split('\n').forEach(function (line, index, lines) {
-      if (line.match(magnetRegexp)) {
-        var link = decodeURI(line.split('"')[1]), // TODO: check that all trackers are added
-          queryData = url.parse(link, true),
-          torrentName = queryData.query.dn,
-          infoLine = lines[index + 1],
-          seederLine = lines[index + 3],
-          leecherLine = lines[index + 4],
-          infos = infoLine.match(torrentInfoRegexp),
-          uploadDate = parseDate(infos[1]),
-          size = parseSize(infos[2]),
-          seeders = parseInt(seederLine.match(extractCellContentRegexp)[1], 10),
-          leechers = parseInt(leecherLine.match(extractCellContentRegexp)[1], 10);
-
-        torrents.push({
-          name: torrentName,
-          season: season,
-          episode: episode,
-          seeders: seeders,
-          leechers: leechers,
-          size: size,
-          uploadDate: uploadDate,
-          link: link
-        });
-      }
-    });
-
-    return torrents;
-  } catch (err) {
-    this.log.warn('Torrent parsing error: ' + err);
-    return null;
-  }
-}
-
-/**
  * Parser constructor. Throws an error if no `url` is provided.
  *
  * @param {String} url - Is used by the torrent-site index to build the search URL.
  * @param {Bunyan.Log} log - Logger instance.
  */
-function Parser (url, log) {
+module.exports = function (url, log) {
   if (!url || !url.toString()) {
     throw new Error('Must provide valid URL');
   }
 
   this.url = 'http://' + url + '/search/';
-  this.log = log;
-  this.parseTorrentData = parseTorrentData;
-}
 
-module.exports = Parser;
+  /**
+   * Parses the torrent data.
+   *
+   * @param {String} html - HTML response from the search.
+   * @param {Number} season - Season which was searched for.
+   * @param {Number} episode - Episode which was searched for.
+   *
+   * @returns {Object} Torrent information if parsing was successful, null otherwise. Properties:
+   *                   {String} name - Name of the torrent.
+   *                   {Number} season - Season of the torrent.
+   *                   {Number} episode - Episode of the torrent.
+   *                   {Number} seeders - Seeders of the torrent.
+   *                   {Number} leechers - Leechers of the torrent.
+   *                   {Number} size - Size in bytes of the torrent.
+   *                   {Date} uploadDate - Date when the torrent was uploaded.
+   *                   {String} link - Link to the torrent.
+   */
+  this.parseTorrentData = function (html, season, episode) {
+    try {
+      var magnetRegexp = /<a href="magnet:?/,
+        torrentInfoRegexp = /.*Uploaded(.*)\,.*Size(.*)\,/,
+        extractCellContentRegexp = /<td.*>(.*)<\/td>/,
+
+        torrents = [];
+
+      html.split('\n').forEach(function (line, index, lines) {
+        if (line.match(magnetRegexp)) {
+          var link = decodeURI(line.split('"')[1]), // TODO: check that all trackers are added
+            queryData = url.parse(link, true),
+            torrentName = queryData.query.dn,
+            infoLine = lines[index + 1],
+            seederLine = lines[index + 3],
+            leecherLine = lines[index + 4],
+            infos = infoLine.match(torrentInfoRegexp),
+            uploadDate = parseDate(infos[1]),
+            size = parseSize(infos[2]),
+            seeders = parseInt(seederLine.match(extractCellContentRegexp)[1], 10),
+            leechers = parseInt(leecherLine.match(extractCellContentRegexp)[1], 10);
+
+          torrents.push({
+            name: torrentName,
+            season: season,
+            episode: episode,
+            seeders: seeders,
+            leechers: leechers,
+            size: size,
+            uploadDate: uploadDate,
+            link: link
+          });
+        }
+      });
+
+      return torrents;
+    } catch (err) {
+      log.warn('Torrent parsing error: ' + err);
+      return null;
+    }
+  };
+};
 
