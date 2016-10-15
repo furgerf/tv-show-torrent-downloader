@@ -1,6 +1,7 @@
 'use strict';
 
-var utils = require('./../common/utils');
+var urlModule = require('url'),
+  utils = require('./../common/utils');
 
 /**
  * Parses the size of a torrent.
@@ -87,24 +88,17 @@ function parseDateToday(dateToday) {
 function parseDate(str) {
   var dateThisYear = str.match(/(\d{2})-(\d{2}).*;(\d{2}):(\d{2})/),
     dateOtherYear = str.match(/(\d{2})-(\d{2}).*;(\d{4})/),
-    dateToday = str.match(/Today.*;(\d{2}):(\d{2})/),
-    date;
+    dateToday = str.match(/Today.*;(\d{2}):(\d{2})/);
 
   if (dateThisYear !== null) {
-    date = parseDateThisYear(dateThisYear);
+    return parseDateThisYear(dateThisYear);
   } else if (dateOtherYear !== null) {
-    date = parseDateLastYear(dateOtherYear);
+    return parseDateLastYear(dateOtherYear);
   } else if (dateToday !== null) {
-    date = parseDateToday(dateToday);
-  } else {
-    return null;
+    return parseDateToday(dateToday);
   }
 
-  if (date > new Date()) {
-    date.setFullYear(date.getFullYear() - 1);
-  }
-
-  return date;
+  return null;
 }
 
 /**
@@ -148,7 +142,7 @@ module.exports = function (url, log) {
       html.split('\n').forEach(function (line, index, lines) {
         if (line.match(magnetRegexp)) {
           var link = decodeURI(line.split('"')[1]), // TODO: check that all trackers are added
-            queryData = url.parse(link, true),
+            queryData = urlModule.parse(link, true),
             torrentName = queryData.query.dn,
             infoLine = lines[index + 1],
             seederLine = lines[index + 3],
