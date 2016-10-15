@@ -7,6 +7,7 @@ var restify = require('restify'),
   UpdateSubscription = require('./updateSubscriptionHandler'),
   Subscription = require('../../database/subscription');
 
+
 /**
  * Parses the provided `torrentSort` and returns a valid torrent sorting method.
  *
@@ -24,79 +25,6 @@ function getTorrentSort(torrentSort) {
 }
 
 /**
- * Recursively looks for new episodes of the same season until no torrents are found for a
- * particular episode.
- *
- * @param {Subscription} subscription - Subscription to which the episodes (would) belong.
- * @param {Number} season - Season of the episode to try and find.
- * @param {Number} episode - Episode of the episode to try and find.
- * @param {Array} torrents - Already found torrents.
- * @param {String} torrentSort - Torrent sorting method.
- * @param {Number} maxTorrentsPerEpisode - Maximum number of torrents that should be retrieved
- *                                         for a single episode.
- *
- * @returns {Promise} Promise which resolves to the array of all found torrents.
- */
-function checkForMultipleEpisodes(subscription, season, episode,
-    torrents, torrentSort, maxTorrentsPerEpisode) {
-  return this.torrentSiteManager.findTorrents(subscription.name + ' '
-      + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
-      season, episode, torrentSort, maxTorrentsPerEpisode)
-    .then(function (newTorrents) {
-      if (newTorrents && newTorrents.length > 0) {
-        // we found torrents, add to list
-        torrents = torrents.concat(newTorrents);
-
-        // look for next episode...
-        return checkForMultipleEpisodes(subscription, season, episode + 1,
-          torrents, torrentSort, maxTorrentsPerEpisode);
-      }
-
-      // couldn't find the episode, return the torrents we already have
-      return torrents;
-    });
-}
-
-/**
- * Looks for updates of a subscription, both new episodes of the same season, and new episodes
- * of a new season.
- *
- * @param {Subscription} subscription - Subscription to which the episodes (would) belong.
- * @param {String} torrentSort - Torrent sorting method.
- * @param {Number} maxTorrentsPerEpisode - Maximum number of torrents that should be retrieved
- *                                         for a single episode.
- * @param {Bunyan.Log} log - Optional. Logger instance.
- *
- * @returns {Promise} Promise which resolves to the array of all found torrents.
- */
-function checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, log) {
-  log &&
-    log.debug('Checking subscription "%s" for new episodes of same season...', subscription.name);
-
-  // check for new episode of same season
-  return checkForMultipleEpisodes(subscription, subscription.lastSeason,
-      subscription.lastEpisode + 1, [], torrentSort, maxTorrentsPerEpisode)
-    .then(function (newEpisodes) {
-      // we just finished checking for new episodes
-      subscription.updateLastUpdateCheckTime();
-
-      log &&
-        log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
-      return checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1,
-          [], torrentSort, maxTorrentsPerEpisode)
-        .then(function (episodes) {
-          // we just finished checking for new episodes
-          subscription.updateLastUpdateCheckTime();
-
-          // merge episodes from current and new season
-          newEpisodes = newEpisodes.concat(episodes);
-
-          return newEpisodes;
-        });
-    });
-}
-
-/**
  * Handles requests to PUT /subscriptions/:subscriptionName/find.
  */
 function checkSubscriptionForUpdates(req, res, next) {
@@ -106,14 +34,18 @@ function checkSubscriptionForUpdates(req, res, next) {
     maxTorrentsPerEpisode = parseInt(body
         ? body.maxTorrentsPerEpisode
         : req.params.maxTorrentsPerEpisode, 10) || 1,
-    startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
+    startDownload = req.params.startDownload === true || req.params.startDownload === 'true',
+
+    // jshint validthis: true
+    that = this;
 
   Subscription.findSubscriptionByName(subName)
     .then(subscription => subscription
         ? subscription
         : next(new restify.BadRequestError("No subscription with name '" + subName + "'.")))
     .then(function (subscription) {
-      return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
+      return that.checkSubscriptionForUpdate(subscription,
+        torrentSort, maxTorrentsPerEpisode, req.log)
         .then(function (data) {
           if (startDownload) {
             data.forEach(function (torrent) {
@@ -142,13 +74,17 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
     maxTorrentsPerEpisode = parseInt(body
         ? body.maxTorrentsPerEpisode
         : req.params.maxTorrentsPerEpisode, 10) || 1,
-    startDownload = req.params.startDownload === true || req.params.startDownload === 'true';
+    startDownload = req.params.startDownload === true || req.params.startDownload === 'true',
+
+    // jshint validthis: true
+    that = this;
 
   // retrieve all subscriptions
   Subscription.findAllSubscriptions()
     // continue when updates are found for all subscriptions
     .then(subscriptions => Q.all(subscriptions.map(function (subscription) {
-      return checkSubscriptionForUpdate(subscription, torrentSort, maxTorrentsPerEpisode, req.log)
+      return that.checkSubscriptionForUpdate(subscription, torrentSort,
+        maxTorrentsPerEpisode, req.log)
         .then(function (data) {
           // adding a reference to the subscription for starting the torrent a bit futher down...
           data.subscription = subscription;
@@ -185,6 +121,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
           new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
 }
 
+
 /**
  * Creates an instance of FindSubscriptionUpdatesHandler.
  *
@@ -201,6 +138,85 @@ function FindSubscriptionUpdatesHandler(torrentSiteManager, log) {
 
   this.log.info('FindSubscriptionUpdatesHandler created');
 }
+
+
+/**
+ * Recursively looks for new episodes of the same season until no torrents are found for a
+ * particular episode.
+ *
+ * @param {Subscription} subscription - Subscription to which the episodes (would) belong.
+ * @param {Number} season - Season of the episode to try and find.
+ * @param {Number} episode - Episode of the episode to try and find.
+ * @param {Array} torrents - Already found torrents.
+ * @param {String} torrentSort - Torrent sorting method.
+ * @param {Number} maxTorrentsPerEpisode - Maximum number of torrents that should be retrieved
+ *                                         for a single episode.
+ *
+ * @returns {Promise} Promise which resolves to the array of all found torrents.
+ */
+FindSubscriptionUpdatesHandler.prototype.checkForMultipleEpisodes = function (subscription,
+  season, episode, torrents, torrentSort, maxTorrentsPerEpisode) {
+  var that = this;
+
+  return this.torrentSiteManager.findTorrents(subscription.name + ' '
+      + utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters,
+      season, episode, torrentSort, maxTorrentsPerEpisode)
+    .then(function (newTorrents) {
+      if (newTorrents && newTorrents.length > 0) {
+        // we found torrents, add to list
+        torrents = torrents.concat(newTorrents);
+
+        // look for next episode...
+        return that.checkForMultipleEpisodes(subscription, season, episode + 1,
+          torrents, torrentSort, maxTorrentsPerEpisode);
+      }
+
+      // couldn't find the episode, return the torrents we already have
+      return torrents;
+    });
+};
+
+/**
+ * Looks for updates of a subscription, both new episodes of the same season, and new episodes
+ * of a new season.
+ *
+ * @param {Subscription} subscription - Subscription to which the episodes (would) belong.
+ * @param {String} torrentSort - Torrent sorting method.
+ * @param {Number} maxTorrentsPerEpisode - Maximum number of torrents that should be retrieved
+ *                                         for a single episode.
+ * @param {Bunyan.Log} log - Optional. Logger instance.
+ *
+ * @returns {Promise} Promise which resolves to the array of all found torrents.
+ */
+FindSubscriptionUpdatesHandler.prototype.checkSubscriptionForUpdate = function (subscription,
+  torrentSort, maxTorrentsPerEpisode, log) {
+  var that = this;
+
+  log &&
+    log.debug('Checking subscription "%s" for new episodes of same season...', subscription.name);
+
+  // check for new episode of same season
+  return this.checkForMultipleEpisodes(subscription, subscription.lastSeason,
+      subscription.lastEpisode + 1, [], torrentSort, maxTorrentsPerEpisode)
+    .then(function (newEpisodes) {
+      // we just finished checking for new episodes
+      subscription.updateLastUpdateCheckTime();
+
+      log &&
+        log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);
+      return that.checkForMultipleEpisodes(subscription, subscription.lastSeason + 1, 1,
+          [], torrentSort, maxTorrentsPerEpisode)
+        .then(function (episodes) {
+          // we just finished checking for new episodes
+          subscription.updateLastUpdateCheckTime();
+
+          // merge episodes from current and new season
+          newEpisodes = newEpisodes.concat(episodes);
+
+          return newEpisodes;
+        });
+    });
+};
 
 module.exports = FindSubscriptionUpdatesHandler;
 
