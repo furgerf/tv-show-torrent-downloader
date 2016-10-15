@@ -78,6 +78,30 @@ describe('database/subscription', function () {
     });
   });
 
+  describe('ensureConnected', function () {
+    var fakeLog = testUtils.getFakeLog(),
+      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription).Subscription;
+
+    it('should raise an error if called when not initialized', function (done) {
+      fakeSubscription.ensureConnected()
+      .fail(function (err) {
+        expect(err).to.eql(new Error('Cannot establish database connection: Not initialized'));
+        done();
+      });
+    });
+
+    it('should not do anything when initialized to not use a real database', function (done) {
+      fakeSubscription.initialize(testUtils.getFakeLog());
+
+      fakeSubscription.ensureConnected()
+      .then(function () {
+        done();
+      });
+    });
+
+    it('should try to establish a database connection when initialized to use a real database');
+  });
+
   describe('getReturnableSubscription', function () {
     it('should only return some specific data', function () {
       var now = new Date(),
@@ -139,7 +163,12 @@ describe('database/subscription', function () {
   });
 
   describe('updateLastUpdateCheckTime', function () {
-    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
+    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]),
+      saveStub = sinon.stub(testee, 'save');
+
+    after(function () {
+      saveStub.restore();
+    });
 
     it('should successfully update the lastUpdateCheckTime', function (done) {
       var oldLastUpdateCheckTime = testee.lastUpdateCheckTime;
@@ -152,7 +181,7 @@ describe('database/subscription', function () {
         expect(newLastUpdateCheckTime).to.be.above(oldLastUpdateCheckTime);
         expect(afterUpdateTime - newLastUpdateCheckTime).to.be.below(20);
 
-        // TODO: Stub testee.save and verify that it's been called
+        expect(saveStub.calledOnce).to.be.true;
 
         done();
       });
@@ -160,7 +189,12 @@ describe('database/subscription', function () {
   });
 
   describe('updateLastDownloadTime', function () {
-    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
+    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]),
+      saveStub = sinon.stub(testee, 'save');
+
+    after(function () {
+      saveStub.restore();
+    });
 
     it('should successfully update the lastDownloadTime', function (done) {
       var oldLastDownloadTime = testee.lastDownloadTime;
@@ -173,7 +207,7 @@ describe('database/subscription', function () {
         expect(newLastDownloadTime).to.be.above(oldLastDownloadTime);
         expect(afterUpdateTime - newLastDownloadTime).to.be.below(20);
 
-        // TODO: Stub testee.save and verify that it's been called
+        expect(saveStub.calledOnce).to.be.true;
 
         done();
       });
@@ -286,36 +320,162 @@ describe('database/subscription', function () {
   });
 
   describe('preSaveAction', function () {
-    it('should modify the subscription as expected');
+    var nextStub = sinon.stub(),
+      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription).Subscription,
+      now = new Date(),
+      newSubscriptionData = {
+        name: 'asdf'
+      },
+      existingSubscriptionData = {
+            name: 'foobar',
+            searchParameters: 'bar',
+            lastSeason: 12,
+            lastEpisode: 34,
+            creationTime: now,
+            lastModifiedTime: now,
+            lastDownloadTime: now,
+            lastUpdateCheckTime: now
+      },
+      newSubscription = new Subscription(newSubscriptionData),
+      existingSubscription = new Subscription(existingSubscriptionData),
+      extractedPreSaveAction;
+
+    // initialize database
+    fakeSubscription.initialize(testUtils.getFakeLog());
+
+    // extract pre-save action - warning, that might not work at some point in the future...
+    // the pre-save action is in the callQueue - each queue item is an array wity two elements
+    // the first seems to be the step in the event when the action should be triggered
+    // the second seems to be the event handler
+    // the event handler we're looking for has the property '0' === 'save'
+    // and property '1' which is a function - the built-in handlers have a boolean at '1' and the
+    // handler function at '2'
+    extractedPreSaveAction = Subscription.schema.callQueue.filter(function (call) {
+      return call[0] === 'pre' && call[1]['0'] === 'save' && typeof call[1]['1'] === 'function';
+    })[0][1][1];
+
+    // the pre-save action must be bound to a Subscription object but normal 'bind()' doesn't seem
+    // to work, so we're adding a new function to our test subscriptions which is invoked in the tests
+    newSubscription.explicitPreSaveAction = extractedPreSaveAction;
+    existingSubscription.explicitPreSaveAction = extractedPreSaveAction;
+
+    beforeEach(function () {
+      nextStub.reset();
+    });
+
+    it('should modify a new subscription as expected', function (done) {
+      newSubscription.explicitPreSaveAction(nextStub)
+      .then(function () {
+        var afterUpdate = new Date();
+
+        // ensure some properties aren't modified
+        expect(newSubscription.name).to.eql(newSubscriptionData.name);
+        expect(newSubscription.lastDownloadTime).to.not.exist;
+        expect(newSubscription.lastUpdateCheckTime).to.not.exist;
+
+
+        // ensure most properties ARE modified
+        expect(newSubscription.searchParameters).to.not.eql(newSubscriptionData.searchParameters);
+        expect(newSubscription.searchParameters).to.eql('');
+
+        expect(newSubscription.lastSeason).to.not.eql(newSubscriptionData.lastSeason);
+        expect(newSubscription.lastSeason).to.eql(1);
+
+        expect(newSubscription.lastEpisode).to.not.eql(newSubscriptionData.lastEpisode);
+        expect(newSubscription.lastEpisode).to.eql(0);
+
+        expect(newSubscription.creationTime).to.not.eql(newSubscriptionData.creationTime);
+        expect(newSubscription.creationTime - afterUpdate).to.be.below(20);
+
+        expect(newSubscription.lastModifiedTime).to.not.eql(newSubscriptionData.lastModifiedTime);
+        expect(newSubscription.lastModifiedTime - afterUpdate).to.be.below(20);
+
+        // ensure `next()` was called
+        expect(nextStub.callCount).to.eql(1);
+
+        done();
+      });
+    });
+
+    it('should modify an existing subscription as expected', function (done) {
+      existingSubscription.explicitPreSaveAction(nextStub)
+      .then(function () {
+        var afterUpdate = new Date();
+
+        // ensure most properties aren't modified
+        expect(existingSubscription.name).to.eql(existingSubscriptionData.name);
+        expect(existingSubscription.searchParameters).to.eql(existingSubscriptionData.searchParameters);
+        expect(existingSubscription.lastSeason).to.eql(existingSubscriptionData.lastSeason);
+        expect(existingSubscription.lastEpisode).to.eql(existingSubscriptionData.lastEpisode);
+        expect(existingSubscription.creationTime).to.eql(existingSubscriptionData.creationTime);
+        expect(existingSubscription.lastDownloadTime).to.eql(existingSubscriptionData.lastDownloadTime);
+        expect(existingSubscription.lastUpdateCheckTime).to.eql(existingSubscriptionData.lastUpdateCheckTime);
+
+        // ensure some properties ARE modified
+        expect(existingSubscription.lastModifiedTime).to.be.above(existingSubscriptionData.lastModifiedTime);
+        expect(existingSubscription.lastModifiedTime - afterUpdate).to.be.below(20);
+
+        // ensure `next()` was called
+        expect(nextStub.callCount).to.eql(1);
+
+        done();
+      });
+    });
   });
 
   describe('initialize', function () {
     var fakeLog = testUtils.getFakeLog();
-
-    // TODO: Find out how to assert (non-)initializedness of Sunscription
 
     beforeEach(function () {
       this.testee = testUtils.getFakeStaticSubscription(Subscription).Subscription;
     });
 
     it('should throw an error when initialized without a log', function () {
+      expect(this.testee.isInitialized).to.be.not.ok;
+
       expect(() => this.testee.initialize()).to.throw('Cannot initialize Subscription without log!');
       expect(() => this.testee.initialize(null)).to.throw('Cannot initialize Subscription without log!');
+
+      expect(this.testee.isInitialized).to.be.not.ok;
     });
 
     it('should throw an error when initialized multiple times', function () {
+      expect(this.testee.isInitialized).to.be.not.ok;
+
       // successful initialization
       this.testee.initialize(fakeLog);
 
+      expect(this.testee.isInitialized).to.be.true;
+
       // unsuccessful initialization
       expect(() => this.testee.initialize()).to.throw('Subscription is already initialized!');
+
+      expect(this.testee.isInitialized).to.be.true;
     });
 
     it('should successfully initialize when not using a real database', function () {
+      expect(this.testee.isInitialized).to.be.not.ok;
+
       this.testee.initialize(fakeLog);
+
+      expect(this.testee.isInitialized).to.be.true;
     });
 
-    it('should successfully initialize when using a real database');
+    it('should successfully initialize when using a real database', function () {
+      var config = {
+        host: 'foo',
+        port: 123
+      };
+
+      expect(this.testee.isInitialized).to.be.not.ok;
+
+      this.testee.initialize(fakeLog, config);
+
+      expect(this.testee.isInitialized).to.be.true;
+
+      // can't verify that mongoose/process event handlers were registered because a mongoose model
+      // can't be rewired
+    });
   });
 
   describe('findSubscriptionByName', function () {

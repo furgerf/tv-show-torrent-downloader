@@ -266,7 +266,6 @@ subscriptionSchema.pre('save', function preSaveAction (next) {
   var that = this,
     database = initializedDatabaseInstance;
 
-  // TODO: Verify it's working...
   return database.ensureConnected()
     .then(function () {
       database.log.debug('Running pre-save action for subscription "%s"', that.name);
