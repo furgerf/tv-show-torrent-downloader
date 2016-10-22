@@ -283,10 +283,9 @@ subscriptionSchema.pre('save', function preSaveAction (next) {
       that.lastSeason = that.lastSeason || 1;
       that.lastEpisode = that.lastEpisode || 0;
 
-      database.log.info('about to be done with pre-save');
-      next();
       database.log.info('done with pre-save');
-    });
+    })
+    .then(next);
 });
 
 // create and export model

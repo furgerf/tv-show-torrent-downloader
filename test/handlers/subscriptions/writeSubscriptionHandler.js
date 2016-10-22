@@ -19,9 +19,9 @@ describe('WriteSubscriptionHandler', function () {
     var subscriptionData,
       testSubscription,
       originalTestSubscription,
-      updateFields = RewiredWriteSubscriptionHandler.__get__('updateFields'),
       now = new Date(),
-      fakeLog = testUtils.getFakeLog();
+      fakeLog = testUtils.getFakeLog(),
+      testHandler = new RewiredWriteSubscriptionHandler(testUtils.getFakeLog());
 
     subscriptionData = {
       name: 'test name',
@@ -40,19 +40,19 @@ describe('WriteSubscriptionHandler', function () {
     originalTestSubscription._id = testSubscription._id;
 
     it('should return the original subscription if the data is not valid', function () {
-      expect(updateFields(testSubscription, undefined, fakeLog)._doc).to.eql(originalTestSubscription._doc);
-      expect(updateFields(testSubscription, 1234, fakeLog)._doc).to.eql(originalTestSubscription._doc);
-      expect(updateFields(testSubscription, 'abcd', fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, undefined, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, 1234, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, 'abcd', fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
-      expect(updateFields(undefined, undefined, fakeLog)).to.eql(undefined);
-      expect(updateFields(null, {}, fakeLog)).to.eql(null);
-      expect(updateFields(1234, {}, fakeLog)).to.eql(1234);
-      expect(updateFields('abcd', {}, fakeLog)).to.eql('abcd');
+      expect(testHandler.updateFields(undefined, undefined, fakeLog)).to.eql(undefined);
+      expect(testHandler.updateFields(null, {}, fakeLog)).to.eql(null);
+      expect(testHandler.updateFields(1234, {}, fakeLog)).to.eql(1234);
+      expect(testHandler.updateFields('abcd', {}, fakeLog)).to.eql('abcd');
     });
 
     it('should ignore extra fields', function () {
-      expect(updateFields(testSubscription, {foo: 'bar'}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
-      expect(updateFields(testSubscription, {bar: 1234}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, {foo: 'bar'}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, {bar: 1234}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
     });
 
     it('should update valid fields', function () {
@@ -62,16 +62,16 @@ describe('WriteSubscriptionHandler', function () {
         newLastEpisode = 78;
 
       originalTestSubscription.name = newName;
-      expect(updateFields(testSubscription, {name: newName}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, {name: newName}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
       originalTestSubscription.searchParameters = newSearchParameters;
-      expect(updateFields(testSubscription, {searchParameters: newSearchParameters}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, {searchParameters: newSearchParameters}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
       originalTestSubscription.lastSeason = newLastSeason;
-      expect(updateFields(testSubscription, {lastSeason: newLastSeason}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, {lastSeason: newLastSeason}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
       originalTestSubscription.lastEpisode = newLastEpisode;
-      expect(updateFields(testSubscription, {lastEpisode: newLastEpisode}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
+      expect(testHandler.updateFields(testSubscription, {lastEpisode: newLastEpisode}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
     });
 
     it('should update multiple fields but ignore invalid ones', function () {
@@ -84,7 +84,7 @@ describe('WriteSubscriptionHandler', function () {
       originalTestSubscription.searchParameters = newSearchParameters;
       originalTestSubscription.lastSeason = newLastSeason;
       originalTestSubscription.lastEpisode = newLastEpisode;
-      expect(updateFields(testSubscription, {
+      expect(testHandler.updateFields(testSubscription, {
           name: newName,
           searchParameters: newSearchParameters,
           lastSeason: newLastSeason,

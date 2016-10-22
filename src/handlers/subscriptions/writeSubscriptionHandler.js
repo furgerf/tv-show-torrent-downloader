@@ -7,43 +7,6 @@ var restify = require('restify'),
 
   Subscription = require('./../../database/subscription');
 
-/**
- * Updates the allowed fields of the subscription with the provided data. Only the fields that are
- * allowed to be modified by the user and are actually specified are updated.
- *
- * @param {Subscription} subscription - Subscription to update.
- * @param {Object} data - Data which updates the subscription.
- * @param {Bunyan.Log} - Logger instance.
- *
- * @returns {Subscription} The updated subscription.
- */
-function updateFields (subscription, data, log) {
-  // jshint validthis: true
-  log = log || this.log;
-
-  if (!subscription || !data) {
-    log.warn('Aborting subscription update because subscription %s or data %s are not valid',
-      subscription, data);
-    return subscription;
-  }
-
-  log.info('Updating subscription %s with:', subscription, data);
-
-  if (data.name !== undefined) {
-    subscription.name = data.name;
-  }
-  if (data.searchParameters !== undefined) {
-    subscription.searchParameters = data.searchParameters;
-  }
-  if (data.lastSeason !== undefined) {
-    subscription.lastSeason = data.lastSeason;
-  }
-  if (data.lastEpisode !== undefined) {
-    subscription.lastEpisode = data.lastEpisode;
-  }
-
-  return subscription;
-}
 
 /**
  * Creates a new subscription from the provided data. Only the fields that are allowed to be set
@@ -66,6 +29,7 @@ function createNewSubscriptionFromData (data) {
     lastSeason: data.lastSeason || 1,
     lastEpisode: data.lastEpisode || 0
   };
+
   return new Subscription(newSubscriptionData);
 }
 
@@ -79,6 +43,7 @@ function addSubscription (req, res, next) {
     return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
   }
 
+  // TODO: Return 201 instead of 200
   Q.fcall(createNewSubscriptionFromData(body).save)
     .then(doc => utils.sendOkResponse('New subscription created', doc.getReturnable(),
           res, next, 'http://' + req.headers.host + req.url))
@@ -91,16 +56,18 @@ function addSubscription (req, res, next) {
  */
 function updateSubscription (req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
-    subscriptionName = decodeURIComponent(req.params[0]);
+    subscriptionName = decodeURIComponent(req.params[0]),
+    that = this;
 
   body.name = body.name || subscriptionName;
 
+  // TODO: Return 201 instead of 200 if a new subscription was created
   // retrieve existing subscription that would be updated
   Subscription.findSubscriptionByName(subscriptionName)
     // if the subscription doesn't exist yet, create a new one
     .then(subscription => subscription ? subscription : createNewSubscriptionFromData(body))
       // update the fields and save
-    .then(subscription => updateFields(subscription, body, req.log).save())
+    .then(subscription => that.updateFields(subscription, body, req.log).save())
     .then(subscription => utils.sendOkResponse('Subscription updated',
           subscription.getReturnable(), res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>
@@ -124,6 +91,7 @@ function deleteSubscription (req, res, next) {
         next(new restify.InternalServerError('Error while removing subscription: ' + error)));
 }
 
+
 /**
  * Creates an instance of WriteSubscriptionHandler.
  *
@@ -139,6 +107,43 @@ function WriteSubscriptionHandler(log) {
 
   this.log.info('WriteSubscriptionHandler created');
 }
+
+
+/**
+ * Updates the allowed fields of the subscription with the provided data. Only the fields that are
+ * allowed to be modified by the user and are actually specified are updated.
+ * NOTE: This function shouldn't be called publicly.
+ *
+ * @param {Subscription} subscription - Subscription to update.
+ * @param {Object} data - Data which updates the subscription.
+ * @param {Bunyan.Log} - Logger instance.
+ *
+ * @returns {Subscription} The updated subscription.
+ */
+WriteSubscriptionHandler.prototype.updateFields = function (subscription, data) {
+  if (!subscription || !data) {
+    this.log.warn('Aborting subscription update because subscription %s or data %s are not valid',
+      subscription, data);
+    return subscription;
+  }
+
+  this.log.info('Updating subscription %s with:', subscription, data);
+
+  if (data.name !== undefined) {
+    subscription.name = data.name;
+  }
+  if (data.searchParameters !== undefined) {
+    subscription.searchParameters = data.searchParameters;
+  }
+  if (data.lastSeason !== undefined) {
+    subscription.lastSeason = data.lastSeason;
+  }
+  if (data.lastEpisode !== undefined) {
+    subscription.lastEpisode = data.lastEpisode;
+  }
+
+  return subscription;
+};
 
 module.exports = WriteSubscriptionHandler;
 
