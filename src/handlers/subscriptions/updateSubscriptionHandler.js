@@ -75,7 +75,7 @@ function startTorrent(torrentLink, log) {
  * @returns {Promise} Promise which resolves if downloading the torrent was successful and rejects
  *                    otherwise.
  */
-function downloadTorrent (sub, season, episode, link, log) {
+UpdateSubscriptionHandler.downloadTorrent = function downloadTorrent (sub, season, episode, link, log) {
   return startTorrent(link, log)
     .then(function () {
       if (!config.productionEnvironment) {

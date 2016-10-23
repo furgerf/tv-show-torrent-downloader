@@ -4,10 +4,13 @@ const root = './../../../src/';
 
 var expect = require('chai').expect,
   supertest = require('supertest'),
+  sinon = require('sinon'),
   rewire = require('rewire'),
+  Q = require('q'),
 
   App = require(root + 'app'),
   config = require(root + 'common/config').getDebugConfig(),
+  utils = require('../../../src/common/utils'),
   testUtils = require('../../test-utils'),
   Subscription = require(root + 'database/subscription'),
   TorrentSiteManager = rewire(root + 'torrent-sites/torrentSiteManager'),
@@ -62,75 +65,73 @@ describe('FindSubscriptionUpdatesHandler', function () {
   describe('requests', function () {
     // prepare sample data
     var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(sub => new Subscription(sub)),
-      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, sampleSubscriptions),
+
+      unknownSubscriptionName = 'unknown show name',
+      subscriptionWithNoUpdates = sampleSubscriptions[0],
+      subscriptionWithUpdatesOfSameSeason = sampleSubscriptions[1],
+      subscriptionWithUpdatesOfNextSeason = sampleSubscriptions[2],
+      subscriptionWithUpdateOfSameAndNextSeasons = sampleSubscriptions[3],
 
       server,
       app,
 
-      subscriptionNameWithNoUpdates = sampleSubscriptions[0].name,
-      subscriptionNameWithUpdatesOfSameSeason = sampleSubscriptions[1].name,
-      subscriptionNameWithUpdatesOfNextSeason = sampleSubscriptions[2].name,
-      subscriptionNameWithUpdateOfSameAndNextSeasons = sampleSubscriptions[3].name,
-
+      uploadDate = new Date(),
       fakeParser = {
-        url: '',
+        url: 'URL',
         parseTorrentData: function (html, season, episode) {
-          return [{
-            name: html,
-            season: season,
-            episode: episode,
-            seeders: 12,
-            leechers: 23,
-            size: 34,
-            uploadDate: new Date(),
-            link: html + ' - ' + season + ' - ' + episode
-          }];
+          return html ? html.map(function (h) {
+            return {
+              name: h,
+              season: season,
+              episode: episode,
+              seeders: 12,
+              leechers: 23,
+              size: 34,
+              uploadDate: uploadDate.toString(),
+              link: h + ' - ' + season + ' - ' + episode
+            };
+          }) : [];
         }
       },
-      returnErrorUrl = 'return error',
-      throwErrorUrl  = 'throw error',
-      fakeExec = function (command, callback) {
-        var actualCommand = command.slice(0, 13),
-          url = command.slice(13);
-        console.log(actualCommand);
-        console.log(url);
 
-        if (actualCommand !== 'wget -nv -O- ') {
-          return callback('Unexpected invocation');
-        }
+      wgetBaseCommand = 'wget -nv -O-',
+      getWgetCommand = function (subscription, season, episode) {
+        return wgetBaseCommand + ' ' + encodeURI(fakeParser.url + subscription.name + ' ' +
+          utils.formatEpisodeNumber(season, episode) + ' ' + subscription.searchParameters);
+      },
 
-        if (url === returnErrorUrl) {
-          return callback('This is an error');
-        }
+      modifiedTorrentSiteManager,
+      findSubscriptionByNameStub,
+      torrentSiteManagerExecStub,
+      fakeUpdateSubscription = {
+        downloadTorrent: sinon.stub()
+      },
+      restoreUpdateSubscription,
+      restoreTorrentSiteManagerExec;
 
-        if (url === throwErrorUrl) {
-          throw new Error('Fake exec failed!');
-        }
+    before(function () {
+      findSubscriptionByNameStub = sinon.stub(Subscription, 'findSubscriptionByName');
 
-        return callback(null, url);
-      };
+      torrentSiteManagerExecStub = sinon.stub();
 
-    // injec fake exec
-    TorrentSiteManager.__set__('exec', fakeExec);
+      restoreTorrentSiteManagerExec = TorrentSiteManager.__set__('exec', torrentSiteManagerExecStub);
 
-    fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
+      modifiedTorrentSiteManager = new TorrentSiteManager(testUtils.getFakeLog());
+      modifiedTorrentSiteManager.allSites = [ fakeParser ];
+    });
 
     beforeEach(function (done) {
-      var torrentSiteManager;
+      var rewiredHandler;
 
       // reset stubs
-      fakeSubscription.findStub.reset();
-      fakeSubscription.skipStub.reset();
-      fakeSubscription.limitStub.reset();
-      fakeSubscription.findOneStub.reset();
+      findSubscriptionByNameStub.reset();
+      torrentSiteManagerExecStub.reset();
 
       // prepare app
       app = new App(config, testUtils.getFakeLog());
-
-      RewiredFindSubscriptionUpdatesHandler.__set__('Subscription', fakeSubscription.Subscription);
-      torrentSiteManager = new TorrentSiteManager(testUtils.getFakeLog());
-      torrentSiteManager.allSites = [fakeParser];
-      app.findSubscriptionUpdatesHandler = new RewiredFindSubscriptionUpdatesHandler(torrentSiteManager, testUtils.getFakeLog());
+      restoreUpdateSubscription = RewiredFindSubscriptionUpdatesHandler.__set__('UpdateSubscription', fakeUpdateSubscription);
+      rewiredHandler = new RewiredFindSubscriptionUpdatesHandler(modifiedTorrentSiteManager, testUtils.getFakeLog());
+      app.findSubscriptionUpdatesHandler = rewiredHandler;
 
       // start server
       app.listen(function () {
@@ -144,27 +145,149 @@ describe('FindSubscriptionUpdatesHandler', function () {
       app.close(done);
     });
 
+    after(function () {
+      findSubscriptionByNameStub.restore();
+      restoreTorrentSiteManagerExec();
+      restoreUpdateSubscription();
+    });
+
     describe('PUT /subscriptions/:subscriptionName/find', function () {
       it('should correctly handle unknown subscriptions', function (done) {
+        findSubscriptionByNameStub.withArgs(unknownSubscriptionName).returns(Q.fcall(() => null));
+
         server
-          .put('/subscriptions/asdf/find')
+          .put('/subscriptions/' + unknownSubscriptionName + '/find')
           .expect('Content-type', 'application/json')
           .expect(400)
           .end(function (err, res) {
             expect(err).to.not.exist;
             expect(res.result).to.not.exist;
             expect(res.body.code).to.equal('BadRequestError');
-            expect(res.body.message).to.equal('No subscription with name \'asdf\'.');
+            expect(res.body.message).to.equal("No subscription with name '" + unknownSubscriptionName + "'.");
             expect(res.body.data).to.not.exist;
+
+            expect(findSubscriptionByNameStub.calledOnce);
+            expect(findSubscriptionByNameStub.calledWith(unknownSubscriptionName));
+            expect(torrentSiteManagerExecStub.notCalled);
+
             done();
           });
       });
 
-      it('should successfully check for updates of a subscription that has no updates');
+      it('should successfully check for updates of a subscription that has no updates', function (done) {
+        var currentSeasonCommand = getWgetCommand(subscriptionWithNoUpdates, subscriptionWithNoUpdates.lastSeason, subscriptionWithNoUpdates.lastEpisode + 1),
+          nextSeasonCommand = getWgetCommand(subscriptionWithNoUpdates, subscriptionWithNoUpdates.lastSeason + 1, 1);
 
-      it('should successfully check for updates of a subscription that has updates of the same season');
+        // find subscription with the expected name should return the corresponding subscription
+        findSubscriptionByNameStub.withArgs(subscriptionWithNoUpdates.name).returns(Q.fcall(() => subscriptionWithNoUpdates));
 
-      it('should successfully check for updates of a subscription that has updates of the next season');
+        // neither current season nor next season should return any torrent
+        torrentSiteManagerExecStub.withArgs(currentSeasonCommand, sinon.match.func).callsArgWith(1, null, null);
+        torrentSiteManagerExecStub.withArgs(nextSeasonCommand, sinon.match.func).callsArgWith(1, null, null);
+
+        server
+          .put('/subscriptions/' + subscriptionWithNoUpdates.name + '/find')
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.result).to.not.exist;
+            expect(res.body.code).to.equal('Success');
+            expect(res.body.data).to.eql([]);
+            expect(res.body.message).to.equal('Found 0 new torrents');
+
+            expect(findSubscriptionByNameStub.calledOnce);
+            expect(findSubscriptionByNameStub.calledWith(subscriptionWithNoUpdates.name));
+
+            // we expect 2 calls: one for the same season update check and one for the new season update check
+            expect(torrentSiteManagerExecStub.calledTwice);
+
+            expect(fakeUpdateSubscription.downloadTorrent.notCalled);
+
+            done();
+          });
+      });
+
+      it('should successfully start torrents of updates that are found of the same season', function (done) {
+        var currentSeasonCommand1 = getWgetCommand(subscriptionWithUpdatesOfSameSeason, subscriptionWithUpdatesOfSameSeason.lastSeason, subscriptionWithUpdatesOfSameSeason.lastEpisode + 1),
+          currentSeasonCommand2 = getWgetCommand(subscriptionWithUpdatesOfSameSeason, subscriptionWithUpdatesOfSameSeason.lastSeason, subscriptionWithUpdatesOfSameSeason.lastEpisode + 2),
+          nextSeasonCommand = getWgetCommand(subscriptionWithUpdatesOfSameSeason, subscriptionWithUpdatesOfSameSeason.lastSeason + 1, 1),
+          dummyTorrentResult = ['asdf'];
+
+        // find subscription with the expected name should return the corresponding subscription
+        findSubscriptionByNameStub.withArgs(subscriptionWithUpdatesOfSameSeason.name).returns(Q.fcall(() => subscriptionWithUpdatesOfSameSeason));
+
+        // neither current season nor next season should return any torrent
+        torrentSiteManagerExecStub.withArgs(currentSeasonCommand1, sinon.match.func).callsArgWith(1, null, dummyTorrentResult);
+        torrentSiteManagerExecStub.withArgs(currentSeasonCommand2, sinon.match.func).callsArgWith(1, null, null);
+        torrentSiteManagerExecStub.withArgs(nextSeasonCommand, sinon.match.func).callsArgWith(1, null, null);
+
+        server
+          .put('/subscriptions/' + subscriptionWithUpdatesOfSameSeason.name + '/find?startDownload=true')
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            var torrentSeason = subscriptionWithUpdatesOfSameSeason.lastSeason,
+              torrentEpisode = subscriptionWithUpdatesOfSameSeason.lastEpisode + 1;
+
+            expect(err).to.not.exist;
+            expect(res.result).to.not.exist;
+            expect(res.body.code).to.equal('Success');
+            expect(res.body.data).to.eql(fakeParser.parseTorrentData(dummyTorrentResult, subscriptionWithUpdatesOfSameSeason.lastSeason, subscriptionWithUpdatesOfSameSeason.lastEpisode + 1));
+            expect(res.body.message).to.equal('Found and started download of 1 new torrents');
+
+            expect(findSubscriptionByNameStub.calledOnce);
+            expect(findSubscriptionByNameStub.calledWith(subscriptionWithUpdatesOfSameSeason.name));
+
+            // we expect 3 calls: two for the same season update check and one for the new season update check
+            expect(torrentSiteManagerExecStub.calledThrice);
+
+            expect(fakeUpdateSubscription.downloadTorrent.calledOnce);
+            expect(fakeUpdateSubscription.downloadTorrent.calledWith(subscriptionWithUpdatesOfSameSeason, torrentSeason, torrentEpisode, dummyTorrentResult[0] + ' - ' + torrentSeason + ' - ' + torrentEpisode, sinon.match.object));
+
+            done();
+          });
+      });
+
+      it('should successfully check for updates and select according to the request of a subscription that has updates of the next season', function (done) {
+        var currentSeasonCommand = getWgetCommand(subscriptionWithUpdatesOfNextSeason, subscriptionWithUpdatesOfNextSeason.lastSeason, subscriptionWithUpdatesOfNextSeason.lastEpisode + 1),
+          nextSeasonCommand1 = getWgetCommand(subscriptionWithUpdatesOfNextSeason, subscriptionWithUpdatesOfNextSeason.lastSeason + 1, 1),
+          nextSeasonCommand2 = getWgetCommand(subscriptionWithUpdatesOfNextSeason, subscriptionWithUpdatesOfNextSeason.lastSeason + 1, 2),
+          dummyTorrentResult = ['foo', 'bar'];
+
+        // find subscription with the expected name should return the corresponding subscription
+        findSubscriptionByNameStub.withArgs(subscriptionWithUpdatesOfNextSeason.name).returns(Q.fcall(() => subscriptionWithUpdatesOfNextSeason));
+
+        // neither current season nor next season should return any torrent
+        torrentSiteManagerExecStub.withArgs(currentSeasonCommand, sinon.match.func).callsArgWith(1, null, null);
+        torrentSiteManagerExecStub.withArgs(nextSeasonCommand1, sinon.match.func).callsArgWith(1, null, dummyTorrentResult);
+        torrentSiteManagerExecStub.withArgs(nextSeasonCommand2, sinon.match.func).callsArgWith(1, null, null);
+
+        server
+          .put('/subscriptions/' + subscriptionWithUpdatesOfNextSeason.name + '/find?torrentSort=newest&maxTorrentsPerEpisode=1')
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            // note that with the current fake torrent parser, it's not really possible to create torrents where it makes sense to sort
+            var expectedTorrent = fakeParser.parseTorrentData(dummyTorrentResult, subscriptionWithUpdatesOfNextSeason.lastSeason + 1, 1)[0];
+
+            expect(err).to.not.exist;
+            expect(res.result).to.not.exist;
+            expect(res.body.code).to.equal('Success');
+            expect(res.body.data).to.eql([expectedTorrent]);
+            expect(res.body.message).to.equal('Found 1 new torrents');
+
+            expect(findSubscriptionByNameStub.calledOnce);
+            expect(findSubscriptionByNameStub.calledWith(subscriptionWithUpdatesOfNextSeason.name));
+
+            // we expect 3 calls: two for the same season update check and one for the new season update check
+            expect(torrentSiteManagerExecStub.calledThrice);
+
+            expect(fakeUpdateSubscription.downloadTorrent.notCalled);
+
+            done();
+          });
+      });
 
       it('should successfully check for updates of a subscription that has updates of both same and next season');
     });
