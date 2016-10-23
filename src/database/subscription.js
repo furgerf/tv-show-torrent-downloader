@@ -21,7 +21,8 @@ var subscriptionSchema = new mongoose.Schema({
   lastModifiedTime: Date,
   lastDownloadTime: Date,
   lastUpdateCheckTime: Date,
-});
+}),
+  model;
 
 /**
  * Checks whether the database is currently connected.
@@ -285,7 +286,7 @@ subscriptionSchema.pre('save', function preSaveAction (next) {
 });
 
 // create and export model
-var model = mongoose.model('Subscription', subscriptionSchema);
+model = mongoose.model('Subscription', subscriptionSchema);
 module.exports = model;
 
 /* jshint +W040 */

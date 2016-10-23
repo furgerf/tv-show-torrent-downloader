@@ -6,7 +6,9 @@ var restify = require('restify'),
 
   config = require('./../../common/config'),
   utils = require('./../../common/utils'),
-  Subscription = require('./../../database/subscription');
+  Subscription = require('./../../database/subscription'),
+
+  UpdateSubscriptionHandler;
 
 /**
  * Determines whether the supplied `season` and `episode` refer to the same or next episode of the
@@ -62,37 +64,6 @@ function startTorrent(torrentLink, log) {
   });
 }
 
-/**
- * "Downloads" a torrent by starting the torrent download and updating the current season/episode
- * of the subscription.
- *
- * @param {Subscription} sub - Subscription to which the torrent belongs.
- * @param {Number} season - Season number of the torrent.
- * @param {Number} episode - Episode number of the torrent.
- * @param {String} link - Link to the torrent.
- * @param {Bunyan.Log} log - Optional. Logger instance. Doesn't generate output if not specified.
- *
- * @returns {Promise} Promise which resolves if downloading the torrent was successful and rejects
- *                    otherwise.
- */
-UpdateSubscriptionHandler.downloadTorrent = function downloadTorrent (sub, season, episode, link, log) {
-  return startTorrent(link, log)
-    .then(function () {
-      if (!config.productionEnvironment) {
-        return;
-      }
-
-      if (!sub.updateLastEpisode(season, episode)) {
-        log && log.error('Failed to update subscription %s to %s!', sub.name,
-          utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
-        throw new Error('Error while updating subscription: Could not update database.');
-      }
-
-      return sub.save()
-        .then(() => log && log.info('Successfully updated subscription %s to %s...',
-          sub.name, utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode)));
-    });
-}
 
 /**
  * Handles reqests to PUT /subscriptions/:subscriptionName/update.
@@ -131,7 +102,7 @@ function updateSubscriptionWithTorrent (req, res, next) {
       ));
     }
 
-    downloadTorrent(sub, season, episode, link, req.log)
+    UpdateSubscriptionHandler.downloadTorrent(sub, season, episode, link, req.log)
       .then(() => sub.updateLastDownloadTime())
       .then(function () {
         utils.sendOkResponse('Started torrent for new episode '
@@ -147,6 +118,40 @@ function updateSubscriptionWithTorrent (req, res, next) {
       });
   });
 }
+
+
+/**
+ * "Downloads" a torrent by starting the torrent download and updating the current season/episode
+ * of the subscription.
+ *
+ * @param {Subscription} sub - Subscription to which the torrent belongs.
+ * @param {Number} season - Season number of the torrent.
+ * @param {Number} episode - Episode number of the torrent.
+ * @param {String} link - Link to the torrent.
+ * @param {Bunyan.Log} log - Optional. Logger instance. Doesn't generate output if not specified.
+ *
+ * @returns {Promise} Promise which resolves if downloading the torrent was successful and rejects
+ *                    otherwise.
+ */
+UpdateSubscriptionHandler.downloadTorrent = function (sub, season, episode, link, log) {
+  return startTorrent(link, log)
+    .then(function () {
+      if (!config.productionEnvironment) {
+        return;
+      }
+
+      if (!sub.updateLastEpisode(season, episode)) {
+        log && log.error('Failed to update subscription %s to %s!', sub.name,
+          utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
+        throw new Error('Error while updating subscription: Could not update database.');
+      }
+
+      return sub.save()
+        .then(() => log && log.info('Successfully updated subscription %s to %s...',
+          sub.name, utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode)));
+    });
+};
+
 
 /**
  * Creates an instance of UpdateSubscriptionHandler.
