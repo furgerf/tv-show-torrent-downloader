@@ -163,11 +163,23 @@ describe('database/subscription', function () {
   });
 
   describe('updateLastUpdateCheckTime', function () {
-    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]),
+    var ensureConnectedStub, testee, saveStub;
+
+    before(function () {
+      ensureConnectedStub = sinon.stub(Subscription, 'ensureConnected');
+      testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
       saveStub = sinon.stub(testee, 'save');
+      ensureConnectedStub.returns(Q.promise((resolve, reject) => resolve()));
+    });
+
+    beforeEach(function () {
+      saveStub.reset();
+      ensureConnectedStub.reset();
+    });
 
     after(function () {
       saveStub.restore();
+      ensureConnectedStub.restore();
     });
 
     it('should successfully update the lastUpdateCheckTime', function (done) {
@@ -182,6 +194,7 @@ describe('database/subscription', function () {
         expect(afterUpdateTime - newLastUpdateCheckTime).to.be.below(20);
 
         expect(saveStub.calledOnce).to.be.true;
+        expect(ensureConnectedStub.calledOnce).to.be.true;
 
         done();
       });
@@ -189,11 +202,23 @@ describe('database/subscription', function () {
   });
 
   describe('updateLastDownloadTime', function () {
-    var testee = new Subscription(testUtils.getSampleSubscriptionData()[0]),
+    var ensureConnectedStub, testee, saveStub;
+
+    before(function () {
+      ensureConnectedStub = sinon.stub(Subscription, 'ensureConnected');
+      testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
       saveStub = sinon.stub(testee, 'save');
+      ensureConnectedStub.returns(Q.promise((resolve, reject) => resolve()));
+    });
+
+    beforeEach(function () {
+      saveStub.reset();
+      ensureConnectedStub.reset();
+    });
 
     after(function () {
       saveStub.restore();
+      ensureConnectedStub.restore();
     });
 
     it('should successfully update the lastDownloadTime', function (done) {
@@ -208,6 +233,7 @@ describe('database/subscription', function () {
         expect(afterUpdateTime - newLastDownloadTime).to.be.below(20);
 
         expect(saveStub.calledOnce).to.be.true;
+        expect(ensureConnectedStub.calledOnce).to.be.true;
 
         done();
       });
@@ -319,6 +345,7 @@ describe('database/subscription', function () {
     });
   });
 
+  /*
   describe('preSaveAction', function () {
     var nextStub = sinon.stub(),
       fakeSubscription = testUtils.getFakeStaticSubscription(Subscription).Subscription,
@@ -422,6 +449,7 @@ describe('database/subscription', function () {
       });
     });
   });
+  */
 
   describe('initialize', function () {
     var fakeLog = testUtils.getFakeLog();

@@ -5,9 +5,7 @@
 var mongoose = require('mongoose'),
   Q = require('q'),
 
-  utils = require('./../common/utils'),
-
-  initializedDatabaseInstance;
+  utils = require('./../common/utils');
 
 mongoose.Promise = Q.Promise;
 
@@ -112,7 +110,6 @@ subscriptionSchema.statics.initialize = function (log, databaseConfiguration) {
   }
 
   this.isInitialized = true;
-  initializedDatabaseInstance = this;
   this.log.info('Subscription initialized');
 };
 
@@ -169,7 +166,7 @@ subscriptionSchema.methods.getReturnable = function () {
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
-  return initializedDatabaseInstance.ensureConnected()
+  return model.ensureConnected()
     .then(() => {
       this.lastUpdateCheckTime = new Date();
       this.save();
@@ -181,7 +178,7 @@ subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastDownloadTime = function () {
-  return initializedDatabaseInstance.ensureConnected()
+  return model.ensureConnected()
     .then(() => {
       this.lastDownloadTime = new Date();
       this.save();
@@ -262,9 +259,8 @@ subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
  */
 subscriptionSchema.pre('save', function preSaveAction (next) {
   // remember `this` for access in the promise callback
-  // also, we have no database context so we fall back to the initialized database instance
   var that = this,
-    database = initializedDatabaseInstance;
+    database = model;
 
   return database.ensureConnected()
     .then(function () {
@@ -289,7 +285,8 @@ subscriptionSchema.pre('save', function preSaveAction (next) {
 });
 
 // create and export model
-module.exports = mongoose.model('Subscription', subscriptionSchema);
+var model = mongoose.model('Subscription', subscriptionSchema);
+module.exports = model;
 
 /* jshint +W040 */
 
