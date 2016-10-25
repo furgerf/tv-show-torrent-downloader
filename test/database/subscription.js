@@ -345,8 +345,69 @@ describe('database/subscription', function () {
     });
   });
 
-  describe('isNextOrSameEpisode', function () {
-    it('should be implemented');
+  describe('isSameOrNextEpisode', function () {
+    beforeEach(function () {
+      this.testee1 = new Subscription(
+        {
+          name: 'testee',
+          lastSeason: 2,
+          lastEpisode: 3
+        }
+      );
+      this.testee2 = new Subscription(
+        {
+          name: 'testee',
+          lastSeason: 5,
+          lastEpisode: 0
+        }
+      );
+      this.testee1.log = testUtils.getFakeLog();
+      this.testee2.log = testUtils.getFakeLog();
+    });
+
+    it('should reject wrong episodes', function () {
+      expect(this.testee1.isSameOrNextEpisode(2, -1)).to.be.false;
+      expect(this.testee1.isSameOrNextEpisode(2, 0)).to.be.false;
+      expect(this.testee1.isSameOrNextEpisode(2, 1)).to.be.false;
+      expect(this.testee1.isSameOrNextEpisode(2, 2)).to.be.false;
+      expect(this.testee1.isSameOrNextEpisode(2, 5)).to.be.false;
+
+      expect(this.testee2.isSameOrNextEpisode(5, -1)).to.be.false;
+      expect(this.testee2.isSameOrNextEpisode(5, 2)).to.be.false;
+      expect(this.testee2.isSameOrNextEpisode(5, 3)).to.be.false;
+    });
+
+    it('should reject wrong seasons', function () {
+      expect(this.testee1.isSameOrNextEpisode(1, 3)).to.be.false;
+      expect(this.testee1.isSameOrNextEpisode(1, 4)).to.be.false;
+      expect(this.testee1.isSameOrNextEpisode(3, 3)).to.be.false;
+      expect(this.testee1.isSameOrNextEpisode(3, 4)).to.be.false;
+
+      expect(this.testee2.isSameOrNextEpisode(4, 0)).to.be.false;
+      expect(this.testee2.isSameOrNextEpisode(4, 1)).to.be.false;
+      expect(this.testee2.isSameOrNextEpisode(7, 0)).to.be.false;
+      expect(this.testee2.isSameOrNextEpisode(7, 1)).to.be.false;
+    });
+
+    it('should accept the same episode', function () {
+      expect(this.testee1.isSameOrNextEpisode(2, 3)).to.be.true;
+
+      expect(this.testee2.isSameOrNextEpisode(5, 0)).to.be.true;
+    });
+
+    it('should accept the next episode', function () {
+      expect(this.testee1.isSameOrNextEpisode(2, 4)).to.be.true;
+
+      expect(this.testee2.isSameOrNextEpisode(5, 1)).to.be.true;
+    });
+
+    it('should accept the first episode of the next season', function () {
+      expect(this.testee1.isSameOrNextEpisode(3, 0)).to.be.true;
+      expect(this.testee1.isSameOrNextEpisode(3, 1)).to.be.true;
+
+      expect(this.testee2.isSameOrNextEpisode(6, 0)).to.be.true;
+      expect(this.testee2.isSameOrNextEpisode(6, 1)).to.be.true;
+    });
   });
 
   /*

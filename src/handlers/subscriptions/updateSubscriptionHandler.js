@@ -75,7 +75,7 @@ function updateSubscriptionWithTorrent (req, res, next) {
     req.log.info('Requesting to download %s, %s',
       subscriptionName, utils.formatEpisodeNumber(season, episode));
 
-    if (!sub.isNextOrSameEpisode(season, episode)) {
+    if (!sub.isSameOrNextEpisode(season, episode)) {
       return next(new restify.BadRequestError(
         'Episode %s of show %s cannot be downloaded when the current episode is %s',
         utils.formatEpisodeNumber(season, episode),

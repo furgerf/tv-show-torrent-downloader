@@ -256,20 +256,20 @@ subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
 
 /**
  * Determines whether the supplied `season` and `episode` refer to the same or next episode of the
- * subscription.
+ * subscription. The next episode of the subscription may be from the current or also from the next
+ * season.
  *
- * @param {Subscription} sub - Subscription against which to check.
  * @param {Number} season - Season number to check.
  * @param {Number} episode - Episode number to check.
  *
  * @returns {Boolean} True if the season/episode is the same or next episode of the subscription.
  */
-subscriptionSchema.methods.isNextOrSameEpisode = function (season, episode) {
+subscriptionSchema.methods.isSameOrNextEpisode = function (season, episode) {
   return (
     // same season and same or next episode
     (season === this.lastSeason &&
       (episode === this.lastEpisode || episode === this.lastEpisode + 1))
-    // *OR* first episode of next season
+      // *OR* first episode of next season
       || (season === this.lastSeason + 1 && (episode === 0 || episode === 1)));
 };
 
