@@ -11,24 +11,6 @@ var restify = require('restify'),
   UpdateSubscriptionHandler;
 
 /**
- * Determines whether the supplied `season` and `episode` refer to the same or next episode of the
- * subscription.
- *
- * @param {Subscription} sub - Subscription against which to check.
- * @param {Number} season - Season number to check.
- * @param {Number} episode - Episode number to check.
- *
- * @returns {Boolean} True if the season/episode is the same or next episode of the subscription.
- */
-function isNextOrSameEpisode(sub, season, episode) {
-  return (
-    // same season and same or next episode
-    (season === sub.lastSeason && (episode === sub.lastEpisode || episode === sub.lastEpisode + 1))
-    // *OR* first episode of next season
-      || (season === sub.lastSeason + 1 && (episode === 0 || episode === 1)));
-}
-
-/**
  * Starts the torrent with the supplied `torrentLink` and the configured torrent command.
  *
  * @param {String} torrentLink - Link of the torrent.
@@ -93,7 +75,7 @@ function updateSubscriptionWithTorrent (req, res, next) {
     req.log.info('Requesting to download %s, %s',
       subscriptionName, utils.formatEpisodeNumber(season, episode));
 
-    if (!isNextOrSameEpisode(sub, season, episode)) {
+    if (!sub.isNextOrSameEpisode(season, episode)) {
       return next(new restify.BadRequestError(
         'Episode %s of show %s cannot be downloaded when the current episode is %s',
         utils.formatEpisodeNumber(season, episode),

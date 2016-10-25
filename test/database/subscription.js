@@ -345,6 +345,10 @@ describe('database/subscription', function () {
     });
   });
 
+  describe('isNextOrSameEpisode', function () {
+    it('should be implemented');
+  });
+
   /*
   describe('preSaveAction', function () {
     var nextStub = sinon.stub(),
