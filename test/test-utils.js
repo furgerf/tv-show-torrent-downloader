@@ -1,7 +1,9 @@
 'use strict';
 
 var Q = require('q'),
-  sinon = require('sinon');
+  sinon = require('sinon'),
+
+  Subscription = require('../src/database/subscription');
 
 /**
  * Creates an instance of FakeLog, mimicking the functions of Bunyan.Log.
@@ -104,4 +106,23 @@ var sampleSubscriptionData = [
 exports.getSampleSubscriptionData = function () { return sampleSubscriptionData.slice(0); };
 
 exports.nonexistentSubscriptionName = 'nonexistent subscription';
+
+
+/**
+ * Extracts the Subscription's pre-save action.
+ *
+ * @returns {function} Extracted pre-save action.
+ */
+exports.extractSubscriptionPreSaveAction = function () {
+  // warning, that might not work at some point in the future...
+  // the pre-save action is in the callQueue - each queue item is an array wity two elements
+  // the first seems to be the step in the event when the action should be triggered
+  // the second seems to be the event handler
+  // the event handler we're looking for has the property '0' === 'save'
+  // and property '1' which is a function - the built-in handlers have a boolean at '1' and the
+  // handler function at '2'
+  return Subscription.model.schema.callQueue.filter(function (call) {
+    return call[0] === 'pre' && call[1]['0'] === 'save' && typeof call[1]['1'] === 'function';
+  })[0][1][1];
+};
 
