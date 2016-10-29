@@ -312,11 +312,11 @@ exports.createNew = function (data) {
   return new Subscription(data);
 };
 
-exports.initialize = subscriptionSchema.statics.initialize;
+exports.initialize = subscriptionSchema.statics.initialize.bind(Subscription);
 
-exports.findSubscriptionByName = subscriptionSchema.statics.findSubscriptionByName;
+exports.findSubscriptionByName = subscriptionSchema.statics.findSubscriptionByName.bind(Subscription);
 
-exports.findAllSubscriptions = subscriptionSchema.statics.findAllSubscriptions;
+exports.findAllSubscriptions = subscriptionSchema.statics.findAllSubscriptions.bind(Subscription);
 
 /* jshint +W040 */
 
