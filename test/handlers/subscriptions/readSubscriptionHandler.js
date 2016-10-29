@@ -4,7 +4,9 @@ const root = './../../../src/';
 
 var expect = require('chai').expect,
   supertest = require('supertest'),
+  sinon = require('sinon'),
   rewire = require('rewire'),
+  Q = require('q'),
 
   App = require(root + 'app'),
   config = require(root + 'common/config').getDebugConfig(),
@@ -18,23 +20,40 @@ describe('ReadSubscriptionHandler', function () {
   describe('requests', function () {
     // prepare sample data
     var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(Subscription.createNew),
-      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model, sampleSubscriptions),
+      findAllSubscriptionsStub,
+      findSubscriptionByNameStub,
+      fakeSubscription,
+
       server,
       app;
 
-    fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
+    before(function () {
+      findAllSubscriptionsStub = sinon.stub();
+      findAllSubscriptionsStub.returns(Q.fcall(() => sampleSubscriptions));
+
+      // creating the FSBN stub is more tricky because the return value depends on the argument
+      findSubscriptionByNameStub = sinon.stub(
+        {foo: () => null},
+        'foo',
+        name => Q.fcall(() => sampleSubscriptions.find(sub => sub.name === name)));
+
+     fakeSubscription = {
+        findAllSubscriptions: findAllSubscriptionsStub,
+        findSubscriptionByName: findSubscriptionByNameStub
+      };
+    });
 
     beforeEach(function (done) {
       // reset stubs
-      fakeSubscription.findStub.reset();
-      fakeSubscription.skipStub.reset();
-      fakeSubscription.limitStub.reset();
-      fakeSubscription.findOneStub.reset();
+      findAllSubscriptionsStub.reset();
+      findSubscriptionByNameStub.reset();
 
       // prepare app
       app = new App(config, testUtils.getFakeLog());
 
-      RewiredReadSubscriptionHandler.__set__('Subscription', fakeSubscription.Subscription);
+      // inject fake subscription - no need to restore afterwards
+      // TODO: CHECK IF THAT REALLY IS TRUE
+      RewiredReadSubscriptionHandler.__set__('Subscription', fakeSubscription);
       app.readSubscriptionHandler = new RewiredReadSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
@@ -101,15 +120,39 @@ describe('ReadSubscriptionHandler', function () {
                 lastDownloadTime : '2015-12-20T18:12:34.667Z'
               }
             ]);
+
+            expect(findAllSubscriptionsStub.calledOnce).to.be.true;
+            expect(findSubscriptionByNameStub.notCalled).to.be.true;
+
             done();
           });
       });
     });
 
     describe('GET /subscriptions/:subscriptionName', function () {
+      it('should correctly handle unknown subscriptions', function (done) {
+        server
+          .get('/subscriptions/' + testUtils.nonexistentSubscriptionName)
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.result).to.not.exist;
+            expect(res.body.code).to.equal('BadRequestError');
+            expect(res.body.message).to.equal("No subscription with name '" + testUtils.nonexistentSubscriptionName + "'.");
+            expect(res.body.data).to.not.exist;
+
+            expect(findAllSubscriptionsStub.notCalled).to.be.true;
+            expect(findSubscriptionByNameStub.calledOnce).to.be.true;
+            expect(findSubscriptionByNameStub.calledWith(testUtils.nonexistentSubscriptionName)).to.be.true;
+
+            done();
+          });
+      });
+
       it('should correctly return sample subscriptions', function (done) {
         server
-          .get('/subscriptions/foo')
+          .get('/subscriptions/' + sampleSubscriptions[0].name)
           .expect('Content-type', 'application/json')
           .expect(200)
           .end(function (err, res) {
@@ -128,13 +171,18 @@ describe('ReadSubscriptionHandler', function () {
                 lastUpdateCheckTime : '2016-09-18T14:00:15.398Z'
               }
             );
+
+            expect(findAllSubscriptionsStub.notCalled).to.be.true;
+            expect(findSubscriptionByNameStub.calledOnce).to.be.true;
+            expect(findSubscriptionByNameStub.calledWith(sampleSubscriptions[0].name)).to.be.true;
+
             done();
           });
       });
 
       it('should correctly return sample subscriptions', function (done) {
         server
-          .get('/subscriptions/bar')
+          .get('/subscriptions/' + sampleSubscriptions[1].name)
           .expect('Content-type', 'application/json')
           .expect(200)
           .end(function (err, res) {
@@ -153,46 +201,11 @@ describe('ReadSubscriptionHandler', function () {
                 lastDownloadTime : '2012-12-21T00:00:00.000Z'
               }
             );
-            done();
-          });
-      });
 
-      it('should correctly return sample subscriptions', function (done) {
-        server
-          .get('/subscriptions/foobar')
-          .expect('Content-type', 'application/json')
-          .expect(200)
-          .end(function (err, res) {
-            expect(err).to.not.exist;
-            expect(res.result).to.not.exist;
-            expect(res.body.code).to.equal('Success');
-            expect(res.body.data).to.eql(
-              {
-                name : 'foobar',
-                searchParameters : '1080p',
-                lastSeason : 2,
-                lastEpisode : 10,
-                creationTime : '2015-12-20T18:12:16.100Z',
-                lastModifiedTime : '2016-09-26T14:00:06.296Z',
-                lastUpdateCheckTime : '2016-09-26T14:00:06.290Z',
-                lastDownloadTime : '2015-12-14T00:00:00.000Z'
-              }
-            );
-            done();
-          });
-      });
+            expect(findAllSubscriptionsStub.notCalled).to.be.true;
+            expect(findSubscriptionByNameStub.calledOnce).to.be.true;
+            expect(findSubscriptionByNameStub.calledWith(sampleSubscriptions[1].name)).to.be.true;
 
-      it('should correctly handle unknown subscriptions', function (done) {
-        server
-          .get('/subscriptions/asdf')
-          .expect('Content-type', 'application/json')
-          .expect(400)
-          .end(function (err, res) {
-            expect(err).to.not.exist;
-            expect(res.result).to.not.exist;
-            expect(res.body.code).to.equal('BadRequestError');
-            expect(res.body.message).to.equal('No subscription with name \'asdf\'.');
-            expect(res.body.data).to.not.exist;
             done();
           });
       });

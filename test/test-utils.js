@@ -135,3 +135,5 @@ var sampleSubscriptionData = [
 ];
 exports.getSampleSubscriptionData = function () { return sampleSubscriptionData.slice(0); };
 
+exports.nonexistentSubscriptionName = 'nonexistent subscription';
+
