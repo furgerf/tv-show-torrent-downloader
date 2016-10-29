@@ -17,8 +17,8 @@ config.api.port = 0;
 describe('ReadSubscriptionHandler', function () {
   describe('requests', function () {
     // prepare sample data
-    var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(sub => new Subscription(sub)),
-      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, sampleSubscriptions),
+    var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(Subscription.createNew),
+      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model, sampleSubscriptions),
       server,
       app;
 

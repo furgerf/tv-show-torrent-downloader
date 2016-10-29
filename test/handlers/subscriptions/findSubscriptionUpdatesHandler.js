@@ -64,7 +64,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
 
   describe('requests', function () {
     // prepare sample data
-    var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(sub => new Subscription(sub)),
+    var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(sub => Subscription.createNew(sub)),
 
       unknownSubscriptionName = 'unknown show name',
       subscriptionWithNoUpdates = sampleSubscriptions[0],

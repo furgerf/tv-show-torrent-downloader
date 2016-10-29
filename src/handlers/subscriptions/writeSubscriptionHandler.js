@@ -30,7 +30,7 @@ function createNewSubscriptionFromData (data) {
     lastEpisode: data.lastEpisode || 0
   };
 
-  return new Subscription(newSubscriptionData);
+  return Subscription.createNew(newSubscriptionData);
 }
 
 /**
@@ -44,7 +44,7 @@ function addSubscription (req, res, next) {
   }
 
   // TODO: Return 201 instead of 200
-  Q.fcall(createNewSubscriptionFromData(body).save)
+  createNewSubscriptionFromData(body).save()
     .then(doc => utils.sendOkResponse('New subscription created', doc.getReturnable(),
           res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>

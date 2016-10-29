@@ -21,7 +21,7 @@ describe('database/subscription', function () {
         {name: 123, lastModifiedTime: 'asdf'},
         {name: 123, lastDownloadTime: 'asdf'},
         {name: 123, lastUpdateCheckTime: 'asdf'}
-      ].map(subscriptionData => new Subscription(subscriptionData).validate()))
+      ].map(subscriptionData => Subscription.createNew(subscriptionData).validate()))
         .then(function (result) {
           result.forEach(function (promise) {
             expect(promise.state).to.equal('rejected');
@@ -40,7 +40,7 @@ describe('database/subscription', function () {
         {name: 123, lastModifiedTime: '123'},
         {name: 123, lastDownloadTime: 4569780988973},
         {name: 123, lastUpdateCheckTime: '4569780988973'},
-      ].map(subscriptionData => new Subscription(subscriptionData));
+      ].map(subscriptionData => Subscription.createNew(subscriptionData));
 
       // check the types
       subscriptions.forEach(function (subscription) {
@@ -80,7 +80,7 @@ describe('database/subscription', function () {
 
   describe('ensureConnected', function () {
     var fakeLog = testUtils.getFakeLog(),
-      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription).Subscription;
+      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model).Subscription;
 
     it('should raise an error if called when not initialized', function (done) {
       fakeSubscription.ensureConnected()
@@ -118,7 +118,7 @@ describe('database/subscription', function () {
             lastDownloadTime: now,
             lastUpdateCheckTime: now
           }
-        ].map(data => new Subscription(data)),
+        ].map(data => Subscription.createNew(data)),
         returnables = [
           {
             name: 'foo',
@@ -166,8 +166,8 @@ describe('database/subscription', function () {
     var ensureConnectedStub, testee, saveStub;
 
     before(function () {
-      ensureConnectedStub = sinon.stub(Subscription, 'ensureConnected');
-      testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
+      ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
+      testee = Subscription.createNew(testUtils.getSampleSubscriptionData()[0]);
       saveStub = sinon.stub(testee, 'save');
       ensureConnectedStub.returns(Q.promise((resolve, reject) => resolve()));
     });
@@ -205,8 +205,8 @@ describe('database/subscription', function () {
     var ensureConnectedStub, testee, saveStub;
 
     before(function () {
-      ensureConnectedStub = sinon.stub(Subscription, 'ensureConnected');
-      testee = new Subscription(testUtils.getSampleSubscriptionData()[0]);
+      ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
+      testee = Subscription.createNew(testUtils.getSampleSubscriptionData()[0]);
       saveStub = sinon.stub(testee, 'save');
       ensureConnectedStub.returns(Q.promise((resolve, reject) => resolve()));
     });
@@ -242,7 +242,7 @@ describe('database/subscription', function () {
 
   describe('isValidUpdateToNewSeason', function () {
     beforeEach(function () {
-      this.testee = new Subscription(
+      this.testee = Subscription.createNew(
         {
           name: 'testee',
           lastSeason: 2,
@@ -268,7 +268,7 @@ describe('database/subscription', function () {
 
   describe('isValidUpdateInSameSeason', function () {
     beforeEach(function () {
-      this.testee = new Subscription(
+      this.testee = Subscription.createNew(
         {
           name: 'testee',
           lastSeason: 2,
@@ -293,7 +293,7 @@ describe('database/subscription', function () {
 
   describe('updateLastEpisode', function () {
     beforeEach(function () {
-      this.testee = new Subscription(
+      this.testee = Subscription.createNew(
         {
           name: 'testee',
           lastSeason: 2,
@@ -347,14 +347,14 @@ describe('database/subscription', function () {
 
   describe('isSameOrNextEpisode', function () {
     beforeEach(function () {
-      this.testee1 = new Subscription(
+      this.testee1 = Subscription.createNew(
         {
           name: 'testee',
           lastSeason: 2,
           lastEpisode: 3
         }
       );
-      this.testee2 = new Subscription(
+      this.testee2 = Subscription.createNew(
         {
           name: 'testee',
           lastSeason: 5,
@@ -520,7 +520,7 @@ describe('database/subscription', function () {
     var fakeLog = testUtils.getFakeLog();
 
     beforeEach(function () {
-      this.testee = testUtils.getFakeStaticSubscription(Subscription).Subscription;
+      this.testee = testUtils.getFakeStaticSubscription(Subscription.model).Subscription;
     });
 
     it('should throw an error when initialized without a log', function () {
@@ -572,7 +572,7 @@ describe('database/subscription', function () {
   });
 
   describe('findSubscriptionByName', function () {
-    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription);
+    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model);
     fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
 
     beforeEach(function () {
@@ -609,7 +609,7 @@ describe('database/subscription', function () {
 
   describe('findAllSubscriptions', function () {
     // the fakeSubscription needs "any" subscriptions so the limit/skip stubs get all set up
-    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription, []);
+    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model, []);
     fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
 
     beforeEach(function () {

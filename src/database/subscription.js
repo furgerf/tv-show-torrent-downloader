@@ -22,7 +22,7 @@ var subscriptionSchema = new mongoose.Schema({
   lastDownloadTime: Date,
   lastUpdateCheckTime: Date,
 }),
-  model;
+  Subscription;
 
 /**
  * Checks whether the database is currently connected.
@@ -167,7 +167,7 @@ subscriptionSchema.methods.getReturnable = function () {
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
-  return model.ensureConnected()
+  return Subscription.ensureConnected()
     .then(() => {
       this.lastUpdateCheckTime = new Date();
       this.save();
@@ -179,7 +179,7 @@ subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
  * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastDownloadTime = function () {
-  return model.ensureConnected()
+  return Subscription.ensureConnected()
     .then(() => {
       this.lastDownloadTime = new Date();
       this.save();
@@ -279,12 +279,11 @@ subscriptionSchema.methods.isSameOrNextEpisode = function (season, episode) {
  */
 subscriptionSchema.pre('save', function preSaveAction (next) {
   // remember `this` for access in the promise callback
-  var that = this,
-    database = model;
+  var that = this;
 
-  return database.ensureConnected()
+  return Subscription.ensureConnected()
     .then(function () {
-      database.log.debug('Running pre-save action for subscription "%s"', that.name);
+      Subscription.log.debug('Running pre-save action for subscription "%s"', that.name);
 
       var currentDate = new Date();
       that.lastModifiedTime = currentDate;
@@ -299,14 +298,23 @@ subscriptionSchema.pre('save', function preSaveAction (next) {
       that.lastSeason = that.lastSeason || 1;
       that.lastEpisode = that.lastEpisode || 0;
 
-      database.log.info('done with pre-save');
+      Subscription.log.info('done with pre-save');
     })
     .then(next);
 });
 
-// create and export model
-model = mongoose.model('Subscription', subscriptionSchema);
-module.exports = model;
+// create model
+Subscription = mongoose.model('Subscription', subscriptionSchema);
+
+exports.model = Subscription;
+
+exports.createNew = function (data) {
+  return new Subscription(data);
+};
+
+exports.findSubscriptionByName = subscriptionSchema.statics.findSubscriptionByName;
+
+exports.findAllSubscriptions = subscriptionSchema.statics.findAllSubscriptions
 
 /* jshint +W040 */
 

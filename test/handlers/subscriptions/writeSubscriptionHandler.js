@@ -4,6 +4,8 @@ const root = './../../../src/';
 
 var expect = require('chai').expect,
   supertest = require('supertest'),
+  sinon = require('sinon'),
+  Q = require('q'),
   rewire = require('rewire'),
 
   testUtils = require('../../test-utils'),
@@ -35,8 +37,8 @@ describe('WriteSubscriptionHandler', function () {
     };
 
     // create two subscriptions with the same data - including the _id!
-    testSubscription = new Subscription(subscriptionData);
-    originalTestSubscription = new Subscription(subscriptionData);
+    testSubscription = Subscription.createNew(subscriptionData);
+    originalTestSubscription = Subscription.createNew(subscriptionData);
     originalTestSubscription._id = testSubscription._id;
 
     it('should return the original subscription if the data is not valid', function () {
@@ -141,14 +143,28 @@ describe('WriteSubscriptionHandler', function () {
   });
 
   describe('requests', function () {
-    var server,
+    var createSubscriptionStub,
+      saveStub = sinon.stub(),
+
+      server,
       app;
+
+    before(function () {
+      saveStub.returns(Q.fcall(() => this));
+    });
 
     beforeEach(function (done) {
       app = new App(config, testUtils.getFakeLog());
 
-      RewiredWriteSubscriptionHandler.__set__('Subscription', Subscription);
+      createSubscriptionStub = sinon.stub(Subscription, 'createNew', function (data) {
+        data.save = function () {
+          return Q.fcall(() => this);
+        };
 
+        data.getReturnable = d => d;
+        return data;
+      });
+      RewiredWriteSubscriptionHandler.__set__('Subscription', Subscription);
       app.writeSubscriptionHandler = new RewiredWriteSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
@@ -158,26 +174,46 @@ describe('WriteSubscriptionHandler', function () {
         done();
       });
     });
+
     afterEach(function (done) {
       app.close(done);
     });
 
+    after(function () {
+      createSubscriptionStub.restore();
+    });
+
     describe('POST /subscriptions', function () {
-      it('should return an error if no subscription name is provided', function (done) {
+    //   it('should return an error if no subscription name is provided', function (done) {
+    //     server
+    //       .post('/subscriptions')
+    //       .expect('Content-type', 'application/json')
+    //       .expect(400)
+    //       .end(function (err, res) {
+    //         expect(err).to.not.exist;
+    //         expect(res.error).to.exist;
+    //         expect(res.body.code).to.eql('BadRequestError');
+    //         expect(res.body.message).to.eql('Provide the name of the tv show to subscribe to.');
+    //         done();
+    //       });
+    //   });
+
+      it('should create a new subscription without any data', function (done) {
+        var newSubscriptionName = 'foo';
         server
           .post('/subscriptions')
+          .field('name', newSubscriptionName)
           .expect('Content-type', 'application/json')
-          .expect(400)
+          //.expect(200)
           .end(function (err, res) {
+            console.log(res.body);
             expect(err).to.not.exist;
             expect(res.error).to.exist;
-            expect(res.body.code).to.eql('BadRequestError');
-            expect(res.body.message).to.eql('Provide the name of the tv show to subscribe to.');
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql('New subscription created');
             done();
           });
       });
-
-      it('should create a new subscription without any data');
 
       it('should create a new subscription with initial data');
     });
