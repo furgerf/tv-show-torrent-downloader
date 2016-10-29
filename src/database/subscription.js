@@ -312,6 +312,8 @@ exports.createNew = function (data) {
   return new Subscription(data);
 };
 
+exports.initialize = subscriptionSchema.statics.initialize;
+
 exports.findSubscriptionByName = subscriptionSchema.statics.findSubscriptionByName;
 
 exports.findAllSubscriptions = subscriptionSchema.statics.findAllSubscriptions;
