@@ -1,7 +1,6 @@
 'use strict';
 
 var restify = require('restify'),
-  Q = require('q'),
 
   utils = require('./../../common/utils'),
 
@@ -57,6 +56,7 @@ function addSubscription (req, res, next) {
 function updateSubscription (req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     subscriptionName = decodeURIComponent(req.params[0]),
+    // jshint validthis: true
     that = this;
 
   body.name = body.name || subscriptionName;

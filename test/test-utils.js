@@ -1,6 +1,7 @@
 'use strict';
 
-var sinon = require('sinon');
+var Q = require('q'),
+  sinon = require('sinon');
 
 /**
  * Creates an instance of FakeLog, mimicking the functions of Bunyan.Log.
@@ -23,6 +24,31 @@ function FakeLog() {
  * @returns {Object} Fake log.
  */
 exports.getFakeLog = function () { return new FakeLog(); };
+
+
+/**
+ * Retrieves an empty Q promise that resolves to the provided value.
+ *
+ * @param {Any} result - Value to resolve to.
+ *
+ * @returns {Promise} Resolving promise.
+ */
+exports.getResolvingPromise = function (result) {
+  // jshint unused: false
+  return Q.promise((resolve, reject) => resolve(result));
+};
+
+/**
+ * Retrieves an empty Q promise that rejects with the provided error.
+ *
+ * @param {Any} err - Error to reject with.
+ *
+ * @returns {Promise} Rejecting promise.
+ */
+exports.getRejectingPromise = function (err) {
+  // jshint unused: false
+  return Q.promise((resolve, reject) => reject(err));
+};
 
 
 var sampleSubscriptionData = [

@@ -178,7 +178,7 @@ describe('database/subscription', function () {
       ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
       testee = Subscription.createNew(testUtils.getSampleSubscriptionData()[0]);
       saveStub = sinon.stub(testee, 'save');
-      ensureConnectedStub.returns(Q.promise((resolve, reject) => resolve()));
+      ensureConnectedStub.returns(testUtils.getResolvingPromise());
     });
 
     beforeEach(function () {
@@ -217,7 +217,7 @@ describe('database/subscription', function () {
       ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
       testee = Subscription.createNew(testUtils.getSampleSubscriptionData()[0]);
       saveStub = sinon.stub(testee, 'save');
-      ensureConnectedStub.returns(Q.promise((resolve, reject) => resolve()));
+      ensureConnectedStub.returns(testUtils.getResolvingPromise());
     });
 
     beforeEach(function () {
@@ -474,7 +474,7 @@ describe('database/subscription', function () {
 
       // stub the real Subscription's ensureConnected
       ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
-      ensureConnectedStub.returns(Q.fcall(() => null));
+      ensureConnectedStub.returns(testUtils.getResolvingPromise());
 
       // replace real log
       realSubscriptionLog = Subscription.model.log;
@@ -616,7 +616,7 @@ describe('database/subscription', function () {
     beforeEach(function () {
       findOneStub = sinon.stub(),
       fakeSubscription = {
-        ensureConnected: () => Q.fcall(() => null), // using a spy here seems overkill...
+        ensureConnected: () => testUtils.getResolvingPromise(),
         findSubscriptionByName: Subscription.model.findSubscriptionByName,
         findOne: findOneStub
       };
@@ -668,10 +668,10 @@ describe('database/subscription', function () {
       skipStub.returns({limit: limitStub});
 
       fakeSubscription = {
-        ensureConnected: () => Q.fcall(() => null), // using a spy here seems overkill...
+        ensureConnected: () => testUtils.getResolvingPromise(),
         findAllSubscriptions: Subscription.model.findAllSubscriptions,
         find: findStub
-      }
+      };
     });
 
     it('should make the expected database call when invoked without arguments', function () {

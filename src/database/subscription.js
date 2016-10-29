@@ -314,7 +314,7 @@ exports.createNew = function (data) {
 
 exports.findSubscriptionByName = subscriptionSchema.statics.findSubscriptionByName;
 
-exports.findAllSubscriptions = subscriptionSchema.statics.findAllSubscriptions
+exports.findAllSubscriptions = subscriptionSchema.statics.findAllSubscriptions;
 
 /* jshint +W040 */
 

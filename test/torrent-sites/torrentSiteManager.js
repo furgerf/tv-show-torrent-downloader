@@ -5,7 +5,6 @@ const root = './../../src/';
 var expect = require('chai').expect,
   rewire = require('rewire'),
   sinon = require('sinon'),
-  Q = require('q'),
 
   testUtils = require('../test-utils'),
   TorrentSiteManager = rewire(root + 'torrent-sites/torrentSiteManager');
@@ -205,7 +204,7 @@ describe('torrent-sites/torrentSiteManager', function () {
       testee.allSites = ['foo'];
 
       // ... and that site should fail
-      tryTorrentSiteStub.returns(Q.promise((resolve, reject) => reject()));
+      tryTorrentSiteStub.returns(testUtils.getRejectingPromise());
 
       testee.findTorrents(searchString, seasonToCheck, episodeToCheck, torrentSort, maxTorrentsPerEpisode)
       .fail(function (err) {
@@ -223,7 +222,7 @@ describe('torrent-sites/torrentSiteManager', function () {
       testee.allSites = ['foo', 'bar'];
 
       // ... and those sites should fail
-      tryTorrentSiteStub.returns(Q.promise((resolve, reject) => reject()));
+      tryTorrentSiteStub.returns(testUtils.getRejectingPromise());
 
       testee.findTorrents(searchString, seasonToCheck, episodeToCheck, torrentSort, maxTorrentsPerEpisode)
       .fail(function (err) {
@@ -244,7 +243,7 @@ describe('torrent-sites/torrentSiteManager', function () {
       testee.allSites = ['foo'];
 
       // ... and that site should return a fake torrent
-      tryTorrentSiteStub.returns(Q.promise((resolve, reject) => resolve(fakeTorrent)));
+      tryTorrentSiteStub.returns(testUtils.getResolvingPromise(fakeTorrent));
 
       testee.findTorrents(searchString, seasonToCheck, episodeToCheck, torrentSort, maxTorrentsPerEpisode)
       .then(function (torrents) {
@@ -264,8 +263,8 @@ describe('torrent-sites/torrentSiteManager', function () {
       testee.allSites = ['foo', 'bar'];
 
       // ... and the first site should fail but the second should return a fake torrent
-      tryTorrentSiteStub.withArgs(testee.allSites[0]).returns(Q.promise((resolve, reject) => reject()));
-      tryTorrentSiteStub.withArgs(testee.allSites[1]).returns(Q.promise((resolve, reject) => resolve(fakeTorrent)));
+      tryTorrentSiteStub.withArgs(testee.allSites[0]).returns(testUtils.getRejectingPromise());
+      tryTorrentSiteStub.withArgs(testee.allSites[1]).returns(testUtils.getResolvingPromise(fakeTorrent));
 
       testee.findTorrents(searchString, seasonToCheck, episodeToCheck, torrentSort, maxTorrentsPerEpisode)
       .then(function (torrents) {
