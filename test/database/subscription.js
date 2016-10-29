@@ -79,8 +79,15 @@ describe('database/subscription', function () {
   });
 
   describe('ensureConnected', function () {
-    var fakeLog = testUtils.getFakeLog(),
-      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model).Subscription;
+    var fakeSubscription;
+
+    beforeEach(function () {
+      fakeSubscription = {
+        ensureConnected: Subscription.model.ensureConnected,
+        isInitialized: false,
+        useDatabase: false
+      };
+    });
 
     it('should raise an error if called when not initialized', function (done) {
       fakeSubscription.ensureConnected()
@@ -91,13 +98,15 @@ describe('database/subscription', function () {
     });
 
     it('should not do anything when initialized to not use a real database', function (done) {
-      fakeSubscription.initialize(testUtils.getFakeLog());
+      fakeSubscription.isInitialized = true;
 
       fakeSubscription.ensureConnected()
       .then(function () {
         done();
       });
     });
+
+    it('should not do anything when initialized to use a real and already connected database');
 
     it('should try to establish a database connection when initialized to use a real database');
   });
@@ -410,49 +419,75 @@ describe('database/subscription', function () {
     });
   });
 
-  /*
   describe('preSaveAction', function () {
     var nextStub = sinon.stub(),
-      fakeSubscription = testUtils.getFakeStaticSubscription(Subscription).Subscription,
       now = new Date(),
       newSubscriptionData = {
         name: 'asdf'
       },
       existingSubscriptionData = {
-            name: 'foobar',
-            searchParameters: 'bar',
-            lastSeason: 12,
-            lastEpisode: 34,
-            creationTime: now,
-            lastModifiedTime: now,
-            lastDownloadTime: now,
-            lastUpdateCheckTime: now
+        name: 'foobar',
+        searchParameters: 'bar',
+        lastSeason: 12,
+        lastEpisode: 34,
+        creationTime: now,
+        lastModifiedTime: now,
+        lastDownloadTime: now,
+        lastUpdateCheckTime: now
       },
-      newSubscription = new Subscription(newSubscriptionData),
-      existingSubscription = new Subscription(existingSubscriptionData),
-      extractedPreSaveAction;
+      newSubscription,
+      existingSubscription,
+      extractedPreSaveAction,
 
-    // initialize database
-    fakeSubscription.initialize(testUtils.getFakeLog());
+      ensureConnectedStub,
+      realSubscriptionLog;
 
-    // extract pre-save action - warning, that might not work at some point in the future...
-    // the pre-save action is in the callQueue - each queue item is an array wity two elements
-    // the first seems to be the step in the event when the action should be triggered
-    // the second seems to be the event handler
-    // the event handler we're looking for has the property '0' === 'save'
-    // and property '1' which is a function - the built-in handlers have a boolean at '1' and the
-    // handler function at '2'
-    extractedPreSaveAction = Subscription.schema.callQueue.filter(function (call) {
-      return call[0] === 'pre' && call[1]['0'] === 'save' && typeof call[1]['1'] === 'function';
-    })[0][1][1];
+    before(function () {
+      // extract pre-save action - warning, that might not work at some point in the future...
+      // the pre-save action is in the callQueue - each queue item is an array wity two elements
+      // the first seems to be the step in the event when the action should be triggered
+      // the second seems to be the event handler
+      // the event handler we're looking for has the property '0' === 'save'
+      // and property '1' which is a function - the built-in handlers have a boolean at '1' and the
+      // handler function at '2'
+      extractedPreSaveAction = Subscription.model.schema.callQueue.filter(function (call) {
+        return call[0] === 'pre' && call[1]['0'] === 'save' && typeof call[1]['1'] === 'function';
+      })[0][1][1];
 
-    // the pre-save action must be bound to a Subscription object but normal 'bind()' doesn't seem
-    // to work, so we're adding a new function to our test subscriptions which is invoked in the tests
-    newSubscription.explicitPreSaveAction = extractedPreSaveAction;
-    existingSubscription.explicitPreSaveAction = extractedPreSaveAction;
+      // the pre-save action must be bound to a Subscription object but normal 'bind()' doesn't seem
+      // to work, so we're adding a new function to our test subscriptions which is invoked in the tests
+      newSubscription = {
+        name: newSubscriptionData.name,
+        explicitPreSaveAction: extractedPreSaveAction
+      };
+      existingSubscription = {
+        name: existingSubscriptionData.name,
+        searchParameters: existingSubscriptionData.searchParameters,
+        lastSeason: existingSubscriptionData.lastSeason,
+        lastEpisode: existingSubscriptionData.lastEpisode,
+        creationTime: existingSubscriptionData.creationTime,
+        lastModifiedTime: existingSubscriptionData.lastModifiedTime,
+        lastDownloadTime: existingSubscriptionData.lastDownloadTime,
+        lastUpdateCheckTime: existingSubscriptionData.lastUpdateCheckTime,
+        explicitPreSaveAction: extractedPreSaveAction
+      };
+
+      // stub the real Subscription's ensureConnected
+      ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
+      ensureConnectedStub.returns(Q.fcall(() => null));
+
+      // replace real log
+      realSubscriptionLog = Subscription.model.log;
+      Subscription.model.log = testUtils.getFakeLog();
+    });
 
     beforeEach(function () {
       nextStub.reset();
+    });
+
+    after(function () {
+      ensureConnectedStub.restore();
+      Subscription.model.log = realSubscriptionLog;
     });
 
     it('should modify a new subscription as expected', function (done) {
@@ -464,7 +499,6 @@ describe('database/subscription', function () {
         expect(newSubscription.name).to.eql(newSubscriptionData.name);
         expect(newSubscription.lastDownloadTime).to.not.exist;
         expect(newSubscription.lastUpdateCheckTime).to.not.exist;
-
 
         // ensure most properties ARE modified
         expect(newSubscription.searchParameters).to.not.eql(newSubscriptionData.searchParameters);
@@ -482,8 +516,7 @@ describe('database/subscription', function () {
         expect(newSubscription.lastModifiedTime).to.not.eql(newSubscriptionData.lastModifiedTime);
         expect(newSubscription.lastModifiedTime - afterUpdate).to.be.below(20);
 
-        // ensure `next()` was called
-        expect(nextStub.callCount).to.eql(1);
+        expect(nextStub.calledOnce).to.be.true;
 
         done();
       });
@@ -499,6 +532,8 @@ describe('database/subscription', function () {
         expect(existingSubscription.searchParameters).to.eql(existingSubscriptionData.searchParameters);
         expect(existingSubscription.lastSeason).to.eql(existingSubscriptionData.lastSeason);
         expect(existingSubscription.lastEpisode).to.eql(existingSubscriptionData.lastEpisode);
+
+
         expect(existingSubscription.creationTime).to.eql(existingSubscriptionData.creationTime);
         expect(existingSubscription.lastDownloadTime).to.eql(existingSubscriptionData.lastDownloadTime);
         expect(existingSubscription.lastUpdateCheckTime).to.eql(existingSubscriptionData.lastUpdateCheckTime);
@@ -507,51 +542,54 @@ describe('database/subscription', function () {
         expect(existingSubscription.lastModifiedTime).to.be.above(existingSubscriptionData.lastModifiedTime);
         expect(existingSubscription.lastModifiedTime - afterUpdate).to.be.below(20);
 
-        // ensure `next()` was called
-        expect(nextStub.callCount).to.eql(1);
+        expect(nextStub.calledOnce).to.be.true;
 
         done();
       });
     });
   });
-  */
 
   describe('initialize', function () {
-    var fakeLog = testUtils.getFakeLog();
+    var fakeLog = testUtils.getFakeLog(),
+      fakeSubscription;
 
     beforeEach(function () {
-      this.testee = testUtils.getFakeStaticSubscription(Subscription.model).Subscription;
+      fakeSubscription = {
+        initialize: Subscription.model.initialize,
+        isInitialized: false,
+        useDatabase: false
+      };
     });
 
     it('should throw an error when initialized without a log', function () {
-      expect(this.testee.isInitialized).to.be.not.ok;
+      expect(fakeSubscription.isInitialized).to.be.not.ok;
 
-      expect(() => this.testee.initialize()).to.throw('Cannot initialize Subscription without log!');
-      expect(() => this.testee.initialize(null)).to.throw('Cannot initialize Subscription without log!');
+      expect(() => fakeSubscription.initialize()).to.throw('Cannot initialize Subscription without log!');
+      expect(() => fakeSubscription.initialize(null)).to.throw('Cannot initialize Subscription without log!');
 
-      expect(this.testee.isInitialized).to.be.not.ok;
+      expect(fakeSubscription.isInitialized).to.be.not.ok;
     });
 
     it('should throw an error when initialized multiple times', function () {
-      expect(this.testee.isInitialized).to.be.not.ok;
+      expect(fakeSubscription.isInitialized).to.be.not.ok;
 
       // successful initialization
-      this.testee.initialize(fakeLog);
+      fakeSubscription.initialize(fakeLog);
 
-      expect(this.testee.isInitialized).to.be.true;
+      expect(fakeSubscription.isInitialized).to.be.true;
 
       // unsuccessful initialization
-      expect(() => this.testee.initialize()).to.throw('Subscription is already initialized!');
+      expect(() => fakeSubscription.initialize()).to.throw('Subscription is already initialized!');
 
-      expect(this.testee.isInitialized).to.be.true;
+      expect(fakeSubscription.isInitialized).to.be.true;
     });
 
     it('should successfully initialize when not using a real database', function () {
-      expect(this.testee.isInitialized).to.be.not.ok;
+      expect(fakeSubscription.isInitialized).to.be.not.ok;
 
-      this.testee.initialize(fakeLog);
+      fakeSubscription.initialize(fakeLog);
 
-      expect(this.testee.isInitialized).to.be.true;
+      expect(fakeSubscription.isInitialized).to.be.true;
     });
 
     it('should successfully initialize when using a real database', function () {
@@ -560,11 +598,11 @@ describe('database/subscription', function () {
         port: 123
       };
 
-      expect(this.testee.isInitialized).to.be.not.ok;
+      expect(fakeSubscription.isInitialized).to.be.not.ok;
 
-      this.testee.initialize(fakeLog, config);
+      fakeSubscription.initialize(fakeLog, config);
 
-      expect(this.testee.isInitialized).to.be.true;
+      expect(fakeSubscription.isInitialized).to.be.true;
 
       // can't verify that mongoose/process event handlers were registered because a mongoose model
       // can't be rewired
@@ -572,11 +610,16 @@ describe('database/subscription', function () {
   });
 
   describe('findSubscriptionByName', function () {
-    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model);
-    fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
+    var fakeSubscription,
+      findOneStub;
 
     beforeEach(function () {
-      fakeSubscription.findOneStub.reset();
+      findOneStub = sinon.stub(),
+      fakeSubscription = {
+        ensureConnected: () => Q.fcall(() => null), // using a spy here seems overkill...
+        findSubscriptionByName: Subscription.model.findSubscriptionByName,
+        findOne: findOneStub
+      };
     });
 
     it('should make the expected database calls', function () {
@@ -588,69 +631,95 @@ describe('database/subscription', function () {
         'foobar',
       ];
 
-      return Q.allSettled(testNames.map(name => fakeSubscription.Subscription.findSubscriptionByName(name)))
+      return Q.allSettled(testNames.map(name => fakeSubscription.findSubscriptionByName(name)))
         .then(function () {
+          expect(findOneStub.callCount).to.eql(testNames.length);
+
           testNames.forEach(function (name) {
-            sinon.assert.calledWith(fakeSubscription.Subscription.findOne, {name: name});
+            expect(findOneStub.calledWith({name: name})).to.be.true;
+            //sinon.assert.calledWith(fakeSubscription.Subscription.findOne, {name: name});
           });
         });
     });
 
     it('should return a promise that resolves to the data from the database', function () {
-      var databaseResult = 123;
+      var testName = 'foobar',
+        databaseResult = 123;
 
-      fakeSubscription.findOneStub.withArgs({name: 'foobar'}).returns(databaseResult);
+      findOneStub.withArgs({name: testName}).returns(databaseResult);
 
-      return fakeSubscription.Subscription.findSubscriptionByName('foobar')
+      return fakeSubscription.findSubscriptionByName(testName)
         .then(result => expect(result).to.equal(databaseResult));
     });
-
   });
 
   describe('findAllSubscriptions', function () {
-    // the fakeSubscription needs "any" subscriptions so the limit/skip stubs get all set up
-    var fakeSubscription = testUtils.getFakeStaticSubscription(Subscription.model, []);
-    fakeSubscription.Subscription.initialize(testUtils.getFakeLog());
+    var fakeSubscription,
+      findStub,
+      skipStub,
+      limitStub;
 
     beforeEach(function () {
-      fakeSubscription.findStub.reset();
-      fakeSubscription.skipStub.reset();
-      fakeSubscription.limitStub.reset();
+      findStub = sinon.stub();
+      skipStub = sinon.stub();
+      limitStub = sinon.stub();
+
+      findStub.returns({skip: skipStub});
+      skipStub.returns({limit: limitStub});
+
+      fakeSubscription = {
+        ensureConnected: () => Q.fcall(() => null), // using a spy here seems overkill...
+        findAllSubscriptions: Subscription.model.findAllSubscriptions,
+        find: findStub
+      }
     });
 
     it('should make the expected database call when invoked without arguments', function () {
-      return fakeSubscription.Subscription.findAllSubscriptions()
+      return fakeSubscription.findAllSubscriptions()
         .then(function () {
-          sinon.assert.called(fakeSubscription.findStub);
-          sinon.assert.calledWith(fakeSubscription.skipStub, 0);
-          sinon.assert.notCalled(fakeSubscription.limitStub);
+          expect(findStub.calledOnce).to.be.true;
+          expect(skipStub.calledOnce).to.be.true;
+          expect(skipStub.calledWith(0)).to.be.true;
+          expect(limitStub.notCalled).to.be.true;
         });
     });
 
     it('should make the expected database call when invoked with a limit', function () {
-      return fakeSubscription.Subscription.findAllSubscriptions(123)
+      var testLimit = 123;
+
+      return fakeSubscription.findAllSubscriptions(testLimit)
         .then(function () {
-          sinon.assert.called(fakeSubscription.findStub);
-          sinon.assert.calledWith(fakeSubscription.skipStub, 0);
-          sinon.assert.calledWith(fakeSubscription.limitStub, 123);
+          expect(findStub.calledOnce).to.be.true;
+          expect(skipStub.calledOnce).to.be.true;
+          expect(skipStub.calledWith(0)).to.be.true;
+          expect(limitStub.calledOnce).to.be.true;
+          expect(limitStub.calledWith(testLimit)).to.be.true;
         });
     });
 
     it('should make the expected database call when invoked with an offset', function () {
-      return fakeSubscription.Subscription.findAllSubscriptions(undefined, 123)
+      var testOffset = 123;
+
+      return fakeSubscription.findAllSubscriptions(undefined, testOffset)
         .then(function () {
-          sinon.assert.called(fakeSubscription.findStub);
-          sinon.assert.calledWith(fakeSubscription.skipStub, 123);
-          sinon.assert.notCalled(fakeSubscription.limitStub);
+          expect(findStub.calledOnce).to.be.true;
+          expect(skipStub.calledOnce).to.be.true;
+          expect(skipStub.calledWith(testOffset)).to.be.true;
+          expect(limitStub.notCalled).to.be.true;
         });
     });
 
     it('should make the expected database call when invoked with limit and offset', function () {
-      return fakeSubscription.Subscription.findAllSubscriptions(123, 456)
+      var testLimit = 123,
+        testOffset = 456;
+
+      return fakeSubscription.findAllSubscriptions(testLimit, testOffset)
         .then(function () {
-          sinon.assert.called(fakeSubscription.findStub);
-          sinon.assert.calledWith(fakeSubscription.skipStub, 456);
-          sinon.assert.calledWith(fakeSubscription.limitStub, 123);
+          expect(findStub.calledOnce).to.be.true;
+          expect(skipStub.calledOnce).to.be.true;
+          expect(skipStub.calledWith(testOffset)).to.be.true;
+          expect(limitStub.calledOnce).to.be.true;
+          expect(limitStub.calledWith(testLimit)).to.be.true;
         });
     });
   });
