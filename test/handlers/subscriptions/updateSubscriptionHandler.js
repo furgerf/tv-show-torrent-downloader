@@ -35,14 +35,15 @@ describe('UpdateSubscriptionHandler', function () {
     failLink = 'foobar',
     successLink = 'asdf',
 
-    restoreExec = RewiredUpdateSubscriptionHandler.__set__('exec', fakeExec),
-    startTorrent = RewiredUpdateSubscriptionHandler.__get__('startTorrent');
+    restoreExec = RewiredUpdateSubscriptionHandler.__set__('exec', fakeExec);
 
   after(function () {
     restoreExec();
   });
 
   describe('startTorrent', function () {
+    var startTorrent = RewiredUpdateSubscriptionHandler.__get__('startTorrent');
+
     it('should reject if the command failed', function (done) {
       startTorrent(config.torrentCommand, failLink, fakeLog)
         .fail(function (err) {
@@ -58,7 +59,75 @@ describe('UpdateSubscriptionHandler', function () {
   });
 
   describe('downloadTorrent', function () {
-    it('should be implemented');
+    var startTorrentStub = sinon.stub(),
+      restoreStartTorrent = RewiredUpdateSubscriptionHandler.__set__('startTorrent', startTorrentStub),
+      fakeSub;
+
+    before(function () {
+      fakeSub = {
+        updateLastEpisode: sinon.stub(),
+        save: sinon.stub()
+      };
+    });
+
+    beforeEach(function () {
+      startTorrentStub.reset();
+      fakeSub.updateLastEpisode.reset();
+      fakeSub.save.reset();
+    });
+
+    after(function () {
+      restoreStartTorrent();
+    });
+
+    it('should fail if the download of an invalid season/episode was started', function (done) {
+      var season = 12,
+        episode = 34,
+        command = 'foo',
+        link = 'bar';
+
+      startTorrentStub.returns(testUtils.getResolvingPromise());
+      fakeSub.updateLastEpisode.returns(false);
+
+      RewiredUpdateSubscriptionHandler.downloadTorrent(fakeSub, season, episode, command, link, fakeLog)
+      .fail(function (err) {
+        expect(err.message).to.eql('Error while updating subscription: Could not update database.');
+
+        expect(startTorrentStub.calledOnce).to.be.true;
+        expect(startTorrentStub.calledWith(command, link, fakeLog)).to.be.true;
+
+        expect(fakeSub.updateLastEpisode.calledOnce).to.be.true;
+        expect(fakeSub.updateLastEpisode.calledWith(season, episode)).to.be.true;
+
+        expect(fakeSub.save.notCalled).to.be.true;
+
+        done();
+      });
+    });
+
+    it('should succeed if the download of a valid season/episode was started', function (done) {
+      var season = 12,
+        episode = 34,
+        command = 'foo',
+        link = 'bar';
+
+      startTorrentStub.returns(testUtils.getResolvingPromise());
+      fakeSub.updateLastEpisode.returns(true);
+      fakeSub.save.returns(testUtils.getResolvingPromise());
+
+      RewiredUpdateSubscriptionHandler.downloadTorrent(fakeSub, season, episode, command, link, fakeLog)
+      .then(function () {
+        expect(startTorrentStub.calledOnce).to.be.true;
+        expect(startTorrentStub.calledWith(command, link, fakeLog)).to.be.true;
+
+        expect(fakeSub.updateLastEpisode.calledOnce).to.be.true;
+        expect(fakeSub.updateLastEpisode.calledWith(season, episode)).to.be.true;
+
+        expect(fakeSub.save.calledOnce).to.be.true;
+
+        done();
+      });
+    });
   });
 
   describe('requests', function () {

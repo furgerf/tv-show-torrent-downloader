@@ -10,43 +10,6 @@ var restify = require('restify'),
   UpdateSubscriptionHandler;
 
 /**
- * Starts the torrent with the supplied `torrentLink` and the configured torrent command.
- *
- * @param {String} torrentCommand - Command to start the torrent download.
- * @param {String} torrentLink - Link of the torrent.
- * @param {Bunyan.Log} log - Optional. Logger instance. Uses `console.log` instead if not supplied.
- *
- * @returns {Promise} Promise which resolves if starting the torrent was successful and rejects
- *                    otherwise.
- */
-function startTorrent(torrentCommand, torrentLink, log) {
-  var command = torrentCommand + " '" + torrentLink + "'";
-
-  log = log;
-
-  log.warn('Starting torrent: %s (command: %s)', torrentLink, command);
-
-  return Q.Promise(function (resolve, reject) {
-    exec(command, function (err, stdout, stderr) {
-      if (err) {
-        log.error(err);
-        return reject(err);
-      }
-
-      if (stderr) {
-        log.warn('Torrent command stderr: %s', stderr);
-      }
-      if (stdout) {
-        log.info('Torrent command stdout: %s', stdout);
-      }
-
-      resolve();
-    });
-  });
-}
-
-
-/**
  * Handles reqests to PUT /subscriptions/:subscriptionName/update.
  * TODO: Simplify.
  */
@@ -103,6 +66,43 @@ function updateSubscriptionWithTorrent (req, res, next) {
 
 
 /**
+ * Starts the torrent with the supplied `torrentLink` and the configured torrent command.
+ *
+ * @param {String} torrentCommand - Command to start the torrent download.
+ * @param {String} torrentLink - Link of the torrent.
+ * @param {Bunyan.Log} log - Optional. Logger instance. Uses `console.log` instead if not supplied.
+ *
+ * @returns {Promise} Promise which resolves if starting the torrent was successful and rejects
+ *                    otherwise.
+ */
+function startTorrent(torrentCommand, torrentLink, log) {
+  var command = torrentCommand + " '" + torrentLink + "'";
+
+  log = log;
+
+  log.warn('Starting torrent: %s (command: %s)', torrentLink, command);
+
+  return Q.Promise(function (resolve, reject) {
+    exec(command, function (err, stdout, stderr) {
+      if (err) {
+        log.error(err);
+        return reject(err);
+      }
+
+      if (stderr) {
+        log.warn('Torrent command stderr: %s', stderr);
+      }
+      if (stdout) {
+        log.info('Torrent command stdout: %s', stdout);
+      }
+
+      resolve();
+    });
+  });
+}
+
+
+/**
  * "Downloads" a torrent by starting the torrent download and updating the current season/episode
  * of the subscription.
  *
@@ -111,7 +111,7 @@ function updateSubscriptionWithTorrent (req, res, next) {
  * @param {Number} episode - Episode number of the torrent.
  * @param {String} command - Command to start the torrent download.
  * @param {String} link - Link to the torrent.
- * @param {Bunyan.Log} log - Optional. Logger instance. Doesn't generate output if not specified.
+ * @param {Bunyan.Log} log - Logger instance. Doesn't generate output if not specified.
  *
  * @returns {Promise} Promise which resolves if downloading the torrent was successful and rejects
  *                    otherwise.
@@ -120,13 +120,13 @@ UpdateSubscriptionHandler.downloadTorrent = function (sub, season, episode, comm
   return startTorrent(command, link, log)
     .then(function () {
       if (!sub.updateLastEpisode(season, episode)) {
-        log && log.error('Failed to update subscription %s to %s!', sub.name,
+        log.error('Failed to update subscription %s to %s!', sub.name,
           utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
         throw new Error('Error while updating subscription: Could not update database.');
       }
 
       return sub.save()
-        .then(() => log && log.info('Successfully updated subscription %s to %s...',
+        .then(() => log.info('Successfully updated subscription %s to %s...',
           sub.name, utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode)));
     });
 };
