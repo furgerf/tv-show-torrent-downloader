@@ -66,12 +66,13 @@ exports.fileSizeToBytes = function (num, unit) {
  * @param {Response} res - Response which should be sent
  * @param {Function} next - Function to pass request to next handler
  * @param {String} url - Optional. URL which was accessed in the request
+ * @param {Number} code - Optional. HTTP response code. Defaults to 200
  * @param {String} etag - Optional. ETAG header
  * @param {Date} lastModified - Optional. Date of last modification
  */
-exports.sendOkResponse = function (message, data, res, next, url, etag, lastModified) {
+exports.sendOkResponse = function (message, data, res, next, url, code, etag, lastModified) {
   // assign always-same fields
-  res.statusCode = 200;
+  res.statusCode = code || 200;
   res.setHeader('Content-Type', 'application/json');
 
   // assign optional fields (if provided)

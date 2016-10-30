@@ -42,10 +42,9 @@ function addSubscription (req, res, next) {
     return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
   }
 
-  // TODO: Return 201 instead of 200
   createNewSubscriptionFromData(body).save()
     .then(doc => utils.sendOkResponse('New subscription created', doc.getReturnable(),
-          res, next, 'http://' + req.headers.host + req.url))
+          res, next, 'http://' + req.headers.host + req.url, 201))
     .fail(error =>
         next(new restify.InternalServerError('Error while saving new subscription: ' + error)));
 }
@@ -57,7 +56,8 @@ function updateSubscription (req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     subscriptionName = decodeURIComponent(req.params[0]),
     // jshint validthis: true
-    that = this;
+    that = this,
+    newSubscriptionCreated;
 
   if (body.name && body.name !== subscriptionName) {
     return next(new restify.BadRequestError('Cannot change the name of a subscription'));
@@ -66,15 +66,21 @@ function updateSubscription (req, res, next) {
   // the body data is used to create the subscription, so set it to the name from the request params
   body.name = subscriptionName;
 
-  // TODO: Return 201 instead of 200 if a new subscription was created and change response message
   // retrieve existing subscription that would be updated
   Subscription.findSubscriptionByName(subscriptionName)
     // if the subscription doesn't exist yet, create a new one
-    .then(subscription => subscription ? subscription : createNewSubscriptionFromData(body))
-      // update the fields and save
+    .then(function (subscription) {
+      if (subscription) {
+        return subscription;
+      }
+      newSubscriptionCreated = true;
+      return createNewSubscriptionFromData(body);
+    })
+    // update the fields and save
     .then(subscription => that.updateFields(subscription, body, req.log).save())
-    .then(subscription => utils.sendOkResponse('Subscription updated',
-          subscription.getReturnable(), res, next, 'http://' + req.headers.host + req.url))
+    .then(subscription => utils.sendOkResponse(newSubscriptionCreated ? 'New subscription created'
+      : 'Subscription updated', subscription.getReturnable(), res, next,
+      'http://' + req.headers.host + req.url, newSubscriptionCreated ? 201 : 200))
     .fail(error =>
         next(new restify.InternalServerError('Error while updating subscription: ' + error)));
 }

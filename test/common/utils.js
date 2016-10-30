@@ -125,12 +125,13 @@ describe('utils', function () {
       var message = 'test message',
         data = {test: 'data'},
         url = 'test url',
+        code = 234,
         etag = 'test etag',
         lastModified = new Date();
 
-      utils.sendOkResponse(message, data, fakeRes, nextStub, url, etag, lastModified);
+      utils.sendOkResponse(message, data, fakeRes, nextStub, url, code,  etag, lastModified);
 
-      expect(fakeRes.statusCode).to.eql(200);
+      expect(fakeRes.statusCode).to.eql(code);
 
       expect(fakeRes.setHeader.callCount).to.eql(4);
       expect(fakeRes.setHeader.calledWithExactly('Content-Type', 'application/json')).to.be.true;

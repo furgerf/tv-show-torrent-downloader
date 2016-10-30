@@ -60,8 +60,7 @@ describe('WriteSubscriptionHandler', function () {
     });
 
     it('should update valid fields', function () {
-      var newName = 'new name',
-        newSearchParameters = 'new parameters',
+      var newSearchParameters = 'new parameters',
         newLastSeason = 56,
         newLastEpisode = 78;
 
@@ -250,7 +249,7 @@ describe('WriteSubscriptionHandler', function () {
           .post('/subscriptions')
           .field('name', newSubscriptionName)
           .expect('Content-type', 'application/json')
-          .expect(200)
+          .expect(201)
           .end(function (err, res) {
             var afterRequest = new Date(),
               parsedCreationTime,
@@ -292,7 +291,7 @@ describe('WriteSubscriptionHandler', function () {
           .field('lastEpisode', newSubscriptionData.lastEpisode)
           .field(dummyField, 123)
           .expect('Content-type', 'application/json')
-          .expect(200)
+          .expect(201)
           .end(function (err, res) {
             var afterRequest = new Date(),
               parsedCreationTime,
@@ -406,7 +405,7 @@ describe('WriteSubscriptionHandler', function () {
           .field('lastEpisode', newSubscriptionData.lastEpisode)
           .field(dummyField, 123)
           .expect('Content-type', 'application/json')
-          .expect(200)
+          .expect(201)
           .end(function (err, res) {
             var afterRequest = new Date(),
               parsedCreationTime,
@@ -415,7 +414,7 @@ describe('WriteSubscriptionHandler', function () {
             expect(err).to.not.exist;
             expect(res.error).to.exist;
             expect(res.body.code).to.eql('Success');
-            expect(res.body.message).to.eql('Subscription updated');
+            expect(res.body.message).to.eql('New subscription created');
             expect(res.body.data.name).to.eql(testUtils.nonexistentSubscriptionName);
             expect(res.body.data.searchParameters).to.eql(newSubscriptionData.searchParameters);
             expect(parseInt(res.body.data.lastSeason, 10)).to.eql(newSubscriptionData.lastSeason);
