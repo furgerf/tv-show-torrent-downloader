@@ -134,18 +134,12 @@ WriteSubscriptionHandler.prototype.updateFields = function (subscription, data) 
 
   this.log.info('Updating subscription %s with:', subscription, data);
 
-  if (data.name !== undefined) {
-    subscription.name = data.name;
-  }
-  if (data.searchParameters !== undefined) {
-    subscription.searchParameters = data.searchParameters;
-  }
-  if (data.lastSeason !== undefined) {
-    subscription.lastSeason = data.lastSeason;
-  }
-  if (data.lastEpisode !== undefined) {
-    subscription.lastEpisode = data.lastEpisode;
-  }
+  const modifyableProperties = ['searchParameters', 'lastSeason', 'lastEpisode'];
+  modifyableProperties.forEach(function (prop) {
+    if (data[prop] !== undefined) {
+      subscription[prop] = data[prop];
+    }
+  });
 
   return subscription;
 };

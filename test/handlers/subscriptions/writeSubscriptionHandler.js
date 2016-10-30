@@ -25,21 +25,23 @@ describe('WriteSubscriptionHandler', function () {
       fakeLog = testUtils.getFakeLog(),
       testHandler = new RewiredWriteSubscriptionHandler(testUtils.getFakeLog());
 
-    subscriptionData = {
-      name: 'test name',
-      searchParameters: 'test parameters',
-      lastSeason: 12,
-      lastEpisode: 34,
-      creationTime: now,
-      lastModifiedTime: now,
-      lastDownloadTime: now,
-      lastUpdateCheckTime: now
-    };
+    beforeEach(function () {
+      subscriptionData = {
+        name: 'test name',
+        searchParameters: 'test parameters',
+        lastSeason: 12,
+        lastEpisode: 34,
+        creationTime: now,
+        lastModifiedTime: now,
+        lastDownloadTime: now,
+        lastUpdateCheckTime: now
+      };
 
-    // create two subscriptions with the same data - including the _id!
-    testSubscription = Subscription.createNew(subscriptionData);
-    originalTestSubscription = Subscription.createNew(subscriptionData);
-    originalTestSubscription._id = testSubscription._id;
+      // create two subscriptions with the same data - including the _id!
+      testSubscription = Subscription.createNew(subscriptionData);
+      originalTestSubscription = Subscription.createNew(subscriptionData);
+      originalTestSubscription._id = testSubscription._id;
+    });
 
     it('should return the original subscription if the data is not valid', function () {
       expect(testHandler.updateFields(testSubscription, undefined, fakeLog)._doc).to.eql(originalTestSubscription._doc);
@@ -63,9 +65,6 @@ describe('WriteSubscriptionHandler', function () {
         newLastSeason = 56,
         newLastEpisode = 78;
 
-      originalTestSubscription.name = newName;
-      expect(testHandler.updateFields(testSubscription, {name: newName}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
-
       originalTestSubscription.searchParameters = newSearchParameters;
       expect(testHandler.updateFields(testSubscription, {searchParameters: newSearchParameters}, fakeLog)._doc).to.eql(originalTestSubscription._doc);
 
@@ -82,12 +81,12 @@ describe('WriteSubscriptionHandler', function () {
         newLastSeason = 56,
         newLastEpisode = 78;
 
-      originalTestSubscription.name = newName;
+      // don't expect a changed name
       originalTestSubscription.searchParameters = newSearchParameters;
       originalTestSubscription.lastSeason = newLastSeason;
       originalTestSubscription.lastEpisode = newLastEpisode;
       expect(testHandler.updateFields(testSubscription, {
-          name: newName,
+          name: newName, // name should be ignored
           searchParameters: newSearchParameters,
           lastSeason: newLastSeason,
           lastEpisode: newLastEpisode,
