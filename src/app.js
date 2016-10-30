@@ -146,10 +146,11 @@ function App(config, log) {
   this.writeSubscriptionHandler =
     new WriteSubscriptionHandler(log.child({component: 'WriteSubscriptionHandler'}));
   this.findSubscriptionUpdatesHandler =
-    new FindSubscriptionUpdatesHandler(torrentSiteManager,
+    new FindSubscriptionUpdatesHandler(torrentSiteManager, config.torrentCommand,
       log.child({component: 'FindSubscriptionUpdatesHandler'}));
   this.updateSubscriptionHandler =
-    new UpdateSubscriptionHandler(log.child({component: 'UpdateSubscriptionHandler'}));
+    new UpdateSubscriptionHandler(config.torrentCommand,
+      log.child({component: 'UpdateSubscriptionHandler'}));
 
   this.systemStatusHandler =
     new SystemStatusHandler(log.child({component: 'SystemStatusHandler'}));

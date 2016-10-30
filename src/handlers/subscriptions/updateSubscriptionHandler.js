@@ -4,7 +4,6 @@ var restify = require('restify'),
   exec = require('child_process').exec,
   Q = require('q'),
 
-  config = require('./../../common/config'),
   utils = require('./../../common/utils'),
   Subscription = require('./../../database/subscription'),
 
@@ -13,17 +12,17 @@ var restify = require('restify'),
 /**
  * Starts the torrent with the supplied `torrentLink` and the configured torrent command.
  *
+ * @param {String} torrentCommand - Command to start the torrent download.
  * @param {String} torrentLink - Link of the torrent.
  * @param {Bunyan.Log} log - Optional. Logger instance. Uses `console.log` instead if not supplied.
  *
  * @returns {Promise} Promise which resolves if starting the torrent was successful and rejects
  *                    otherwise.
  */
-function startTorrent(torrentLink, log) {
-  var command = config.torrentCommand + " '" + torrentLink + "'";
+function startTorrent(torrentCommand, torrentLink, log) {
+  var command = torrentCommand + " '" + torrentLink + "'";
 
-  // jshint validthis: true
-  log = log || this.log;
+  log = log;
 
   log.warn('Starting torrent: %s (command: %s)', torrentLink, command);
 
@@ -84,7 +83,8 @@ function updateSubscriptionWithTorrent (req, res, next) {
       ));
     }
 
-    UpdateSubscriptionHandler.downloadTorrent(sub, season, episode, link, req.log)
+    UpdateSubscriptionHandler.downloadTorrent( // TODO: Check that `this` is defined
+        sub, season, episode, this.torrentCommand, link, req.log)
       .then(() => sub.updateLastDownloadTime())
       .then(function () {
         utils.sendOkResponse('Started torrent for new episode '
@@ -109,19 +109,16 @@ function updateSubscriptionWithTorrent (req, res, next) {
  * @param {Subscription} sub - Subscription to which the torrent belongs.
  * @param {Number} season - Season number of the torrent.
  * @param {Number} episode - Episode number of the torrent.
+ * @param {String} command - Command to start the torrent download.
  * @param {String} link - Link to the torrent.
  * @param {Bunyan.Log} log - Optional. Logger instance. Doesn't generate output if not specified.
  *
  * @returns {Promise} Promise which resolves if downloading the torrent was successful and rejects
  *                    otherwise.
  */
-UpdateSubscriptionHandler.downloadTorrent = function (sub, season, episode, link, log) {
-  return startTorrent(link, log)
+UpdateSubscriptionHandler.downloadTorrent = function (sub, season, episode, command, link, log) {
+  return startTorrent(command, link, log)
     .then(function () {
-      if (!config.productionEnvironment) {
-        return;
-      }
-
       if (!sub.updateLastEpisode(season, episode)) {
         log && log.error('Failed to update subscription %s to %s!', sub.name,
           utils.formatEpisodeNumber(sub.lastSeason, sub.lastEpisode));
@@ -140,10 +137,13 @@ UpdateSubscriptionHandler.downloadTorrent = function (sub, season, episode, link
  *
  * @constructor
  *
+ * @param {String} torrentCommand - Command that should be used to start a torrent.
  * @param {Bunyan.Log} log - Logger instance.
  */
-function UpdateSubscriptionHandler(log) {
+function UpdateSubscriptionHandler(torrentCommand, log) {
+  this.torrentCommand = torrentCommand;
   this.log = log;
+
   this.updateSubscriptionWithTorrent = updateSubscriptionWithTorrent;
 
   this.log.info('UpdateSubscriptionHandler created');

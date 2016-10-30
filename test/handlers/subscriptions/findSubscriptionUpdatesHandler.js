@@ -101,6 +101,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
       },
 
       modifiedTorrentSiteManager,
+      torrentDownloadCommand = 'download ze torrent',
       findSubscriptionByNameStub,
       findAllSubscriptionsStub,
       torrentSiteManagerExecStub,
@@ -213,7 +214,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
       // prepare app
       app = new App(config, testUtils.getFakeLog());
       restoreUpdateSubscription = RewiredFindSubscriptionUpdatesHandler.__set__('UpdateSubscription', fakeUpdateSubscription);
-      rewiredHandler = new RewiredFindSubscriptionUpdatesHandler(modifiedTorrentSiteManager, testUtils.getFakeLog());
+      rewiredHandler = new RewiredFindSubscriptionUpdatesHandler(modifiedTorrentSiteManager, torrentDownloadCommand, testUtils.getFakeLog());
       app.findSubscriptionUpdatesHandler = rewiredHandler;
 
       // start server
@@ -229,6 +230,8 @@ describe('FindSubscriptionUpdatesHandler', function () {
     });
 
     after(function () {
+      findSubscriptionByNameStub.restore();
+      findAllSubscriptionsStub.restore();
       findSubscriptionByNameStub.restore();
       restoreTorrentSiteManagerExec();
       restoreUpdateSubscription();
@@ -306,7 +309,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
             subscriptionWithUpdatesOfSameSeasonCommands.forEach(cmd => expect(torrentSiteManagerExecStub.calledWith(cmd, sinon.match.func)).to.be.true);
 
             expect(fakeUpdateSubscription.downloadTorrent.calledOnce).to.be.true;
-            expect(fakeUpdateSubscription.downloadTorrent.calledWith(subscriptionWithUpdatesOfSameSeason, torrentSeason, torrentEpisode, subscriptionWithUpdatesOfSameSeasonDummyData[0] + ' - ' + torrentSeason + ' - ' + torrentEpisode, sinon.match.object)).to.be.true;
+            expect(fakeUpdateSubscription.downloadTorrent.calledWith(subscriptionWithUpdatesOfSameSeason, torrentSeason, torrentEpisode, torrentDownloadCommand, subscriptionWithUpdatesOfSameSeasonDummyData[0] + ' - ' + torrentSeason + ' - ' + torrentEpisode, sinon.match.object)).to.be.true;
 
             done();
           });

@@ -50,7 +50,7 @@ function checkSubscriptionForUpdates(req, res, next) {
           if (startDownload) {
             data.forEach(function (torrent) {
               UpdateSubscription.downloadTorrent(subscription,
-                  torrent.season, torrent.episode, torrent.link, req.log);
+                  torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
             });
           }
 
@@ -104,7 +104,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
         if (startDownload) {
           entry.forEach(function (torrent) {
             UpdateSubscription.downloadTorrent(entry.subscription,
-                torrent.season, torrent.episode, torrent.link, req.log);
+                torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
           });
         }
         // we don't need the subscription reference anymore
@@ -128,10 +128,12 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
  * @constructor
  *
  * @param {TorrentSiteManager} torrentSiteManager - TorrentSiteManager instance.
+ * @param {String} torrentCommand - Command that should be used to start a torrent.
  * @param {Bunyan.Log} log - Logger instance.
  */
-function FindSubscriptionUpdatesHandler(torrentSiteManager, log) {
+function FindSubscriptionUpdatesHandler(torrentSiteManager, torrentCommand, log) {
   this.torrentSiteManager = torrentSiteManager;
+  this.torrentCommand = torrentCommand;
   this.log = log;
   this.checkAllSubscriptionsForUpdates = checkAllSubscriptionsForUpdates;
   this.checkSubscriptionForUpdates = checkSubscriptionForUpdates;
