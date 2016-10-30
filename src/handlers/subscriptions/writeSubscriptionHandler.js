@@ -59,9 +59,14 @@ function updateSubscription (req, res, next) {
     // jshint validthis: true
     that = this;
 
-  body.name = body.name || subscriptionName;
+  if (body.name && body.name !== subscriptionName) {
+    return next(new restify.BadRequestError('Cannot change the name of a subscription'));
+  }
 
-  // TODO: Return 201 instead of 200 if a new subscription was created
+  // the body data is used to create the subscription, so set it to the name from the request params
+  body.name = subscriptionName;
+
+  // TODO: Return 201 instead of 200 if a new subscription was created and change response message
   // retrieve existing subscription that would be updated
   Subscription.findSubscriptionByName(subscriptionName)
     // if the subscription doesn't exist yet, create a new one
@@ -85,8 +90,8 @@ function deleteSubscription (req, res, next) {
         ? subscription
         : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
     .then(subscription => subscription.remove())
-    .then(() => utils.sendOkResponse('Removed subscription with name "' +
-          subscriptionName + '".', {}, res, next, 'http://' + req.headers.host + req.url))
+    .then(() => utils.sendOkResponse("Removed subscription with name '" +
+          subscriptionName + "'.", {}, res, next, 'http://' + req.headers.host + req.url))
     .fail(error =>
         next(new restify.InternalServerError('Error while removing subscription: ' + error)));
 }

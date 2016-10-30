@@ -143,28 +143,71 @@ describe('WriteSubscriptionHandler', function () {
   });
 
   describe('requests', function () {
-    var createSubscriptionStub,
+    var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(Subscription.createNew),
+      createSubscriptionStub,
       saveStub = sinon.stub(),
+      findSubscriptionByNameStub,
+      removeSubscriptionStub = sinon.stub(),
+
+      explicitPreSaveAction,
+
+      now,
 
       server,
-      app;
+      app,
+
+      ensureConnectedStub,
+      realSubscriptionLog;
 
     before(function () {
       saveStub.returns(Q.fcall(() => this));
-    });
+      explicitPreSaveAction = testUtils.extractSubscriptionPreSaveAction();
 
-    beforeEach(function (done) {
-      app = new App(config, testUtils.getFakeLog());
+      // creating the FSBN stub is more tricky because the return value depends on the argument
+      findSubscriptionByNameStub = sinon.stub(Subscription, 'findSubscriptionByName',
+        name => Q.fcall(() => {
+          var sub = sampleSubscriptions.find(sub => sub.name === name);
+          if (sub) {
+            sub.remove = removeSubscriptionStub;
+            sub.getReturnable = Subscription.model.schema.methods.getReturnable;
+            sub.explicitPreSaveAction = explicitPreSaveAction;
+            sub.save = function () {
+              return sub.explicitPreSaveAction(testUtils.getResolvingPromise())
+                .then(() => sub);
+            };
+          }
+          return sub;
+        }));
+
+      // stub the real Subscription's ensureConnected
+      ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
+      ensureConnectedStub.returns(testUtils.getResolvingPromise());
+
+      // replace real log
+      realSubscriptionLog = Subscription.model.log;
+      Subscription.model.log = testUtils.getFakeLog();
 
       createSubscriptionStub = sinon.stub(Subscription, 'createNew', function (data) {
+        data.explicitPreSaveAction = explicitPreSaveAction;
+
         data.save = function () {
-          return Q.fcall(() => this);
+          return data.explicitPreSaveAction(testUtils.getResolvingPromise())
+          .then(() => data);
         };
 
-        data.getReturnable = d => d;
+        data.getReturnable = Subscription.model.schema.methods.getReturnable;
+
         return data;
       });
       RewiredWriteSubscriptionHandler.__set__('Subscription', Subscription);
+    });
+
+    beforeEach(function (done) {
+      findSubscriptionByNameStub.reset();
+
+      app = new App(config, testUtils.getFakeLog());
+
+      now = new Date();
       app.writeSubscriptionHandler = new RewiredWriteSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
@@ -177,26 +220,30 @@ describe('WriteSubscriptionHandler', function () {
 
     afterEach(function (done) {
       app.close(done);
+      removeSubscriptionStub.reset();
     });
 
     after(function () {
+      findSubscriptionByNameStub.restore();
       createSubscriptionStub.restore();
+      ensureConnectedStub.restore();
+      Subscription.model.log = realSubscriptionLog;
     });
 
     describe('POST /subscriptions', function () {
-    //   it('should return an error if no subscription name is provided', function (done) {
-    //     server
-    //       .post('/subscriptions')
-    //       .expect('Content-type', 'application/json')
-    //       .expect(400)
-    //       .end(function (err, res) {
-    //         expect(err).to.not.exist;
-    //         expect(res.error).to.exist;
-    //         expect(res.body.code).to.eql('BadRequestError');
-    //         expect(res.body.message).to.eql('Provide the name of the tv show to subscribe to.');
-    //         done();
-    //       });
-    //   });
+      it('should return an error if no subscription name is provided', function (done) {
+        server
+          .post('/subscriptions')
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql('Provide the name of the tv show to subscribe to.');
+            done();
+          });
+      });
 
       it('should create a new subscription without any data', function (done) {
         var newSubscriptionName = 'foo';
@@ -204,26 +251,282 @@ describe('WriteSubscriptionHandler', function () {
           .post('/subscriptions')
           .field('name', newSubscriptionName)
           .expect('Content-type', 'application/json')
-          //.expect(200)
+          .expect(200)
           .end(function (err, res) {
-            console.log(res.body);
+            var afterRequest = new Date(),
+              parsedCreationTime,
+              parsedLastModifiedTime;
+
             expect(err).to.not.exist;
             expect(res.error).to.exist;
             expect(res.body.code).to.eql('Success');
             expect(res.body.message).to.eql('New subscription created');
+            expect(res.body.data.name).to.eql(newSubscriptionName);
+            expect(res.body.data.searchParameters).to.eql('');
+            expect(res.body.data.lastSeason).to.eql(1);
+            expect(res.body.data.lastEpisode).to.eql(0);
+
+            parsedCreationTime = Date.parse(res.body.data.creationTime);
+            expect(parsedCreationTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(20);
+
+            parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
+            expect(parsedLastModifiedTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+
+            expect(res.body.data.lastDownloadTime).to.not.exist;
+            expect(res.body.data.lastUpdateCheckTime).to.not.exist;
+
             done();
           });
       });
 
-      it('should create a new subscription with initial data');
+      it('should create a new subscription with initial data and filter out invalid data', function (done) {
+        var newSubscriptionData = testUtils.getSampleSubscriptionData()[0],
+          dummyField = 'dummy';
+
+        server
+          .post('/subscriptions')
+          .field('name', newSubscriptionData.name)
+          .field('searchParameters', newSubscriptionData.searchParameters)
+          .field('lastSeason', newSubscriptionData.lastSeason)
+          .field('lastEpisode', newSubscriptionData.lastEpisode)
+          .field(dummyField, 123)
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            var afterRequest = new Date(),
+              parsedCreationTime,
+              parsedLastModifiedTime;
+
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql('New subscription created');
+            expect(res.body.data.name).to.eql(newSubscriptionData.name);
+            expect(res.body.data.searchParameters).to.eql(newSubscriptionData.searchParameters);
+            expect(parseInt(res.body.data.lastSeason, 10)).to.eql(newSubscriptionData.lastSeason);
+            expect(parseInt(res.body.data.lastEpisode, 10)).to.eql(newSubscriptionData.lastEpisode);
+
+            parsedCreationTime = Date.parse(res.body.data.creationTime);
+            expect(parsedCreationTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(20);
+
+            parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
+            expect(parsedLastModifiedTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+
+            expect(res.body.data.lastDownloadTime).to.not.exist;
+            expect(res.body.data.lastUpdateCheckTime).to.not.exist;
+
+            expect(res.body.data[dummyField]).to.not.exist;
+
+            done();
+          });
+      });
     });
 
     describe('POST /subscriptions/:subscriptionName', function () {
-      it('should be implemented');
+      it('should return an error if the body specifies a different name than the url', function (done) {
+        var oldName = 'foo',
+          newName = 'bar';
+
+        server
+          .post('/subscriptions/' + oldName)
+          .field('name', newName)
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql('Cannot change the name of a subscription');
+            done();
+          });
+      });
+
+      it('should not do anything if no valid fields are specified for updating', function (done) {
+        var subscriptionData = testUtils.getSampleSubscriptionData()[0],
+          subscriptionName = subscriptionData.name,
+          dummyField = 'dummy';
+
+        server
+          .post('/subscriptions/' + subscriptionName)
+          .field(dummyField, 123)
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            var afterRequest = new Date(),
+              parsedCreationTime,
+              parsedLastModifiedTime,
+              parsedLastDownloadTime,
+              parsedLastUpdateCheckTime;
+
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql('Subscription updated');
+            expect(res.body.data.name).to.eql(subscriptionName);
+            expect(res.body.data.searchParameters).to.eql(subscriptionData.searchParameters);
+            expect(parseInt(res.body.data.lastSeason, 10)).to.eql(subscriptionData.lastSeason);
+            expect(parseInt(res.body.data.lastEpisode, 10)).to.eql(subscriptionData.lastEpisode);
+
+            // creation time shouldn't have changed
+            parsedCreationTime = Date.parse(res.body.data.creationTime);
+            expect(parsedCreationTime).to.not.be.NaN;
+            expect(parsedCreationTime).to.eql(subscriptionData.creationTime.getTime());
+
+            // last modified time should be about now
+            parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
+            expect(parsedLastModifiedTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+
+            parsedLastDownloadTime = Date.parse(res.body.data.creationTime);
+            expect(parsedLastDownloadTime).to.not.be.NaN;
+            expect(parsedLastDownloadTime).to.eql(subscriptionData.creationTime.getTime());
+
+            parsedLastUpdateCheckTime = Date.parse(res.body.data.creationTime);
+            expect(parsedLastUpdateCheckTime).to.not.be.NaN;
+            expect(parsedLastUpdateCheckTime).to.eql(subscriptionData.creationTime.getTime());
+
+            expect(res.body.data[dummyField]).to.not.exist;
+
+            done();
+          });
+      });
+
+
+      it('should create a new subscription with initial data and filter out invalid data', function (done) {
+        var newSubscriptionData = testUtils.getSampleSubscriptionData()[0],
+          dummyField = 'dummy';
+
+        server
+          .post('/subscriptions/' + testUtils.nonexistentSubscriptionName)
+          .field('searchParameters', newSubscriptionData.searchParameters)
+          .field('lastSeason', newSubscriptionData.lastSeason)
+          .field('lastEpisode', newSubscriptionData.lastEpisode)
+          .field(dummyField, 123)
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            var afterRequest = new Date(),
+              parsedCreationTime,
+              parsedLastModifiedTime;
+
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql('Subscription updated');
+            expect(res.body.data.name).to.eql(testUtils.nonexistentSubscriptionName);
+            expect(res.body.data.searchParameters).to.eql(newSubscriptionData.searchParameters);
+            expect(parseInt(res.body.data.lastSeason, 10)).to.eql(newSubscriptionData.lastSeason);
+            expect(parseInt(res.body.data.lastEpisode, 10)).to.eql(newSubscriptionData.lastEpisode);
+
+            parsedCreationTime = Date.parse(res.body.data.creationTime);
+            expect(parsedCreationTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(20);
+
+            parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
+            expect(parsedLastModifiedTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+
+            expect(res.body.data.lastDownloadTime).to.not.exist;
+            expect(res.body.data.lastUpdateCheckTime).to.not.exist;
+
+            expect(res.body.data[dummyField]).to.not.exist;
+
+            done();
+          });
+      });
+
+      it('should update valid fields and ignore invalid fields', function (done) {
+        var existingSubscriptionData = testUtils.getSampleSubscriptionData()[0],
+          existingSubscriptionName = existingSubscriptionData.name,
+          updatingSubscriptionData = testUtils.getSampleSubscriptionData()[2],
+          dummyField = 'dummy';
+
+        server
+          .post('/subscriptions/' + existingSubscriptionName)
+          .field('name', existingSubscriptionName)
+          .field('searchParameters', updatingSubscriptionData.searchParameters)
+          .field('lastSeason', updatingSubscriptionData.lastSeason)
+          .field('lastEpisode', updatingSubscriptionData.lastEpisode)
+          .field(dummyField, 123)
+          .expect('Content-type', 'application/json')
+          // .expect(200)
+          .end(function (err, res) {
+            var afterRequest = new Date(),
+              parsedCreationTime,
+              parsedLastModifiedTime,
+              parsedLastDownloadTime,
+              parsedLastUpdateCheckTime;
+
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql('Subscription updated');
+            expect(res.body.data.name).to.eql(existingSubscriptionName); // the name isn't changed
+            expect(res.body.data.searchParameters).to.eql(updatingSubscriptionData.searchParameters);
+            expect(parseInt(res.body.data.lastSeason, 10)).to.eql(updatingSubscriptionData.lastSeason);
+            expect(parseInt(res.body.data.lastEpisode, 10)).to.eql(updatingSubscriptionData.lastEpisode);
+
+            // creation time shouldn't have changed
+            parsedCreationTime = Date.parse(res.body.data.creationTime);
+            expect(parsedCreationTime).to.not.be.NaN;
+            expect(parsedCreationTime).to.eql(existingSubscriptionData.creationTime.getTime());
+
+            // last modified time should be about now
+            parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
+            expect(parsedLastModifiedTime).to.not.be.NaN;
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+
+            parsedLastDownloadTime = Date.parse(res.body.data.lastDownloadTime);
+            expect(parsedLastDownloadTime).to.not.be.NaN;
+            expect(parsedLastDownloadTime).to.eql(existingSubscriptionData.lastDownloadTime.getTime());
+            parsedLastUpdateCheckTime = Date.parse(res.body.data.lastUpdateCheckTime);
+            expect(parsedLastUpdateCheckTime).to.not.be.NaN;
+            expect(parsedLastUpdateCheckTime).to.eql(existingSubscriptionData.lastUpdateCheckTime.getTime());
+            expect(res.body.data[dummyField]).to.not.exist;
+
+            done();
+          });
+      });
     });
 
     describe('DELETE /subscriptions/:subscriptionName', function () {
-      it('should be implemented');
+      it('should return an error if an unknown subscription name is provided', function (done) {
+        server
+          .delete('/subscriptions/' + testUtils.nonexistentSubscriptionName)
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql("No subscription named '" + testUtils.nonexistentSubscriptionName + "'.");
+
+            expect(removeSubscriptionStub.notCalled).to.be.true;
+
+            done();
+          });
+      });
+
+      it('should successfully remove a subscription', function (done) {
+        server
+          .delete('/subscriptions/' + sampleSubscriptions[0].name)
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql("Removed subscription with name '" + sampleSubscriptions[0].name + "'.");
+
+            expect(removeSubscriptionStub.calledOnce).to.be.true;
+
+            done();
+          });
+      });
     });
   });
 });
