@@ -267,11 +267,11 @@ describe('WriteSubscriptionHandler', function () {
 
             parsedCreationTime = Date.parse(res.body.data.creationTime);
             expect(parsedCreationTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(testUtils.timeEpsilon);
 
             parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
             expect(parsedLastModifiedTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(testUtils.timeEpsilon);
 
             expect(res.body.data.lastDownloadTime).to.not.exist;
             expect(res.body.data.lastUpdateCheckTime).to.not.exist;
@@ -309,11 +309,11 @@ describe('WriteSubscriptionHandler', function () {
 
             parsedCreationTime = Date.parse(res.body.data.creationTime);
             expect(parsedCreationTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(testUtils.timeEpsilon);
 
             parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
             expect(parsedLastModifiedTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(testUtils.timeEpsilon);
 
             expect(res.body.data.lastDownloadTime).to.not.exist;
             expect(res.body.data.lastUpdateCheckTime).to.not.exist;
@@ -378,7 +378,7 @@ describe('WriteSubscriptionHandler', function () {
             // last modified time should be about now
             parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
             expect(parsedLastModifiedTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(testUtils.timeEpsilon);
 
             parsedLastDownloadTime = Date.parse(res.body.data.creationTime);
             expect(parsedLastDownloadTime).to.not.be.NaN;
@@ -423,11 +423,11 @@ describe('WriteSubscriptionHandler', function () {
 
             parsedCreationTime = Date.parse(res.body.data.creationTime);
             expect(parsedCreationTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedCreationTime).to.be.below(testUtils.timeEpsilon);
 
             parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
             expect(parsedLastModifiedTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(testUtils.timeEpsilon);
 
             expect(res.body.data.lastDownloadTime).to.not.exist;
             expect(res.body.data.lastUpdateCheckTime).to.not.exist;
@@ -452,7 +452,7 @@ describe('WriteSubscriptionHandler', function () {
           .field('lastEpisode', updatingSubscriptionData.lastEpisode)
           .field(dummyField, 123)
           .expect('Content-type', 'application/json')
-          // .expect(200)
+          .expect(200)
           .end(function (err, res) {
             var afterRequest = new Date(),
               parsedCreationTime,
@@ -477,7 +477,7 @@ describe('WriteSubscriptionHandler', function () {
             // last modified time should be about now
             parsedLastModifiedTime = Date.parse(res.body.data.lastModifiedTime);
             expect(parsedLastModifiedTime).to.not.be.NaN;
-            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(20);
+            expect(afterRequest.getTime() - parsedLastModifiedTime).to.be.below(testUtils.timeEpsilon);
 
             parsedLastDownloadTime = Date.parse(res.body.data.lastDownloadTime);
             expect(parsedLastDownloadTime).to.not.be.NaN;

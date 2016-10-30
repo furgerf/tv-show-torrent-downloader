@@ -200,7 +200,7 @@ describe('database/subscription', function () {
           newLastUpdateCheckTime = testee.lastUpdateCheckTime;
 
         expect(newLastUpdateCheckTime).to.be.above(oldLastUpdateCheckTime);
-        expect(afterUpdateTime - newLastUpdateCheckTime).to.be.below(20);
+        expect(afterUpdateTime - newLastUpdateCheckTime).to.be.below(testUtils.timeEpsilon);
 
         expect(saveStub.calledOnce).to.be.true;
         expect(ensureConnectedStub.calledOnce).to.be.true;
@@ -239,7 +239,7 @@ describe('database/subscription', function () {
           newLastDownloadTime = testee.lastDownloadTime;
 
         expect(newLastDownloadTime).to.be.above(oldLastDownloadTime);
-        expect(afterUpdateTime - newLastDownloadTime).to.be.below(20);
+        expect(afterUpdateTime - newLastDownloadTime).to.be.below(testUtils.timeEpsilon);
 
         expect(saveStub.calledOnce).to.be.true;
         expect(ensureConnectedStub.calledOnce).to.be.true;
@@ -501,10 +501,10 @@ describe('database/subscription', function () {
         expect(newSubscription.lastEpisode).to.eql(0);
 
         expect(newSubscription.creationTime).to.not.eql(newSubscriptionData.creationTime);
-        expect(newSubscription.creationTime - afterUpdate).to.be.below(20);
+        expect(newSubscription.creationTime - afterUpdate).to.be.below(testUtils.timeEpsilon);
 
         expect(newSubscription.lastModifiedTime).to.not.eql(newSubscriptionData.lastModifiedTime);
-        expect(newSubscription.lastModifiedTime - afterUpdate).to.be.below(20);
+        expect(newSubscription.lastModifiedTime - afterUpdate).to.be.below(testUtils.timeEpsilon);
 
         expect(nextStub.calledOnce).to.be.true;
 
@@ -530,7 +530,7 @@ describe('database/subscription', function () {
 
         // ensure some properties ARE modified
         expect(existingSubscription.lastModifiedTime).to.be.above(existingSubscriptionData.lastModifiedTime);
-        expect(existingSubscription.lastModifiedTime - afterUpdate).to.be.below(20);
+        expect(existingSubscription.lastModifiedTime - afterUpdate).to.be.below(testUtils.timeEpsilon);
 
         expect(nextStub.calledOnce).to.be.true;
 

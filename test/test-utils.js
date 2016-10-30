@@ -126,3 +126,10 @@ exports.extractSubscriptionPreSaveAction = function () {
   })[0][1][1];
 };
 
+
+/**
+ * Time in milliseconds in which two dates can be considered to be equal when undable to compare
+ * directly (eg. only after a response was received).
+ */
+exports.timeEpsilon = 50;
+
