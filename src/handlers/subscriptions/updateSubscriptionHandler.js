@@ -14,7 +14,7 @@ var restify = require('restify'),
  * TODO: Simplify.
  */
 function updateSubscriptionWithTorrent (req, res, next) {
-  var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
+  var body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {}),
     subscriptionName = decodeURIComponent(req.params[0]),
     season = parseInt(body.season, 10),
     episode = parseInt(body.episode, 10),

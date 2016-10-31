@@ -28,6 +28,7 @@ function getTorrentSort(torrentSort) {
  * Handles requests to PUT /subscriptions/:subscriptionName/find.
  */
 function checkSubscriptionForUpdates(req, res, next) {
+  // the request body can be used to pass parameters, but they can also be passed in the querystring
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     subName = decodeURIComponent(req.params[0]),
     torrentSort = getTorrentSort(body ? body.torrentSort : req.params.torrentSort),
@@ -67,6 +68,7 @@ function checkSubscriptionForUpdates(req, res, next) {
  * Handles requests to PUT /subscriptions/find.
  */
 function checkAllSubscriptionsForUpdates(req, res, next) {
+  // the request body can be used to pass parameters, but they can also be passed in the querystring
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
     result,
     updateCount = 0,
