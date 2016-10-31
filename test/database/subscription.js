@@ -289,18 +289,26 @@ describe('database/subscription', function () {
 
     it('should reject invalid episode updates', function () {
       expect(this.testee.isValidUpdateInSameSeason(2, 0)).to.be.false;
-      expect(this.testee.isValidUpdateInSameSeason(2, 3)).to.be.false;
       expect(this.testee.isValidUpdateInSameSeason(2, 5)).to.be.false;
 
       expect(this.testee.isValidUpdateInSameSeason(3, 1)).to.be.false;
     });
 
     it('should accept a valid episode update', function () {
+      expect(this.testee.isValidUpdateInSameSeason(2, 3)).to.be.true;
       expect(this.testee.isValidUpdateInSameSeason(2, 4)).to.be.true;
     });
   });
 
   describe('updateLastEpisode', function () {
+    var realSubscriptionLog;
+
+    before(function () {
+      // replace real log
+      realSubscriptionLog = Subscription.model.log;
+      Subscription.model.log = testUtils.getFakeLog();
+    });
+
     beforeEach(function () {
       this.testee = Subscription.createNew(
         {
@@ -309,7 +317,10 @@ describe('database/subscription', function () {
           lastEpisode: 3
         }
       );
-      this.testee.log = testUtils.getFakeLog();
+    });
+
+    after(function () {
+      Subscription.model.log = realSubscriptionLog;
     });
 
     it('should reject invalid arguments', function () {
@@ -327,8 +338,6 @@ describe('database/subscription', function () {
       expect(this.testee.updateLastEpisode(1, 2), 'Do not allow season decrease').to.be.false;
       expect(this.testee.updateLastEpisode(2, 2), 'Do not allow episode decrease').to.be.false;
 
-      expect(this.testee.updateLastEpisode(2, 3), 'Do not allow same season/episode').to.be.false;
-
       expect(this.testee.updateLastEpisode(2, 5), 'Do not allow skipping episodes').to.be.false;
       expect(this.testee.updateLastEpisode(4, 1), 'Do not allow skipping season season').to.be.false;
 
@@ -340,6 +349,8 @@ describe('database/subscription', function () {
     });
 
     it('should accept valid update attempts', function () {
+      expect(this.testee.updateLastEpisode(2, 3), 'Allow same season/episode').to.be.true;
+
       expect(this.testee.updateLastEpisode(2, 4), 'Allow episode increase by one').to.be.true;
       expect(this.testee.lastSeason).to.eql(2);
       expect(this.testee.lastEpisode).to.eql(4);

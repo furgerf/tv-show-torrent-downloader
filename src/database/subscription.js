@@ -209,7 +209,8 @@ subscriptionSchema.methods.isValidUpdateToNewSeason = function (newSeason, newEp
  * @returns True if the episode update is valid, false otherwise.
  */
 subscriptionSchema.methods.isValidUpdateInSameSeason = function (newSeason, newEpisode) {
-  return newSeason === this.lastSeason && newEpisode === this.lastEpisode + 1;
+  return newSeason === this.lastSeason &&
+    (newEpisode === this.lastEpisode || newEpisode === this.lastEpisode + 1);
 };
 
 /**
@@ -227,7 +228,7 @@ subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
   }
 
   if (this.isValidUpdateToNewSeason(season, episode)) {
-    this.log.debug('Updating last episode of subscription %s from %s to %s',
+    Subscription.log.debug('Updating last episode of subscription %s from %s to %s',
       this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
       utils.formatEpisodeNumber(season, episode));
 
@@ -238,7 +239,7 @@ subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
   }
 
   if (this.isValidUpdateInSameSeason(season, episode)) {
-    this.log.debug('Updating last episode of subscription %s from %s to %s', this.name,
+    Subscription.log.debug('Updating last episode of subscription %s from %s to %s', this.name,
       utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
       utils.formatEpisodeNumber(this.lastSeason, episode));
 
@@ -247,7 +248,7 @@ subscriptionSchema.methods.updateLastEpisode = function (season, episode) {
     return true;
   }
 
-  this.log.warn('Attempting invalid season/episode update of subscription %s from %s to %s',
+  Subscription.log.warn('Attempting invalid season/episode update of subscription %s from %s to %s',
     this.name, utils.formatEpisodeNumber(this.lastSeason, this.lastEpisode),
     utils.formatEpisodeNumber(season, episode));
 

@@ -8,16 +8,24 @@ var expect = require('chai').expect,
   Q = require('q'),
   rewire = require('rewire'),
 
+  utils = require(root + 'common/utils'),
   testUtils = require('../../test-utils'),
   App = require(root + 'app'),
   config = require(root + 'common/config').getDebugConfig(),
-  // Subscription = require(root + 'database/subscription'),
+  Subscription = require(root + 'database/subscription'),
   RewiredUpdateSubscriptionHandler = rewire(root + 'handlers/subscriptions/updateSubscriptionHandler');
 
 config.api.port = 0;
 
 describe('UpdateSubscriptionHandler', function () {
   var fakeLog = testUtils.getFakeLog(),
+    fakeExec,
+    failLink = 'foobar',
+    successLink = 'asdf',
+    downloadedTorrents,
+    restoreExec;
+
+  before(function () {
     fakeExec = function (command, callback) {
       var actualCommand = command.slice(0, config.torrentCommand.length),
         link = command.slice(config.torrentCommand.length).split("'")[1];
@@ -30,12 +38,15 @@ describe('UpdateSubscriptionHandler', function () {
         return callback('This is an error');
       }
 
+      downloadedTorrents.push(link);
       return callback(null);
-    },
-    failLink = 'foobar',
-    successLink = 'asdf',
-
+    };
     restoreExec = RewiredUpdateSubscriptionHandler.__set__('exec', fakeExec);
+  });
+
+  beforeEach(function () {
+    downloadedTorrents = [];
+  });
 
   after(function () {
     restoreExec();
@@ -60,10 +71,11 @@ describe('UpdateSubscriptionHandler', function () {
 
   describe('downloadTorrent', function () {
     var startTorrentStub = sinon.stub(),
-      restoreStartTorrent = RewiredUpdateSubscriptionHandler.__set__('startTorrent', startTorrentStub),
+      restoreStartTorrent,
       fakeSub;
 
     before(function () {
+      restoreStartTorrent = RewiredUpdateSubscriptionHandler.__set__('startTorrent', startTorrentStub),
       fakeSub = {
         updateLastEpisode: sinon.stub(),
         save: sinon.stub()
@@ -131,8 +143,246 @@ describe('UpdateSubscriptionHandler', function () {
   });
 
   describe('requests', function () {
+    var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(Subscription.createNew),
+      saveStub = sinon.stub(),
+      findSubscriptionByNameStub,
+      explicitPreSaveAction,
+
+      updateLastDownloadTimeSpy,
+
+      server,
+      app,
+
+      ensureConnectedStub,
+      realSubscriptionLog;
+
+    before(function () {
+      saveStub.returns(Q.fcall(() => this));
+      explicitPreSaveAction = testUtils.extractSubscriptionPreSaveAction();
+
+      // creating the FSBN stub is more tricky because the return value depends on the argument
+      findSubscriptionByNameStub = sinon.stub(Subscription, 'findSubscriptionByName',
+        name => Q.fcall(() => {
+          var sub = sampleSubscriptions.find(sub => sub.name === name);
+          if (sub) {
+            updateLastDownloadTimeSpy = sinon.spy(sub, 'updateLastDownloadTime');
+            sub.getReturnable = Subscription.model.schema.methods.getReturnable;
+            sub.explicitPreSaveAction = explicitPreSaveAction;
+            sub.save = function () {
+              return sub.explicitPreSaveAction(testUtils.getResolvingPromise())
+                .then(() => sub);
+            };
+          }
+          return sub;
+        }));
+
+      // stub the real Subscription's ensureConnected
+      ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
+      ensureConnectedStub.returns(testUtils.getResolvingPromise());
+
+      // replace real log
+      realSubscriptionLog = Subscription.model.log;
+      Subscription.model.log = testUtils.getFakeLog();
+
+      RewiredUpdateSubscriptionHandler.__set__('Subscription', Subscription);
+    });
+
+    beforeEach(function (done) {
+      var rewiredHandler;
+
+      findSubscriptionByNameStub.reset();
+
+      app = new App(config, testUtils.getFakeLog());
+
+      rewiredHandler = new RewiredUpdateSubscriptionHandler(config.torrentCommand, testUtils.getFakeLog());
+      app.updateSubscriptionHandler = rewiredHandler;
+
+      // start server
+      app.listen(function () {
+        var url = 'http://' + this.address().address + ':' + this.address().port;
+        server = supertest.agent(url);
+        done();
+      });
+    });
+
+    afterEach(function (done) {
+      if (updateLastDownloadTimeSpy) {
+        updateLastDownloadTimeSpy.restore();
+      }
+      app.close(done);
+    });
+
+    after(function () {
+      findSubscriptionByNameStub.restore();
+      ensureConnectedStub.restore();
+      Subscription.model.log = realSubscriptionLog;
+    });
+
     describe('PUT /subscriptions/:subscriptionName/update', function () {
-      it('should be implemented');
+      it('should return an error if there is no subscription with that name', function (done) {
+        server
+          .put('/subscriptions/' + testUtils.nonexistentSubscriptionName + '/update')
+          .field('season', 123)
+          .field('episode', 456)
+          .field('link', 'foobar')
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql("No subscription named '" + testUtils.nonexistentSubscriptionName + "'.");
+
+            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+
+            done();
+          });
+      });
+
+      it('should return an error if the season isn\' specified', function (done) {
+        var testSubscriptionName = sampleSubscriptions[0].name;
+        server
+          .put('/subscriptions/' + testSubscriptionName + '/update')
+          .field('episode', 123)
+          .field('link', 'foobar')
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql('`season`, `episode`, and `link` must be specified in the request body');
+
+            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+
+            done();
+          });
+      });
+
+      it('should return an error if the season isn\' specified', function (done) {
+        var testSubscriptionName = sampleSubscriptions[0].name;
+        server
+          .put('/subscriptions/' + testSubscriptionName + '/update')
+          .field('season', 123)
+          .field('link', 456)
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql('`season`, `episode`, and `link` must be specified in the request body');
+
+            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+
+            done();
+          });
+      });
+
+      it('should return an error if the season isn\' specified', function (done) {
+        var testSubscriptionName = sampleSubscriptions[0].name;
+        server
+          .put('/subscriptions/' + testSubscriptionName + '/update')
+          .field('season', 123)
+          .field('episode', 456)
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql('`season`, `episode`, and `link` must be specified in the request body');
+
+            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+
+            done();
+          });
+      });
+
+      it('should return an error if the attempted update is not for a same or next episode', function (done) {
+        var testSubscription = sampleSubscriptions[0],
+          testSubscriptionName = testSubscription.name,
+          testSeason = testSubscription.lastSeason,
+          testEpisode = testSubscription.lastEpisode + 2;
+
+        server
+          .put('/subscriptions/' + testSubscriptionName + '/update')
+          .field('season', testSeason)
+          .field('episode', testEpisode)
+          .field('link', 'foobar')
+          .expect('Content-type', 'application/json')
+          .expect(400)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('BadRequestError');
+            expect(res.body.message).to.eql('Episode ' + utils.formatEpisodeNumber(testSeason, testEpisode) +
+              ' of show ' + testSubscriptionName + ' cannot be downloaded when the current episode is ' +
+                utils.formatEpisodeNumber(testSubscription.lastSeason, testSubscription.lastEpisode)
+            );
+
+            expect(updateLastDownloadTimeSpy).to.exist; // a subscription was retrieved
+            expect(updateLastDownloadTimeSpy.notCalled).to.be.true; // there was no download
+
+            done();
+          });
+      });
+
+      it('should successfully download a torrent of the same episode', function (done) {
+        var testSubscription = sampleSubscriptions[0],
+          testSubscriptionName = testSubscription.name,
+          testSeason = testSubscription.lastSeason,
+          testEpisode = testSubscription.lastEpisode;
+
+        server
+          .put('/subscriptions/' + testSubscriptionName + '/update')
+          .field('season', testSeason)
+          .field('episode', testEpisode)
+          .field('link', successLink)
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql('Started torrent for new episode ' + utils.formatEpisodeNumber(testSeason, testEpisode) +
+              ' of show ' + testSubscriptionName);
+
+            expect(downloadedTorrents).to.eql([successLink]);
+            expect(updateLastDownloadTimeSpy).to.exist; // a subscription was retrieved
+            expect(updateLastDownloadTimeSpy.calledOnce).to.be.true; // there was a download
+
+            done();
+          });
+      });
+
+      it('should successfully download a torrent of the next episode', function (done) {
+        var testSubscription = sampleSubscriptions[0],
+          testSubscriptionName = testSubscription.name,
+          testSeason = testSubscription.lastSeason,
+          testEpisode = testSubscription.lastEpisode + 1;
+
+        server
+          .put('/subscriptions/' + testSubscriptionName + '/update')
+          .field('season', testSeason)
+          .field('episode', testEpisode)
+          .field('link', successLink)
+          .expect('Content-type', 'application/json')
+          .expect(200)
+          .end(function (err, res) {
+            expect(err).to.not.exist;
+            expect(res.error).to.exist;
+            expect(res.body.code).to.eql('Success');
+            expect(res.body.message).to.eql('Started torrent for new episode ' + utils.formatEpisodeNumber(testSeason, testEpisode) +
+              ' of show ' + testSubscriptionName);
+
+            expect(downloadedTorrents).to.eql([successLink]);
+            expect(updateLastDownloadTimeSpy).to.exist; // a subscription was retrieved
+            expect(updateLastDownloadTimeSpy.calledOnce).to.be.true; // there was a download
+
+            done();
+          });
+      });
     });
   });
 });
