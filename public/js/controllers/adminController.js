@@ -85,9 +85,8 @@ mod.controller('adminController', ['logger', 'settings', 'notification', 'adminH
               disk.freePercentage = Math.round(disk.spaceAvailable / disk.spaceTotal * 10000) / 100;
             });
           })
-          .catch(function (resp) {
-            logger.logConsole('TODO: Handle response');
-            logger.logConsole(resp);
+          .catch(function (err) {
+            logger.logConsole('Disk usage request error: ' + err);
           });
       };
 
@@ -96,9 +95,8 @@ mod.controller('adminController', ['logger', 'settings', 'notification', 'adminH
           .then(function (resp) {
             that.version = resp.data.data;
           })
-          .catch(function (resp) {
-            logger.logConsole('TODO: Handle response');
-            logger.logConsole(resp);
+          .catch(function (err) {
+            logger.logConsole('Version request error: ' + err);
           });
       };
 

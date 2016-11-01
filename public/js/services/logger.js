@@ -31,8 +31,7 @@
     };
     this.logFile = function (msg) {
       if (logMethods & 0x4) {
-        // TODO: implement, maybe...
-        alert("LOGGING TO FILE IS NOT YET IMPLEMENTED!");
+        alert("LOGGING TO FILE IS NOT IMPLEMENTED!");
       }
       this.logAlert(msg);
     };

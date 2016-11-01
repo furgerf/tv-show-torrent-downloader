@@ -164,26 +164,24 @@ subscriptionSchema.methods.getReturnable = function () {
 
 /**
  * Updates the last update check time to now and saves the subscription.
- * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
   return Subscription.ensureConnected()
     .then(() => {
       this.lastUpdateCheckTime = new Date();
-      this.save();
-    });
+    })
+    .then(this.save);
 };
 
 /**
  * Updates the last download time to now and saves the subscription.
- * TODO: the document is saved asynchronously, have to do something to manage that...
  */
 subscriptionSchema.methods.updateLastDownloadTime = function () {
   return Subscription.ensureConnected()
     .then(() => {
       this.lastDownloadTime = new Date();
-      this.save();
-    });
+    })
+    .then(this.save);
 };
 
 /**
