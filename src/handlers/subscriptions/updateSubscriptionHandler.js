@@ -8,16 +8,47 @@ var restify = require('restify'),
 
   UpdateSubscriptionHandler;
 
+
 /**
- * Handles reqests to PUT /subscriptions/:subscriptionName/update.
+ * Tries to parse a request body and extract the parameters that are required for updating a
+ * subscription.
+ *
+ * @param {Object} requestBody - Body of the request to parse.
+ *
+ * @returns {Object} Parsed reqeust body with properties `season`, `episode`, and `link`.
  */
-function updateSubscriptionWithTorrent (req, res, next) {
-  var body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {}),
+function parseRequestBody(requestBody) {
+  var body = (typeof requestBody === 'string') ? JSON.parse(requestBody) : (requestBody || {}),
     season = parseInt(body.season, 10),
     episode = parseInt(body.episode, 10),
     link = body.link;
 
-  if (isNaN(season) || isNaN(episode) || !link) {
+  return {
+    season: season,
+    episode: episode,
+    link: link
+  };
+}
+
+/**
+ * Determines whether a parsed request body contains the necessary information for an update.
+ *
+ * @param {Object} body - Parsed request body.
+ *
+ * @returns {Boolean} True if the body contains the necessary information.
+ */
+function hasValidRequestBodyParameters(body) {
+  // use double negation for link to check if it is truthy
+  return !isNaN(body.season) && !isNaN(body.episode) && !!body.link;
+}
+
+/**
+ * Handles reqests to PUT /subscriptions/:subscriptionName/update.
+ */
+function updateSubscriptionWithTorrent (req, res, next) {
+  var body = parseRequestBody(req.body);
+
+  if (!hasValidRequestBodyParameters(body)) {
     return next(new restify.BadRequestError(
       '`season`, `episode`, and `link` must be specified in the request body'));
   }
@@ -27,23 +58,23 @@ function updateSubscriptionWithTorrent (req, res, next) {
   }
 
   req.log.info('Requesting to download %s, %s',
-    req.subscription.name, utils.formatEpisodeNumber(season, episode));
+    req.subscription.name, utils.formatEpisodeNumber(body.season, body.episode));
 
-  if (!req.subscription.isSameOrNextEpisode(season, episode)) {
+  if (!req.subscription.isSameOrNextEpisode(body.season, body.episode)) {
     return next(new restify.BadRequestError(
       'Episode %s of show %s cannot be downloaded when the current episode is %s',
-      utils.formatEpisodeNumber(season, episode), req.subscription.name,
+      utils.formatEpisodeNumber(body.season, body.episode), req.subscription.name,
       utils.formatEpisodeNumber(req.subscription.lastSeason, req.subscription.lastEpisode)
     ));
   }
 
   // jshint validthis: true
   UpdateSubscriptionHandler.downloadTorrent(
-    req.subscription, season, episode, this.torrentCommand, link, req.log)
+    req.subscription, body.season, body.episode, this.torrentCommand, body.link, req.log)
   .then(subscription => subscription.updateLastDownloadTime())
   .then(function () {
     utils.sendOkResponse('Started torrent for new episode '
-      + utils.formatEpisodeNumber(season, episode) + ' of show ' + req.subscription.name,
+      + utils.formatEpisodeNumber(body.season, body.episode) + ' of show ' + req.subscription.name,
       null, res, next, 'http://' + req.headers.host + req.url);
   });
 }

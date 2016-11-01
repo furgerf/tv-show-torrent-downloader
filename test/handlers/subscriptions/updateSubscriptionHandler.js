@@ -53,6 +53,70 @@ describe('UpdateSubscriptionHandler', function () {
     restoreExec();
   });
 
+  describe('parseRequestBody', function () {
+    var parseRequestBody,
+      emptyParsedBody = {
+        season: NaN,
+        episode: NaN,
+        link: undefined
+      },
+      fullParsedBody = {
+        season: 123,
+        episode: 456,
+        link: 'foobar'
+      };
+
+    before(function () {
+      parseRequestBody = RewiredUpdateSubscriptionHandler.__get__('parseRequestBody');
+    });
+
+    it('should be able to handle invalid input', function () {
+      expect(parseRequestBody(null)).to.eql(emptyParsedBody);
+      expect(parseRequestBody(123)).to.eql(emptyParsedBody);
+      expect(parseRequestBody([])).to.eql(emptyParsedBody);
+    });
+
+    it('should be able to handle a request body with missing data', function () {
+      expect(parseRequestBody({foo: 'bar'})).to.eql(emptyParsedBody);
+      expect(parseRequestBody({season: 123, foo: 'bar'})).to.eql({season: 123, episode: NaN, link: undefined});
+      expect(parseRequestBody({link: 'foobar'})).to.eql({season: NaN, episode: NaN, link: 'foobar'});
+    });
+
+    it('should be able to parse a stringified request body', function () {
+      expect(parseRequestBody(JSON.stringify(fullParsedBody))).to.eql(fullParsedBody);
+    });
+
+    it('should be able to parse a normal request body', function () {
+      expect(parseRequestBody(fullParsedBody)).to.eql(fullParsedBody);
+    });
+  });
+
+  describe('hasValidRequestBodyParameters', function () {
+    var hasValidRequestBodyParameters;
+
+    before(function () {
+      hasValidRequestBodyParameters = RewiredUpdateSubscriptionHandler.__get__('hasValidRequestBodyParameters');
+    });
+
+    it('should reject if the season is missing or invalid', function () {
+      expect(hasValidRequestBodyParameters({episode: 123, link: 'foobar'})).to.be.false;
+      expect(hasValidRequestBodyParameters({season: 'foobar', episode: 123, link: 'foobar'})).to.be.false;
+    });
+
+    it('should reject if the episode is missing or invalid', function () {
+      expect(hasValidRequestBodyParameters({season: 123, link: 'foobar'})).to.be.false;
+      expect(hasValidRequestBodyParameters({season: 123, episode: 'foobar', link: 'foobar'})).to.be.false;
+    });
+
+    it('should reject if the link is missing', function () {
+      expect(hasValidRequestBodyParameters({season: 123, episode: 456})).to.be.false;
+    });
+
+    it('should accept complete data', function () {
+      expect(hasValidRequestBodyParameters({season: 123, episode: 456, link: 'foobar'})).to.be.true;
+    });
+  });
+
   describe('startTorrent', function () {
     var startTorrent = RewiredUpdateSubscriptionHandler.__get__('startTorrent');
 
