@@ -12,7 +12,8 @@
     "cover-report": "istanbul cover --dir gen/coverage/ --report html --report cobertura _mocha -- --recursive -R xunit --reporter-options output=gen/xunit-report.xml || true",
     "lint": "jshint src/ --verbose --show-non-errors || true",
     "lint-test": "jshint test/ --verbose --show-non-errors || true",
-    "lint-xml": "jshint src/ --verbose --show-non-errors --reporter checkstyle > gen/jshint.xml || true"
+    "lint-xml": "jshint src/ --verbose --show-non-errors --reporter checkstyle > gen/jshint.xml || true",
+    "pre-commit": "npm test; npm run lint"
   },
   "repository": {
     "type": "git",

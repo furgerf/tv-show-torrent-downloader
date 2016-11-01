@@ -5,7 +5,6 @@ var restify = require('restify'),
   Q = require('q'),
 
   utils = require('./../../common/utils'),
-  Subscription = require('./../../database/subscription'),
 
   UpdateSubscriptionHandler;
 
@@ -14,7 +13,6 @@ var restify = require('restify'),
  */
 function updateSubscriptionWithTorrent (req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {}),
-    subscriptionName = decodeURIComponent(req.params[0]),
     season = parseInt(body.season, 10),
     episode = parseInt(body.episode, 10),
     link = body.link;
@@ -24,40 +22,31 @@ function updateSubscriptionWithTorrent (req, res, next) {
       '`season`, `episode`, and `link` must be specified in the request body'));
   }
 
-  Subscription.findSubscriptionByName(subscriptionName)
-    .then(subscription => subscription
-        ? subscription
-        : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
-    .then(function (subscription) {
-      req.log.info('Requesting to download %s, %s',
-        subscriptionName, utils.formatEpisodeNumber(season, episode));
+  if (!req.subscription) {
+    return next(new restify.BadRequestError('No subscription found with the given name.'));
+  }
 
-      if (subscription.isSameOrNextEpisode(season, episode)) {
-        return subscription;
-      }
+  req.log.info('Requesting to download %s, %s',
+    req.subscription.name, utils.formatEpisodeNumber(season, episode));
 
-      return next(new restify.BadRequestError(
-        'Episode %s of show %s cannot be downloaded when the current episode is %s',
-        utils.formatEpisodeNumber(season, episode),
-        subscription.name,
-        utils.formatEpisodeNumber(subscription.lastSeason, subscription.lastEpisode)
-      ));
-    })
-    .then(subscription => UpdateSubscriptionHandler.downloadTorrent(
-      subscription, season, episode, this.torrentCommand, link, req.log))
-    .then(subscription => subscription.updateLastDownloadTime())
-    .then(function () {
-      utils.sendOkResponse('Started torrent for new episode '
-        + utils.formatEpisodeNumber(season, episode) + ' of show ' + subscriptionName,
-        null, res, next, 'http://' + req.headers.host + req.url);
-      res.end();
-      return next();
-    })
-    .catch(function (error) {
-      return next(
-        new restify.InternalServerError('Error while trying to start torrent: %s', error)
-      );
-    });
+  if (!req.subscription.isSameOrNextEpisode(season, episode)) {
+    return next(new restify.BadRequestError(
+      'Episode %s of show %s cannot be downloaded when the current episode is %s',
+      utils.formatEpisodeNumber(season, episode), req.subscription.name,
+      utils.formatEpisodeNumber(req.subscription.lastSeason, req.subscription.lastEpisode)
+    ));
+  }
+
+  // jshint validthis: true
+  UpdateSubscriptionHandler.downloadTorrent(
+    req.subscription, season, episode, this.torrentCommand, link, req.log)
+  .then(subscription => subscription.updateLastDownloadTime())
+  .then(function () {
+    utils.sendOkResponse('Started torrent for new episode '
+      + utils.formatEpisodeNumber(season, episode) + ' of show ' + req.subscription.name,
+      null, res, next, 'http://' + req.headers.host + req.url);
+  })
+  .fail(err => next(new restify.InternalServerError('Error while starting torrent: %s', err)));
 }
 
 

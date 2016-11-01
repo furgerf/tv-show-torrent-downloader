@@ -30,7 +30,6 @@ function getTorrentSort(torrentSort) {
 function checkSubscriptionForUpdates(req, res, next) {
   // the request body can be used to pass parameters, but they can also be passed in the querystring
   var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
-    subName = decodeURIComponent(req.params[0]),
     torrentSort = getTorrentSort(body ? body.torrentSort : req.params.torrentSort),
     maxTorrentsPerEpisode = parseInt(body
         ? body.maxTorrentsPerEpisode
@@ -40,28 +39,25 @@ function checkSubscriptionForUpdates(req, res, next) {
     // jshint validthis: true
     that = this;
 
-  Subscription.findSubscriptionByName(subName)
-    .then(subscription => subscription
-        ? subscription
-        : next(new restify.BadRequestError("No subscription with name '" + subName + "'.")))
-    .then(function (subscription) {
-      return that.checkSubscriptionForUpdate(subscription,
-        torrentSort, maxTorrentsPerEpisode, req.log)
-        .then(function (data) {
-          if (startDownload) {
-            data.forEach(function (torrent) {
-              UpdateSubscription.downloadTorrent(subscription,
-                  torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
-            });
-          }
+  if (!req.subscription) {
+    return next(new restify.BadRequestError('No subscription found with the given name.'));
+  }
 
-        utils.sendOkResponse('Found ' +
-            (startDownload && data.length > 0 ? 'and started download of ' : '') +
-            data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
+  that.checkSubscriptionForUpdate(req.subscription, torrentSort, maxTorrentsPerEpisode, req.log)
+    .then(function (data) {
+      if (startDownload) {
+        data.forEach(function (torrent) {
+          UpdateSubscription.downloadTorrent(req.subscription,
+            torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
         });
+      }
+
+      utils.sendOkResponse('Found ' +
+        (startDownload && data.length > 0 ? 'and started download of ' : '') +
+          data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(
-        new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
+      new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
 }
 
 /**

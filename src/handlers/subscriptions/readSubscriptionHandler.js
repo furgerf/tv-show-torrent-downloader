@@ -9,23 +9,13 @@ var restify = require("restify"),
  * Handles reqests to GET /subscriptions/:subscriptionName.
  */
 function getSubscriptionByName (req, res, next) {
-  var subscriptionName = decodeURIComponent(req.params[0]);
+  if (!req.subscription) {
+    return next(new restify.BadRequestError('No subscription found with the given name.'));
+  }
 
-  // retrieve subscriptions
-  Subscription.findSubscriptionByName(subscriptionName)
-    .then(function (subscription) {
-      if (!subscription) {
-        return next(
-            new restify.BadRequestError("No subscription with name '" + subscriptionName + "'."));
-      }
-
-      // sub with requested name found, return returnable
-      utils.sendOkResponse("Subscription with name '" + subscriptionName + "' retrieved.",
-          subscription.getReturnable(), res, next, "http://" + req.headers.host + req.url);
-    })
-    .fail(function (err) {
-      next(new restify.InternalServerError(err ? err.name + ': ' + err.message : '?'));
-    });
+  // sub with requested name found, return returnable
+  utils.sendOkResponse("Subscription with name '" + req.subscription.name + "' retrieved.",
+    req.subscription.getReturnable(), res, next, "http://" + req.headers.host + req.url);
 }
 
 /**

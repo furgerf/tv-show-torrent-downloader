@@ -5,6 +5,9 @@ var restify = require('restify'),
   join = require('path').join,
   fs = require('fs'),
 
+  // handler helper
+  subscriptionRetriever = require('./handlers/subscriptions/singleSubscriptionRetriever'),
+
   // endpoint handlers
   ReadSubscriptionHandler = require('./handlers/subscriptions/readSubscriptionHandler'),
   WriteSubscriptionHandler = require('./handlers/subscriptions/writeSubscriptionHandler'),
@@ -25,12 +28,6 @@ var restify = require('restify'),
     path.pop();
     return join(path.join('/'), 'public');
   })();
-
-/*
-global.rootRequire = function(name) {
-    return require(__dirname + '/' + name);
-};
-*/
 
 process.title = 'tv-show-api';
 
@@ -84,26 +81,28 @@ function getServer(log, serveStaticFiles) {
   // retrieve all/specific subscription info
   server.get(/^\/subscriptions\/?$/,
     (req, res, next) => this.readSubscriptionHandler.getAllSubscriptions(req, res, next));
-  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/,
+  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, subscriptionRetriever.retrieve,
     (req, res, next) => this.readSubscriptionHandler.getSubscriptionByName(req, res, next));
 
   // add/update/delete subscription
   server.post(/^\/subscriptions\/?$/,
     (req, res, next) => this.writeSubscriptionHandler.addSubscription(req, res, next));
-  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/,
+  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, subscriptionRetriever.retrieve,
     (req, res, next) => this.writeSubscriptionHandler.updateSubscription(req, res, next));
-  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/,
+  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, subscriptionRetriever.retrieve,
     (req, res, next) => this.writeSubscriptionHandler.deleteSubscription(req, res, next));
 
   // check all/specific subscription for update
   server.put(/^\/subscriptions\/find\/?$/, (req, res, next) =>
     this.findSubscriptionUpdatesHandler.checkAllSubscriptionsForUpdates(req, res, next));
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, (req, res, next) =>
-    this.findSubscriptionUpdatesHandler.checkSubscriptionForUpdates(req, res, next));
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, subscriptionRetriever.retrieve,
+    (req, res, next) =>
+      this.findSubscriptionUpdatesHandler.checkSubscriptionForUpdates(req, res, next));
 
   // update specific subscription with torrent
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/, (req, res, next) =>
-    this.updateSubscriptionHandler.updateSubscriptionWithTorrent(req, res, next));
+  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/, subscriptionRetriever.retrieve,
+    (req, res, next) =>
+      this.updateSubscriptionHandler.updateSubscriptionWithTorrent(req, res, next));
 
   // system status
   server.get(/^\/status\/system\/disk\/?$/,

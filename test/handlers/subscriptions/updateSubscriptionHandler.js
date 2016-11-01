@@ -10,9 +10,10 @@ var expect = require('chai').expect,
 
   utils = require(root + 'common/utils'),
   testUtils = require('../../test-utils'),
-  App = require(root + 'app'),
+  App = rewire(root + 'app'),
   config = require(root + 'common/config').getDebugConfig(),
   Subscription = require(root + 'database/subscription'),
+  RewiredSingleSubscriptionRetriever = rewire(root + 'handlers/subscriptions/singleSubscriptionRetriever'),
   RewiredUpdateSubscriptionHandler = rewire(root + 'handlers/subscriptions/updateSubscriptionHandler');
 
 config.api.port = 0;
@@ -145,10 +146,10 @@ describe('UpdateSubscriptionHandler', function () {
   describe('requests', function () {
     var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(Subscription.createNew),
       saveStub = sinon.stub(),
-      findSubscriptionByNameStub,
-      explicitPreSaveAction,
+      fakeSubscription,
 
-      updateLastDownloadTimeSpy,
+      restoreSubscriptionRetriever,
+      restoreApp,
 
       server,
       app,
@@ -157,24 +158,21 @@ describe('UpdateSubscriptionHandler', function () {
       realSubscriptionLog;
 
     before(function () {
-      saveStub.returns(Q.fcall(() => this));
-      explicitPreSaveAction = testUtils.extractSubscriptionPreSaveAction();
+      var explicitPreSaveAction = testUtils.extractSubscriptionPreSaveAction();
 
-      // creating the FSBN stub is more tricky because the return value depends on the argument
-      findSubscriptionByNameStub = sinon.stub(Subscription, 'findSubscriptionByName',
-        name => Q.fcall(() => {
-          var sub = sampleSubscriptions.find(sub => sub.name === name);
-          if (sub) {
-            updateLastDownloadTimeSpy = sinon.spy(sub, 'updateLastDownloadTime');
-            sub.getReturnable = Subscription.model.schema.methods.getReturnable;
-            sub.explicitPreSaveAction = explicitPreSaveAction;
-            sub.save = function () {
-              return sub.explicitPreSaveAction(testUtils.getResolvingPromise())
-                .then(() => sub);
-            };
-          }
-          return sub;
-        }));
+      fakeSubscription = testUtils.getFakeFindSubscription(function (sub) {
+        if (sub) {
+          sub.getReturnable = Subscription.model.schema.methods.getReturnable;
+          sub.explicitPreSaveAction = explicitPreSaveAction;
+          sub.save = function () {
+            return sub.explicitPreSaveAction(testUtils.getResolvingPromise())
+              .then(() => sub);
+          };
+        }
+        return sub;
+      });
+
+      saveStub.returns(Q.fcall(() => this));
 
       // stub the real Subscription's ensureConnected
       ensureConnectedStub = sinon.stub(Subscription.model, 'ensureConnected');
@@ -183,19 +181,18 @@ describe('UpdateSubscriptionHandler', function () {
       // replace real log
       realSubscriptionLog = Subscription.model.log;
       Subscription.model.log = testUtils.getFakeLog();
-
-      RewiredUpdateSubscriptionHandler.__set__('Subscription', Subscription);
     });
 
     beforeEach(function (done) {
-      var rewiredHandler;
-
-      findSubscriptionByNameStub.reset();
-
+      // prepare app
+      // inject fake subscription in the subscriptionRetriever
+      restoreSubscriptionRetriever = RewiredSingleSubscriptionRetriever.__set__('Subscription', fakeSubscription);
+      // inject modified subscriptionRetriever in the app
+      restoreApp = App.__set__('subscriptionRetriever', RewiredSingleSubscriptionRetriever);
+      // create app
       app = new App(config, testUtils.getFakeLog());
-
-      rewiredHandler = new RewiredUpdateSubscriptionHandler(config.torrentCommand, testUtils.getFakeLog());
-      app.updateSubscriptionHandler = rewiredHandler;
+      // replace USH
+      app.updateSubscriptionHandler = new RewiredUpdateSubscriptionHandler(config.torrentCommand, testUtils.getFakeLog());
 
       // start server
       app.listen(function () {
@@ -206,14 +203,13 @@ describe('UpdateSubscriptionHandler', function () {
     });
 
     afterEach(function (done) {
-      if (updateLastDownloadTimeSpy) {
-        updateLastDownloadTimeSpy.restore();
-      }
       app.close(done);
     });
 
     after(function () {
-      findSubscriptionByNameStub.restore();
+      restoreSubscriptionRetriever();
+      restoreApp();
+
       ensureConnectedStub.restore();
       Subscription.model.log = realSubscriptionLog;
     });
@@ -231,15 +227,15 @@ describe('UpdateSubscriptionHandler', function () {
             expect(err).to.not.exist;
             expect(res.error).to.exist;
             expect(res.body.code).to.eql('BadRequestError');
-            expect(res.body.message).to.eql("No subscription named '" + testUtils.nonexistentSubscriptionName + "'.");
+            expect(res.body.message).to.eql('No subscription found with the given name.');
 
-            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+            expect(downloadedTorrents).to.eql([]);
 
             done();
           });
       });
 
-      it('should return an error if the season isn\' specified', function (done) {
+      it('should return an error if the season isn\'t specified', function (done) {
         var testSubscriptionName = sampleSubscriptions[0].name;
         server
           .put('/subscriptions/' + testSubscriptionName + '/update')
@@ -253,13 +249,13 @@ describe('UpdateSubscriptionHandler', function () {
             expect(res.body.code).to.eql('BadRequestError');
             expect(res.body.message).to.eql('`season`, `episode`, and `link` must be specified in the request body');
 
-            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+            expect(downloadedTorrents).to.eql([]);
 
             done();
           });
       });
 
-      it('should return an error if the season isn\' specified', function (done) {
+      it('should return an error if the season isn\'t specified', function (done) {
         var testSubscriptionName = sampleSubscriptions[0].name;
         server
           .put('/subscriptions/' + testSubscriptionName + '/update')
@@ -273,13 +269,13 @@ describe('UpdateSubscriptionHandler', function () {
             expect(res.body.code).to.eql('BadRequestError');
             expect(res.body.message).to.eql('`season`, `episode`, and `link` must be specified in the request body');
 
-            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+            expect(downloadedTorrents).to.eql([]);
 
             done();
           });
       });
 
-      it('should return an error if the season isn\' specified', function (done) {
+      it('should return an error if the season isn\'t specified', function (done) {
         var testSubscriptionName = sampleSubscriptions[0].name;
         server
           .put('/subscriptions/' + testSubscriptionName + '/update')
@@ -293,7 +289,7 @@ describe('UpdateSubscriptionHandler', function () {
             expect(res.body.code).to.eql('BadRequestError');
             expect(res.body.message).to.eql('`season`, `episode`, and `link` must be specified in the request body');
 
-            expect(updateLastDownloadTimeSpy).to.not.exist; // no subscription was retrieved
+            expect(downloadedTorrents).to.eql([]);
 
             done();
           });
@@ -321,8 +317,7 @@ describe('UpdateSubscriptionHandler', function () {
                 utils.formatEpisodeNumber(testSubscription.lastSeason, testSubscription.lastEpisode)
             );
 
-            expect(updateLastDownloadTimeSpy).to.exist; // a subscription was retrieved
-            expect(updateLastDownloadTimeSpy.notCalled).to.be.true; // there was no download
+            expect(downloadedTorrents).to.eql([]);
 
             done();
           });
@@ -349,8 +344,6 @@ describe('UpdateSubscriptionHandler', function () {
               ' of show ' + testSubscriptionName);
 
             expect(downloadedTorrents).to.eql([successLink]);
-            expect(updateLastDownloadTimeSpy).to.exist; // a subscription was retrieved
-            expect(updateLastDownloadTimeSpy.calledOnce).to.be.true; // there was a download
 
             done();
           });
@@ -377,8 +370,6 @@ describe('UpdateSubscriptionHandler', function () {
               ' of show ' + testSubscriptionName);
 
             expect(downloadedTorrents).to.eql([successLink]);
-            expect(updateLastDownloadTimeSpy).to.exist; // a subscription was retrieved
-            expect(updateLastDownloadTimeSpy.calledOnce).to.be.true; // there was a download
 
             done();
           });

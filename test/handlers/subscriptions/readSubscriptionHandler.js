@@ -4,14 +4,13 @@ const root = './../../../src/';
 
 var expect = require('chai').expect,
   supertest = require('supertest'),
-  sinon = require('sinon'),
   rewire = require('rewire'),
-  Q = require('q'),
 
-  App = require(root + 'app'),
+  App = rewire(root + 'app'),
   config = require(root + 'common/config').getDebugConfig(),
   testUtils = require('../../test-utils'),
   Subscription = require(root + 'database/subscription'),
+  RewiredSingleSubscriptionRetriever = rewire(root + 'handlers/subscriptions/singleSubscriptionRetriever'),
   RewiredReadSubscriptionHandler = rewire(root + 'handlers/subscriptions/readSubscriptionHandler');
 
 config.api.port = 0;
@@ -23,24 +22,17 @@ describe('ReadSubscriptionHandler', function () {
       findAllSubscriptionsStub,
       findSubscriptionByNameStub,
       fakeSubscription,
+      restoreSubscriptionRetriever,
+      restoreHandler,
+      restoreApp,
 
       server,
       app;
 
     before(function () {
-      findAllSubscriptionsStub = sinon.stub();
-      findAllSubscriptionsStub.returns(Q.fcall(() => sampleSubscriptions));
-
-      // creating the FSBN stub is more tricky because the return value depends on the argument
-      findSubscriptionByNameStub = sinon.stub(
-        {foo: () => null},
-        'foo',
-        name => Q.fcall(() => sampleSubscriptions.find(sub => sub.name === name)));
-
-     fakeSubscription = {
-        findAllSubscriptions: findAllSubscriptionsStub,
-        findSubscriptionByName: findSubscriptionByNameStub
-      };
+      fakeSubscription = testUtils.getFakeFindSubscription();
+      findAllSubscriptionsStub = fakeSubscription.findAllSubscriptions;
+      findSubscriptionByNameStub = fakeSubscription.findSubscriptionByName;
     });
 
     beforeEach(function (done) {
@@ -49,11 +41,15 @@ describe('ReadSubscriptionHandler', function () {
       findSubscriptionByNameStub.reset();
 
       // prepare app
+      // inject fake subscription in the subscriptionRetriever
+      restoreSubscriptionRetriever = RewiredSingleSubscriptionRetriever.__set__('Subscription', fakeSubscription);
+      // inject fake subscription in the RSH
+      restoreHandler = RewiredReadSubscriptionHandler.__set__('Subscription', fakeSubscription);
+      // inject modified subscriptionRetriever in the app
+      restoreApp = App.__set__('subscriptionRetriever', RewiredSingleSubscriptionRetriever);
+      // create app
       app = new App(config, testUtils.getFakeLog());
-
-      // inject fake subscription - no need to restore afterwards
-      // TODO: CHECK IF THAT REALLY IS TRUE
-      RewiredReadSubscriptionHandler.__set__('Subscription', fakeSubscription);
+      // replace RSH
       app.readSubscriptionHandler = new RewiredReadSubscriptionHandler(testUtils.getFakeLog());
 
       // start server
@@ -66,6 +62,12 @@ describe('ReadSubscriptionHandler', function () {
 
     afterEach(function (done) {
       app.close(done);
+    });
+
+    after(function () {
+      restoreSubscriptionRetriever();
+      restoreHandler();
+      restoreApp();
     });
 
     describe('GET /subscriptions', function () {
@@ -139,7 +141,7 @@ describe('ReadSubscriptionHandler', function () {
             expect(err).to.not.exist;
             expect(res.result).to.not.exist;
             expect(res.body.code).to.equal('BadRequestError');
-            expect(res.body.message).to.equal("No subscription with name '" + testUtils.nonexistentSubscriptionName + "'.");
+            expect(res.body.message).to.equal("No subscription found with the given name.");
             expect(res.body.data).to.not.exist;
 
             expect(findAllSubscriptionsStub.notCalled).to.be.true;

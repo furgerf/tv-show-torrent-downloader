@@ -247,7 +247,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
             expect(err).to.not.exist;
             expect(res.result).to.not.exist;
             expect(res.body.code).to.equal('BadRequestError');
-            expect(res.body.message).to.equal("No subscription with name '" + unknownSubscriptionName + "'.");
+            expect(res.body.message).to.equal("No subscription found with the given name.");
             expect(res.body.data).to.not.exist;
 
             expect(findSubscriptionByNameStub.calledOnce).to.be.true;

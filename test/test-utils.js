@@ -105,6 +105,10 @@ var sampleSubscriptionData = [
 ];
 exports.getSampleSubscriptionData = function () { return sampleSubscriptionData.slice(0); };
 
+exports.getSampleSubscriptions = function () {
+  return exports.getSampleSubscriptionData().map(Subscription.createNew);
+};
+
 exports.nonexistentSubscriptionName = 'nonexistent subscription';
 
 
@@ -132,4 +136,40 @@ exports.extractSubscriptionPreSaveAction = function () {
  * directly (eg. only after a response was received).
  */
 exports.timeEpsilon = 50;
+
+/**
+ * Gets an object offering the methods `findAllSubscriptions` and `findSubscriptionByName` that can
+ * be used to replace a `Subscription` in a test.
+ * The subscriptions that are returned are Subscription instances with the sample data from
+ * `getSampleSubscriptionData`.
+ *
+ * @param {Function} transformSubscription - Optional. If specified, this transformation is applied
+ *                                           to each subscription that is retrieved through these
+ *                                           fake methods.
+ *
+ * @returns {Object} Fake subscription object.
+ */
+exports.getFakeFindSubscription = function (transformSubscription) {
+  // transformation to apply to each subscription that is retrieved through this fake
+  // can be used for example to assign some real Subscription methods
+  var subscriptionTransformation = (transformSubscription || function (x) { return x; }),
+
+    sampleSubscriptions = exports.getSampleSubscriptions(),
+
+    findSubscriptionByNameStub = sinon.stub(
+      {foo: () => null}, // stub dummy method of dummy object
+      'foo',
+      name => Q.fcall(() => sampleSubscriptions.find(sub => sub.name === name))
+        .then(subscriptionTransformation)),
+
+    findAllSubscriptionsStub = sinon.stub();
+
+  findAllSubscriptionsStub.returns(Q.fcall(() => sampleSubscriptions)
+    .then(subs => subs.map(subscriptionTransformation)));
+
+  return {
+    findAllSubscriptions: findAllSubscriptionsStub,
+    findSubscriptionByName: findSubscriptionByNameStub
+  };
+};
 
