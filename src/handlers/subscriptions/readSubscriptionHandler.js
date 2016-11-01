@@ -33,9 +33,6 @@ function getAllSubscriptions (req, res, next) {
           subscriptions.map(sub => sub.getReturnable()),
           res, next, "http://" + req.headers.host + req.url);
       next();
-    })
-    .fail(function (err) {
-      next(new restify.InternalServerError(err ? err.name + ': ' + err.message : '?'));
     });
 }
 

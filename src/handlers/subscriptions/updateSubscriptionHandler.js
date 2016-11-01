@@ -45,8 +45,7 @@ function updateSubscriptionWithTorrent (req, res, next) {
     utils.sendOkResponse('Started torrent for new episode '
       + utils.formatEpisodeNumber(season, episode) + ' of show ' + req.subscription.name,
       null, res, next, 'http://' + req.headers.host + req.url);
-  })
-  .fail(err => next(new restify.InternalServerError('Error while starting torrent: %s', err)));
+  });
 }
 
 
