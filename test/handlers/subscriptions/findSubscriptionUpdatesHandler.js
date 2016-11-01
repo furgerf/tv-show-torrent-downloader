@@ -354,14 +354,14 @@ describe('FindSubscriptionUpdatesHandler', function () {
             expect(res.body.data).to.eql(subscriptionWithUpdatesOfSameAndNextSeasonDummyTorrents);
             expect(res.body.message).to.equal('Found 4 new torrents');
 
-            expect(findSubscriptionByNameStub.calledOnce).to.be.true;;
+            expect(findSubscriptionByNameStub.calledOnce).to.be.true;
             expect(findSubscriptionByNameStub.calledWith(subscriptionWithUpdatesOfSameAndNextSeason.name)).to.be.true;
 
             // we expect 5 calls: three for the same season update check and two for the new season update check
             expect(torrentSiteManagerExecStub.callCount).to.eql(5);
             subscriptionWithUpdatesOfSameAndNextSeasonCommands.forEach(cmd => expect(torrentSiteManagerExecStub.calledWith(cmd, sinon.match.func)).to.be.true);
 
-            expect(fakeUpdateSubscription.downloadTorrent.notCalled).to.be.true;;
+            expect(fakeUpdateSubscription.downloadTorrent.notCalled).to.be.true;
 
             done();
           });

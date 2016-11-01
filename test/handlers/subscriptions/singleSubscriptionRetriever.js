@@ -90,9 +90,9 @@ describe('singleSubscriptionRetriever', function () {
 
         // can't check for equality of the object apparently because of some model properties
         // so instead, we compare the schema's properties
-        for (var prop in schemaProperties) {
-          expect(fakeReq[prop]).to.eql(subscription[prop]);
-        }
+        schemaProperties.forEach(function (prop) {
+          expect(fakeReq.subscription[prop]).to.eql(subscription[prop]);
+        });
 
         done();
       };
@@ -114,9 +114,9 @@ describe('singleSubscriptionRetriever', function () {
 
         // can't check for equality of the object apparently because of some model properties
         // so instead, we compare the schema's properties
-        for (var prop in schemaProperties) {
-          expect(fakeReq[prop]).to.eql(subscription[prop]);
-        }
+        schemaProperties.forEach(function (prop) {
+          expect(fakeReq.subscription[prop]).to.eql(subscription[prop]);
+        });
 
         done();
       };
