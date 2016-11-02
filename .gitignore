@@ -2,3 +2,4 @@
 node_modules/
 Session.vim
 gen/
+npm-debug.log

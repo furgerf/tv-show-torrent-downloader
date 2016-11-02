@@ -85,6 +85,33 @@ describe('utils', function () {
     });
   });
 
+  describe('mergeObjects', function () {
+    it('should join objects with different properties', function () {
+      var obj1 = {foo: 123},
+        obj2 = {bar: 456},
+        merged1 = utils.mergeObjects(obj1, obj2),
+        merged2 = utils.mergeObjects(obj2, obj1);
+
+      expect(merged1).to.eql(merged2);
+      expect(merged1).to.eql({foo: 123, bar: 456});
+      expect(obj1).to.eql({foo: 123});
+      expect(obj2).to.eql({bar: 456});
+    });
+
+    it('should correctly join objects with matching properties', function () {
+      var obj1 = {foo: 123, foobar: 123},
+        obj2 = {bar: 456, foobar: 456},
+        merged1 = utils.mergeObjects(obj1, obj2),
+        merged2 = utils.mergeObjects(obj2, obj1);
+
+      expect(merged1).to.not.eql(merged2);
+      expect(merged1).to.eql({foo: 123, bar: 456, foobar: 456});
+      expect(merged2).to.eql({foo: 123, bar: 456, foobar: 123});
+      expect(obj1).to.eql({foo: 123, foobar: 123});
+      expect(obj2).to.eql({bar: 456, foobar: 456});
+    });
+  });
+
   describe('sendOkResponse', function () {
     var fakeRes = {
       setHeader: sinon.stub(),
