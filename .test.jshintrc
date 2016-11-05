@@ -1,5 +1,5 @@
 {
-    //"maxerr"        : 50,       // {int} Maximum error before stopping
+    "maxerr"        : 0,        // {int} Maximum error before stopping
 
     // Enforcing
     "bitwise"       : true,     // true: Prohibit bitwise operators (&, |, ^, etc.)
@@ -30,16 +30,16 @@
     "maxparams"     : 8,        // {int} Max number of formal params allowed per function
     "maxdepth"      : 5,        // {int} Max depth of nested blocks (within functions)
     "maxstatements" : 20,       // {int} Max number statements per function
-    "maxcomplexity" : 5,        // {int} Max cyclomatic complexity per function
-    "maxlen"        : 0,      // {int} Max number of characters per line
-    //"varstmt"       : false,    // true: Disallow any var statements. Only `let` and `const` are allowed.
+    "maxcomplexity" : 6,        // {int} Max cyclomatic complexity per function
+    "maxlen"        : 0,        // {int} Max number of characters per line
+    //"varstmt"       : false,  // true: Disallow any var statements. Only `let` and `const` are allowed.
 
     // Relaxing
     "asi"           : false,     // true: Tolerate Automatic Semicolon Insertion (no semicolons)
     "boss"          : false,     // true: Tolerate assignments where comparisons would be expected
     "debug"         : false,     // true: Allow debugger statements e.g. browser breakpoints.
     "eqnull"        : false,     // true: Tolerate use of `== null`
-    //"esversion"     : 6,         // {int} Specify the ECMAScript version to which the code must adhere.
+    //"esversion"     : 6,       // {int} Specify the ECMAScript version to which the code must adhere.
     "esnext"        : true,      // use until "esversion is available (jshint 2.9.2 onwards)
     "moz"           : false,     // true: Allow Mozilla specific syntax (extends and overrides esnext features)
                                  // (ex: `for each`, multiple try/catch, function expression…)

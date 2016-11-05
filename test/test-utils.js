@@ -135,7 +135,7 @@ exports.extractSubscriptionPreSaveAction = function () {
  * Time in milliseconds in which two dates can be considered to be equal when undable to compare
  * directly (eg. only after a response was received).
  */
-exports.timeEpsilon = 50;
+exports.timeEpsilon = 200;
 
 /**
  * Gets an object offering the methods `findAllSubscriptions` and `findSubscriptionByName` that can
