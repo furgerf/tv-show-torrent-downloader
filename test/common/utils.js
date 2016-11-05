@@ -110,6 +110,19 @@ describe('utils', function () {
       expect(obj1).to.eql({foo: 123, foobar: 123});
       expect(obj2).to.eql({bar: 456, foobar: 456});
     });
+
+    it('should correctly join objects with matching object properties', function () {
+      var obj1 = {foo: 123, foobar: {foo: 12, bar: 34}},
+        obj2 = {bar: 456, foobar: {bar: 56, foobar: 78}},
+        merged1 = utils.mergeObjects(obj1, obj2),
+        merged2 = utils.mergeObjects(obj2, obj1);
+
+      expect(merged1).to.not.eql(merged2);
+      expect(merged1).to.eql({foo: 123, bar: 456, foobar: {foo: 12, bar: 56, foobar: 78}});
+      expect(merged2).to.eql({foo: 123, bar: 456, foobar: {foo: 12, bar: 34, foobar: 78}});
+      expect(obj1).to.eql({foo: 123, foobar: {foo: 12, bar: 34}});
+      expect(obj2).to.eql({bar: 456, foobar: {bar: 56, foobar: 78}});
+    });
   });
 
   describe('sendOkResponse', function () {

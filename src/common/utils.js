@@ -61,8 +61,8 @@ exports.fileSizeToBytes = function (num, unit) {
  * Merges the properties of `object1` and `object2` into a new object. If both objects contain the
  * same property, the value of `object2` is stored. The two original objects aren't modified.
  *
- * @param {Object} object1 - Object where the properties should be added.
- * @param {Object} object2 - Object from where the properties should be copied.
+ * @param {Object} object1 - Object from where the low-priority properties should be copied.
+ * @param {Object} object2 - Object from where the high-priority properties should be copied.
  *
  * @returns {Object} Combination of the two objects.
  */
@@ -78,7 +78,11 @@ exports.mergeObjects = function (object1, object2) {
 
   for (prop in object2) {
     if (object2.hasOwnProperty(prop)) {
-      result[prop] = object2[prop];
+      if (typeof object2[prop] === 'object') {
+        result[prop] = exports.mergeObjects(object1[prop], object2[prop]);
+      } else {
+        result[prop] = object2[prop];
+      }
     }
   }
 

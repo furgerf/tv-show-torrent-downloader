@@ -101,10 +101,12 @@ subscriptionSchema.statics.initialize = function (log, databaseConfiguration) {
       log.warn('Connection to MongoDB lost', databaseAddress);
     });
     process.on('SIGINT', function () {
-      mongoose.collection.close(function () {
-        log.info('Application is terminating: closing MongoDB connection');
-        process.exit(0);
-      });
+      if (mongoose.collection) {
+        mongoose.collection.close(function () {
+          log.info('Application is terminating: closing MongoDB connection');
+          process.exit(0);
+        });
+      }
     });
   } else {
     this.log.warn('NOT using real database!');
