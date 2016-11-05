@@ -8,8 +8,8 @@
     "stop": "pkill tv-show-api --signal SIGINT",
     "test": "mocha --check-leaks --full-trace --inline-diffs --no-exit --recursive",
     "auto-test": "mocha -w --recursive",
-    "cover": "istanbul cover --dir gen/coverage/ --report html _mocha -- --recursive -R progress || true",
-    "cover-report": "istanbul cover --dir gen/coverage/ --report html --report cobertura _mocha -- --recursive -R xunit --reporter-options output=gen/xunit-report.xml || true",
+    "cover": "istanbul cover --dir gen/coverage/ --report html _mocha -- --recursive -R progress",
+    "cover-report": "istanbul cover --dir gen/coverage/ --report html --report cobertura _mocha -- --recursive -R xunit --reporter-options output=gen/xunit-report.xml",
     "lint": "jshint src/ --verbose --show-non-errors | egrep --color=auto '|line [0-9]+' || true",
     "lint-test": "jshint test/ --verbose --show-non-errors --config .test.jshintrc | egrep --color=auto '|line [0-9]+' || true",
     "lint-xml": "jshint src/ --verbose --show-non-errors --reporter checkstyle > gen/jshint.xml || true",
@@ -20,7 +20,7 @@
     "url": "https://github.com/furgerf/tv-show-torrent-downloader"
   },
   "author": "Fabian Furger",
-  "license": "ISC",
+  "license": "APL2.0",
   "dependencies": {
     "bunyan": "*",
     "git-rev-sync": "*",
