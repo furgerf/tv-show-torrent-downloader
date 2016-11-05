@@ -25,17 +25,38 @@ function getTorrentSort(torrentSort) {
 }
 
 /**
+ * Parses the data that was sent with the request. First priority are the request params from
+ * the query string, second priority is the request body. The information that is required to look
+ * for updates is extracted and returned.
+ *
+ * @param {Object} requestBody - Body of the request to parse.
+ * @param {Object} requestParams - Params of the request to parse.
+ *
+ * @returns {Object} Parsed request data with properties `torrentSort, `maxTorrentsPerEpisode`, and
+ *                   `startDownload.
+ */
+
+function parseRequestData(requestBody, requestParams) {
+  // the request body can be used to pass parameters, but they can also be passed in the querystring
+  // higher priority is given to the querystring (request params)
+  var body = (typeof requestBody === 'string') ? JSON.parse(requestBody) : (requestBody || {}),
+    data = utils.mergeObjects(body, requestParams),
+    torrentSort = getTorrentSort(data.torrentSort),
+    maxTorrentsPerEpisode = parseInt(data.maxTorrentsPerEpisode, 10) || 1,
+    startDownload = data.startDownload === true || data.startDownload === 'true';
+
+  return {
+    torrentSort: torrentSort,
+    maxTorrentsPerEpisode: maxTorrentsPerEpisode,
+    startDownload: startDownload
+  };
+}
+
+/**
  * Handles requests to PUT /subscriptions/:subscriptionName/find.
  */
 function checkSubscriptionForUpdates(req, res, next) {
-  // the request body can be used to pass parameters, but they can also be passed in the querystring
-  var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
-    torrentSort = getTorrentSort(body ? body.torrentSort : req.params.torrentSort),
-    maxTorrentsPerEpisode = parseInt(body
-        ? body.maxTorrentsPerEpisode
-        : req.params.maxTorrentsPerEpisode, 10) || 1,
-    startDownload = req.params.startDownload === true || req.params.startDownload === 'true',
-
+  var parameters = parseRequestData(req.body, req.params),
     // jshint validthis: true
     that = this;
 
@@ -43,9 +64,10 @@ function checkSubscriptionForUpdates(req, res, next) {
     return next(new restify.BadRequestError('No subscription found with the given name.'));
   }
 
-  that.checkSubscriptionForUpdate(req.subscription, torrentSort, maxTorrentsPerEpisode, req.log)
+  that.checkSubscriptionForUpdate(req.subscription, parameters.torrentSort,
+    parameters.maxTorrentsPerEpisode, req.log)
     .then(function (data) {
-      if (startDownload) {
+      if (parameters.startDownload) {
         data.forEach(function (torrent) {
           UpdateSubscription.downloadTorrent(req.subscription,
             torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
@@ -53,7 +75,7 @@ function checkSubscriptionForUpdates(req, res, next) {
       }
 
       utils.sendOkResponse('Found ' +
-        (startDownload && data.length > 0 ? 'and started download of ' : '') +
+        (parameters.startDownload && data.length > 0 ? 'and started download of ' : '') +
           data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(
@@ -64,16 +86,9 @@ function checkSubscriptionForUpdates(req, res, next) {
  * Handles requests to PUT /subscriptions/find.
  */
 function checkAllSubscriptionsForUpdates(req, res, next) {
-  // the request body can be used to pass parameters, but they can also be passed in the querystring
-  var body = typeof req.body === "string" ? JSON.parse(req.body) : req.body,
+  var parameters = parseRequestData(req.body, req.params),
     result,
     updateCount = 0,
-    torrentSort = getTorrentSort(body ? body.torrentSort : req.params.torrentSort),
-    maxTorrentsPerEpisode = parseInt(body
-        ? body.maxTorrentsPerEpisode
-        : req.params.maxTorrentsPerEpisode, 10) || 1,
-    startDownload = req.params.startDownload === true || req.params.startDownload === 'true',
-
     // jshint validthis: true
     that = this;
 
@@ -81,8 +96,8 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
   Subscription.findAllSubscriptions()
     // continue when updates are found for all subscriptions
     .then(subscriptions => Q.all(subscriptions.map(function (subscription) {
-      return that.checkSubscriptionForUpdate(subscription, torrentSort,
-        maxTorrentsPerEpisode, req.log)
+      return that.checkSubscriptionForUpdate(subscription, parameters.torrentSort,
+        parameters.maxTorrentsPerEpisode, req.log)
         .then(function (data) {
           // adding a reference to the subscription for starting the torrent a bit futher down...
           data.subscription = subscription;
@@ -99,7 +114,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
       // remove the subscription property from each result entry
       // but only after starting the download - if requested
       result.forEach(function (entry) {
-        if (startDownload) {
+        if (parameters.startDownload) {
           entry.forEach(function (torrent) {
             UpdateSubscription.downloadTorrent(entry.subscription,
                 torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
@@ -112,7 +127,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
       // done
       utils.sendOkResponse('Checked ' + data.length + ' subscriptions for updates and found ' +
           updateCount + ' new torrents' +
-          (startDownload && updateCount > 0 ? ' which were downloaded' : ''),
+          (parameters.startDownload && updateCount > 0 ? ' which were downloaded' : ''),
           result, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(

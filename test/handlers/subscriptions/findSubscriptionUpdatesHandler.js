@@ -46,6 +46,51 @@ describe('FindSubscriptionUpdatesHandler', function () {
     });
   });
 
+  describe('parseRequestData', function () {
+    var parseRequestData,
+      defaultData = {
+        torrentSort: 'largest',
+        maxTorrentsPerEpisode: 1,
+        startDownload: false
+      },
+      testData = {
+        torrentSort: 'newest',
+        maxTorrentsPerEpisode: 123,
+        startDownload: true
+      };
+
+    before(function () {
+      parseRequestData = RewiredFindSubscriptionUpdatesHandler.__get__('parseRequestData');
+    });
+
+    it('should be able to handle invalid input', function () {
+      expect(parseRequestData(null)).to.eql(defaultData);
+      expect(parseRequestData(123)).to.eql(defaultData);
+      expect(parseRequestData([])).to.eql(defaultData);
+    });
+
+    it('should be able to handle a request body with missing data', function () {
+      expect(parseRequestData({foo: 'bar'})).to.eql(defaultData);
+      expect(parseRequestData({maxTorrentsPerEpisode: 456, foo: 'bar'})).to.eql({torrentSort: 'largest', maxTorrentsPerEpisode: 456, startDownload: false});
+      expect(parseRequestData({startDownload: true})).to.eql({torrentSort: 'largest', maxTorrentsPerEpisode: 1, startDownload: true});
+    });
+
+    it('should be able to parse a stringified request body', function () {
+      expect(parseRequestData(JSON.stringify(testData))).to.eql(testData);
+    });
+
+    it('should be able to parse both params and body', function () {
+      expect(parseRequestData({torrentSort: 'smallest'}, {maxTorrentsPerEpisode: 321, startDownload: true})).to.eql({torrentSort: 'smallest', maxTorrentsPerEpisode: 321, startDownload: true});
+
+      expect(parseRequestData(defaultData, testData)).to.eql(testData);
+      expect(parseRequestData(testData, defaultData)).to.eql(defaultData);
+    });
+
+    it('should be able to parse a normal request body', function () {
+      expect(parseRequestData(testData)).to.eql(testData);
+    });
+  });
+
   describe('checkForMultipleEpisodes', function () {
     it('should reject invalid input');
 
