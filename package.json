@@ -7,6 +7,7 @@
     "start": "supervisor server.js | node_modules/bunyan/bin/bunyan",
     "stop": "pkill tv-show-api --signal SIGINT",
     "test": "mocha --check-leaks --full-trace --inline-diffs --no-exit --recursive",
+    "start-bare": "node server.js",
     "auto-test": "mocha -w --recursive",
     "cover": "istanbul cover --dir gen/coverage/ --report html _mocha -- --recursive -R progress",
     "cover-report": "istanbul cover --dir gen/coverage/ --report html --report cobertura _mocha -- --recursive -R xunit --reporter-options output=gen/xunit-report.xml",
