@@ -24,6 +24,7 @@
   "dependencies": {
     "bunyan": "*",
     "git-rev-sync": "*",
+    "minimist": "*",
     "mongoose": "*",
     "q": "*",
     "restify": "*"
