@@ -94,6 +94,7 @@ function checkSubscriptionForUpdates(req, res, next) {
 function checkAllSubscriptionsForUpdates(req, res, next) {
   var parameters = parseRequestData(req.body, req.params),
     result,
+    subscriptionCount,
     updateCount = 0,
     // jshint validthis: true
     that = this;
@@ -112,29 +113,37 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
     })))
     .then(function (data) {
       // prepare result
+      subscriptionCount = data.length;
       result = data.filter(function (entry) { return entry.length > 0; });
       result.forEach(function (torrents) {
         updateCount += torrents.length;
       });
 
-      // remove the subscription property from each result entry
-      // but only after starting the download - if requested
-      result.forEach(function (entry) {
-        if (parameters.startDownload) {
-          entry.forEach(function (torrent) {
-            UpdateSubscription.downloadTorrent(entry.subscription,
-                torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
-          });
-        }
-        // we don't need the subscription reference anymore
+      if (!parameters.startDownload || updateCount === 0) {
+        return result;
+      }
+
+      // start the downloads and return the initially found torrent data
+      return Q.all(result.map(function (torrents) {
+        return that.downloadEpisodesInSequence(torrents, torrents.subscription, req.log)
+          .fail(err =>
+            next(new restify.InternalServerError('Error while downloading torrents: ' + err)));
+      }))
+      .then (() => result);
+    })
+    .then(function (data) {
+      // remove the subscription property from each data entry
+      data.forEach(function (entry) {
         delete entry.subscription;
       });
-
+      return data;
+    })
+    .then(function (data) {
       // done
-      utils.sendOkResponse('Checked ' + data.length + ' subscriptions for updates and found ' +
-          updateCount + ' new torrents' +
+      utils.sendOkResponse('Checked ' + subscriptionCount + ' subscriptions for updates and found '
+          + updateCount + ' new torrents' +
           (parameters.startDownload && updateCount > 0 ? ' which were downloaded' : ''),
-          result, res, next, 'http://' + req.headers.host + req.url);
+          data, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(
           new restify.InternalServerError('All known torrent sites appear to be unavailable.')));

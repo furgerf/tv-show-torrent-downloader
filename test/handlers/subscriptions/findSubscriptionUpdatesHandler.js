@@ -120,7 +120,9 @@ describe('FindSubscriptionUpdatesHandler', function () {
       subscriptionWithUpdatesOfSameSeason = sampleSubscriptions[1],
       subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub,
       subscriptionWithUpdatesOfNextSeason = sampleSubscriptions[2],
+      subscriptionWithUpdatesOfNextSeasonUpdateLastDownloadTimeStub,
       subscriptionWithUpdatesOfSameAndNextSeason = sampleSubscriptions[3],
+      subscriptionWithUpdatesOfSameAndNextSeasonUpdateLastDownloadTimeStub,
 
       server,
       app,
@@ -252,6 +254,8 @@ describe('FindSubscriptionUpdatesHandler', function () {
       torrentSiteManagerExecStub.withArgs(subscriptionWithUpdatesOfSameAndNextSeasonCommands[4], sinon.match.func).callsArgWith(1, null, null);
 
       subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub = sinon.stub(subscriptionWithUpdatesOfSameSeason, 'updateLastDownloadTime');
+      subscriptionWithUpdatesOfNextSeasonUpdateLastDownloadTimeStub = sinon.stub(subscriptionWithUpdatesOfNextSeason, 'updateLastDownloadTime');
+      subscriptionWithUpdatesOfSameAndNextSeasonUpdateLastDownloadTimeStub = sinon.stub(subscriptionWithUpdatesOfSameAndNextSeason, 'updateLastDownloadTime');
     });
 
     beforeEach(function (done) {
@@ -281,6 +285,8 @@ describe('FindSubscriptionUpdatesHandler', function () {
       app.close(done);
 
       subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub.reset();
+      subscriptionWithUpdatesOfNextSeasonUpdateLastDownloadTimeStub.reset();
+      subscriptionWithUpdatesOfSameAndNextSeasonUpdateLastDownloadTimeStub.reset();
     });
 
     after(function () {
@@ -476,6 +482,10 @@ describe('FindSubscriptionUpdatesHandler', function () {
             expect(res.body.message).to.equal('Checked 4 subscriptions for updates and found 7 new torrents which were downloaded');
 
             expect(findAllSubscriptionsStub.calledOnce).to.be.true;
+
+            expect(subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub.calledOnce).to.be.true;
+            expect(subscriptionWithUpdatesOfNextSeasonUpdateLastDownloadTimeStub.calledOnce).to.be.true;
+            expect(subscriptionWithUpdatesOfSameAndNextSeasonUpdateLastDownloadTimeStub.calledOnce).to.be.true;
 
             expect(torrentSiteManagerExecStub.callCount).to.eql(13);
             subscriptionWithNoUpdatesCommands.forEach(cmd => expect(torrentSiteManagerExecStub.calledWith(cmd, sinon.match.func)).to.be.true);
