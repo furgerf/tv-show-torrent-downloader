@@ -107,6 +107,10 @@ describe('FindSubscriptionUpdatesHandler', function () {
     it('should check for updates of same and of next season');
   });
 
+  describe('downloadEpisodesInSequence', function () {
+    it('should be implemented');
+  });
+
   describe('requests', function () {
     // prepare sample data
     var sampleSubscriptions = testUtils.getSampleSubscriptionData().map(sub => Subscription.createNew(sub)),

@@ -74,17 +74,11 @@ function checkSubscriptionForUpdates(req, res, next) {
 
       hasStartedTorrents = true;
 
-      // download torrents in sequence
-      return data.reduce(function (previous, torrent) {
-        return previous.then(function () {
-          return UpdateSubscription.downloadTorrent(req.subscription,
-            torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
-        });
-      }, new Q())
-        // then, once all are downloaded, update the last download time
-        .then(() => req.subscription.updateLastDownloadTime())
-        // eventually, return the retrieved torrent data
-        .then (() => data);
+      // start the downloads and return the initially found torrent data
+      return that.downloadEpisodesInSequence(data, req.subscription, req.log)
+      .then (() => data)
+      .fail(err =>
+        next(new restify.InternalServerError('Error while downloading torrents: ' + err)));
     })
     .then(function (data) {
       utils.sendOkResponse('Found ' + (hasStartedTorrents ? 'and started download of ' : '') +
@@ -243,6 +237,28 @@ FindSubscriptionUpdatesHandler.prototype.checkSubscriptionForUpdate = function (
           return newEpisodes;
         });
     });
+};
+
+/**
+ * Downloads a number of episodes of a season in sequence.
+ *
+ * @param {Array} torrents - Array of the torrents to download.
+ * @param {Subscription} sub - Subscription to which the torrents belong.
+ * @param {Bunyan.Log} log - Logger instance.
+ *
+ * @returns {Promise} Promise which resolves when all torrent downloads are started.
+ */
+FindSubscriptionUpdatesHandler.prototype.downloadEpisodesInSequence = function (data, sub, log) {
+  var that = this;
+
+  return data.reduce(function (previous, torrent) {
+    return previous.then(function () {
+      return UpdateSubscription.downloadTorrent(sub,
+        torrent.season, torrent.episode, that.torrentCommand, torrent.link, log);
+    });
+  }, new Q())
+    // once all are downloaded, update the last download time
+    .then(() => sub.updateLastDownloadTime());
 };
 
 module.exports = FindSubscriptionUpdatesHandler;
