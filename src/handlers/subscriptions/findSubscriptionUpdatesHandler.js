@@ -214,8 +214,8 @@ FindSubscriptionUpdatesHandler.prototype.checkSubscriptionForUpdate = function (
   return this.checkForMultipleEpisodes(subscription, subscription.lastSeason,
       subscription.lastEpisode + 1, [], torrentSort, maxTorrentsPerEpisode)
     .then(function (newEpisodes) {
-      // we just finished checking for new episodes
-      subscription.updateLastUpdateCheckTime();
+      // we just finished checking for new episodes of same season
+      // no need to update the LastUpdateCheckTime because we're about to check again...
 
       log &&
         log.debug('Checking subscription "%s" for episodes of new season...', subscription.name);

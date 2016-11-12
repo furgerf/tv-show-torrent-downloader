@@ -15,7 +15,7 @@ var parseArgs = require('minimist'),
       'database.host',
       'torrentCommand'
     ],
-    boolean: [
+    boolean: [ // specifying arguments as booleans makes them `false` if unspecified
       'production',
       'serveStaticFiles'
     ],
