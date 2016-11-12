@@ -114,6 +114,7 @@ describe('FindSubscriptionUpdatesHandler', function () {
       unknownSubscriptionName = 'unknown show name',
       subscriptionWithNoUpdates = sampleSubscriptions[0],
       subscriptionWithUpdatesOfSameSeason = sampleSubscriptions[1],
+      subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub,
       subscriptionWithUpdatesOfNextSeason = sampleSubscriptions[2],
       subscriptionWithUpdatesOfSameAndNextSeason = sampleSubscriptions[3],
 
@@ -245,6 +246,8 @@ describe('FindSubscriptionUpdatesHandler', function () {
       torrentSiteManagerExecStub.withArgs(subscriptionWithUpdatesOfSameAndNextSeasonCommands[2], sinon.match.func).callsArgWith(1, null, null);
       torrentSiteManagerExecStub.withArgs(subscriptionWithUpdatesOfSameAndNextSeasonCommands[3], sinon.match.func).callsArgWith(1, null, subscriptionWithUpdatesOfSameAndNextSeasonDummyData[2]);
       torrentSiteManagerExecStub.withArgs(subscriptionWithUpdatesOfSameAndNextSeasonCommands[4], sinon.match.func).callsArgWith(1, null, null);
+
+      subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub = sinon.stub(subscriptionWithUpdatesOfSameSeason, 'updateLastDownloadTime');
     });
 
     beforeEach(function (done) {
@@ -272,6 +275,8 @@ describe('FindSubscriptionUpdatesHandler', function () {
 
     afterEach(function (done) {
       app.close(done);
+
+      subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub.reset();
     });
 
     after(function () {
@@ -348,6 +353,8 @@ describe('FindSubscriptionUpdatesHandler', function () {
 
             expect(findSubscriptionByNameStub.calledOnce).to.be.true;
             expect(findSubscriptionByNameStub.calledWith(subscriptionWithUpdatesOfSameSeason.name)).to.be.true;
+
+            expect(subscriptionWithUpdatesOfSameSeasonUpdateLastDownloadTimeStub.calledOnce).to.be.true;
 
             // we expect 3 calls: two for the same season update check and one for the new season update check
             expect(torrentSiteManagerExecStub.calledThrice).to.be.true;

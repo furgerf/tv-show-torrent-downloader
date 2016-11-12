@@ -58,7 +58,8 @@ function parseRequestData(requestBody, requestParams) {
 function checkSubscriptionForUpdates(req, res, next) {
   var parameters = parseRequestData(req.body, req.params),
     // jshint validthis: true
-    that = this;
+    that = this,
+    hasStartedTorrents;
 
   if (!req.subscription) {
     return next(new restify.BadRequestError('No subscription found with the given name.'));
@@ -67,16 +68,27 @@ function checkSubscriptionForUpdates(req, res, next) {
   that.checkSubscriptionForUpdate(req.subscription, parameters.torrentSort,
     parameters.maxTorrentsPerEpisode, req.log)
     .then(function (data) {
-      if (parameters.startDownload) {
-        data.forEach(function (torrent) {
-          UpdateSubscription.downloadTorrent(req.subscription,
-            torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
-        });
+      if (!parameters.startDownload || data.length === 0) {
+        return data;
       }
 
-      utils.sendOkResponse('Found ' +
-        (parameters.startDownload && data.length > 0 ? 'and started download of ' : '') +
-          data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
+      hasStartedTorrents = true;
+
+      // download torrents in sequence
+      return data.reduce(function (previous, torrent) {
+        return previous.then(function () {
+          return UpdateSubscription.downloadTorrent(req.subscription,
+            torrent.season, torrent.episode, that.torrentCommand, torrent.link, req.log);
+        });
+      }, new Q())
+        // then, once all are downloaded, update the last download time
+        .then(() => req.subscription.updateLastDownloadTime())
+        // eventually, return the retrieved torrent data
+        .then (() => data);
+    })
+    .then(function (data) {
+      utils.sendOkResponse('Found ' + (hasStartedTorrents ? 'and started download of ' : '') +
+        data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(
       new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
