@@ -9,6 +9,7 @@ var Q = require('q'),
   exec = require('child_process').exec,
 
   PirateBay = require('./piratebay'),
+  NewPirateBay = require('./newPiratebay'),
 
   torrentComparer = {
     'largest': (t1, t2) => t1.size < t2.size,
@@ -50,22 +51,30 @@ function compareTorrents (t1, t2, sort) {
  * @param {Bunyan.Log} log - Logger instance.
  */
 module.exports = function TorrentSiteManager (log) {
-  var pirateBayMn = new PirateBay('thepiratebay.mn', log),
+  var hiddenBay = new NewPirateBay('thehiddenbay.com', log),
+    pirateBayRocks = new NewPirateBay('thepiratebay.rocks', log),
+    pirateProxyLive= new NewPirateBay('pirateproxy.live', log),
+    pirateBayMn = new PirateBay('thepiratebay.mn', log),
+    pirateBayOrg = new PirateBay('thepiratebay.org', log),
     pirateBaySe = new PirateBay('thepiratebay.se', log),
     pirateBayPe = new PirateBay('pirateproxy.pe', log),
     pirateBayAhoy = new PirateBay('ahoy.one', log),
     pirateBayPatatje = new PirateBay('tpb.patatje.eu', log),
-    invalidParser = new PirateBay('foobar', log),
+    // invalidParser = new PirateBay('foobar', log),
 
     that = this;
 
   this.allSites = [
+    hiddenBay,
+    pirateBayRocks,
+    pirateProxyLive,
+    pirateBayOrg,
     pirateBayPatatje,
     pirateBayAhoy,
     pirateBayPe,
     pirateBaySe,
-    pirateBayMn,
-    invalidParser,
+    // pirateBayMn,
+    // invalidParser,
   ];
 
 

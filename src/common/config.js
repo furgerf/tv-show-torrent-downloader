@@ -32,7 +32,7 @@ function getDebugConfig() {
 function getProductionConfig() {
   return new Config(
     {
-      host : 'localhost',
+      host : '0.0.0.0',
       port : 8000
     },
     {

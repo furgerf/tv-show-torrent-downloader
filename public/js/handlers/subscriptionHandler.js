@@ -77,6 +77,25 @@
     };
 
     /**
+     * Finds downloads for the last episode for the subscription with the given name.
+     * @returns {Promise} Promise of the HTTP request.
+     */
+    this.findSubscriptionLastEpisode = function (subscriptionName, currentEpisode) {
+      var url = getSubscriptionUrl(subscriptionName),
+          sub = { lastEpisode: currentEpisode-1 },
+          reqBody = JSON.stringify(sub);
+
+      logger.logConsole('Updating subscription ' + subscriptionName + ' with ' + reqBody);
+      return $http.post(url, sub)
+        .then(function (response) {
+          // ignore response(?)
+          var url = getSubscriptionFindUpdateUrl(subscriptionName);
+          logger.logConsole('Finding updates for subscription "' + subscriptionName + '" with GET ' + url);
+          return $http.put(url, { torrentSort: settings.getTorrentSort(), maxTorrentsPerEpisode: settings.getMaxTorrentsPerEpisode() });
+        });
+    };
+
+    /**
      * Tells the server to start download of a specific episode of a specific subscription.
      * @param {String} subscriptionName - Name of the subscription.
      * @param {Number} seasonNumber - Season number of the episode to download.

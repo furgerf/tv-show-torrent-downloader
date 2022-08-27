@@ -43,6 +43,23 @@ mod.controller('overviewController', ['logger', 'subscriptionHandler', 'settings
       };
 
       /**
+       * Retrieves links to download the last episode for one subscription.
+       * @param {String} subscriptionName - Name of the subscription for which to find downloads.
+       */
+      that.findSubscriptionLastEpisode = function (subscriptionName, currentEpisode) {
+        subscriptionHandler.findSubscriptionLastEpisode(subscriptionName, currentEpisode)
+          .then(function (response) {
+            handleSubscriptionUpdatesResponse(response, subscriptionName);
+
+            // because the last episode and update date changed, retrieve the subscription again
+            getSubscription(subscriptionName);
+          })
+        .catch(function (err) {
+          notification.show('Error ' + err.status + ' while requesting last episode for subscription ' + subscriptionName + ':\n' + (err.data || {}).message);
+        });
+      };
+
+      /**
        * Retrieves subscription updates for all subscriptions.
        */
       that.findAllSubscriptionUpdates = function () {

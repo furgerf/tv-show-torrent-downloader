@@ -31,7 +31,7 @@ exports.createLogger = function(logConfig) {
     ensureLogDirectoryExists(logConfig.logDirectory);
     logStreams.push({
       name: 'main log',
-      level: 'info',
+      level: 'debug',
       path: logConfig.logDirectory + '/tv-show-downloader.log',
       type: 'rotating-file',
       period: '1w',

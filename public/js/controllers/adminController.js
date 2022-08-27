@@ -86,7 +86,7 @@ mod.controller('adminController', ['logger', 'settings', 'notification', 'adminH
             });
           })
           .catch(function (err) {
-            logger.logConsole('Disk usage request error: ' + err);
+            logger.logConsole('Disk usage request error: ' + JSON.stringify(err));
           });
       };
 
@@ -96,7 +96,7 @@ mod.controller('adminController', ['logger', 'settings', 'notification', 'adminH
             that.version = resp.data.data;
           })
           .catch(function (err) {
-            logger.logConsole('Version request error: ' + err);
+            logger.logConsole('Version request error: ' + JSON.stringify(err));
           });
       };
 
