@@ -23,7 +23,7 @@ function getSubscriptionByName (req, res, next) {
  */
 function getAllSubscriptions (req, res, next) {
   var offset = parseInt(req.params.offset, 10) || 0,
-    limit = parseInt(req.params.limit, 10) || 20;
+    limit = parseInt(req.params.limit, 10);
 
   // retrieve subs
   Subscription.findAllSubscriptions(limit, offset)
