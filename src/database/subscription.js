@@ -172,7 +172,9 @@ subscriptionSchema.methods.updateLastUpdateCheckTime = function () {
     .then(() => {
       this.lastUpdateCheckTime = new Date();
     })
-    .then(this.save);
+    .then(() => {
+      this.save()
+    });
 };
 
 /**
@@ -183,7 +185,9 @@ subscriptionSchema.methods.updateLastDownloadTime = function () {
     .then(() => {
       this.lastDownloadTime = new Date();
     })
-    .then(this.save);
+    .then(() => {
+      this.save()
+    });
 };
 
 /**

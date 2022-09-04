@@ -43,7 +43,7 @@ function hasValidRequestBodyParameters(body) {
 }
 
 /**
- * Handles reqests to PUT /subscriptions/:subscriptionName/update.
+ * Handles requests to PUT /subscriptions/:subscriptionName/update.
  */
 function updateSubscriptionWithTorrent (req, res, next) {
   var body = parseRequestBody(req.body);

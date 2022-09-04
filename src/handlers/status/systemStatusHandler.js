@@ -29,7 +29,7 @@ function parseDiskInformation(data) {
 }
 
 /**
- * Handles reqests to GET /status/system/disk.
+ * Handles requests to GET /status/system/disk.
  */
 function getSystemDiskUsage(req, res, next) {
   exec('df -x tmpfs -x devtmpfs | tail -n +2', function (err, stdout, stderr) {

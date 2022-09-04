@@ -51,10 +51,10 @@ function getServer(log, serveStaticFiles) {
 
   // add some generic handlers
   server.use([
-    restify.bodyParser(),
-    restify.authorizationParser(),
-    restify.queryParser(),
-    restify.requestLogger()
+    restify.plugins.bodyParser(),
+    restify.plugins.authorizationParser(),
+    restify.plugins.queryParser(),
+    restify.plugins.requestLogger()
   ]);
 
   // request handling cleanup
@@ -79,48 +79,48 @@ function getServer(log, serveStaticFiles) {
   // the requests handler functions have access to the handler object's context
   // subscriptions
   // retrieve all/specific subscription info
-  server.get(/^\/subscriptions\/?$/,
+  server.get('/subscriptions',
     (req, res, next) => this.readSubscriptionHandler.getAllSubscriptions(req, res, next));
-  server.get(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, subscriptionRetriever.retrieve,
+  server.get('/subscriptions/:subscription([a-zA-Z0-9%]+)', subscriptionRetriever.retrieve,
     (req, res, next) => this.readSubscriptionHandler.getSubscriptionByName(req, res, next));
 
   // add/update/delete subscription
-  server.post(/^\/subscriptions\/?$/,
+  server.post('/subscriptions',
     (req, res, next) => this.writeSubscriptionHandler.addSubscription(req, res, next));
-  server.post(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, subscriptionRetriever.retrieve,
+  server.post('/subscriptions/:subscription([a-zA-Z0-9%]+)', subscriptionRetriever.retrieve,
     (req, res, next) => this.writeSubscriptionHandler.updateSubscription(req, res, next));
-  server.del(/^\/subscriptions\/([a-zA-Z0-9%]+)\/?$/, subscriptionRetriever.retrieve,
+  server.del('/subscriptions/:subscription([a-zA-Z0-9%]+)', subscriptionRetriever.retrieve,
     (req, res, next) => this.writeSubscriptionHandler.deleteSubscription(req, res, next));
 
   // check all/specific subscription for update
-  server.put(/^\/subscriptions\/find\/?$/, (req, res, next) =>
+  server.put('/subscriptions/find', (req, res, next) =>
     this.findSubscriptionUpdatesHandler.checkAllSubscriptionsForUpdates(req, res, next));
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/find\/?$/, subscriptionRetriever.retrieve,
+  server.put('/subscriptions/:subscription([a-zA-Z0-9%]+)/find', subscriptionRetriever.retrieve,
     (req, res, next) =>
       this.findSubscriptionUpdatesHandler.checkSubscriptionForUpdates(req, res, next));
 
   // update specific subscription with torrent
-  server.put(/^\/subscriptions\/([a-zA-Z0-9%]+)\/update\/?$/, subscriptionRetriever.retrieve,
+  server.put('/subscriptions/:subscription([a-zA-Z0-9%]+)/update', subscriptionRetriever.retrieve,
     (req, res, next) =>
       this.updateSubscriptionHandler.updateSubscriptionWithTorrent(req, res, next));
 
   // system status
-  server.get(/^\/status\/system\/disk\/?$/,
+  server.get('/status/system/disk',
     (req, res, next) => this.systemStatusHandler.getSystemDiskUsage(req, res, next));
 
   // version
-  server.get(/^\/status\/version\/?$/,
+  server.get('/status/version',
     (req, res, next) => this.versionHandler.getVersion(req, res, next));
 
   // root
-  server.get(/^\/$/, function (req, res, next) {
+  server.get('/', function (req, res, next) {
     req.log.debug('Accessing root');
     res.redirect('/index.html', next);
   });
 
   // serve static files if not in production
   if (serveStaticFiles) {
-    server.get(/^\/([a-zA-Z0-9_\/\.~-]*)/, function (req, res, next) {
+    server.get('/any([a-zA-Z0-9_\/\.~-]*)', function (req, res, next) {
       var path = join(root, req.params[0]),
         stream = fs.createReadStream(path);
 

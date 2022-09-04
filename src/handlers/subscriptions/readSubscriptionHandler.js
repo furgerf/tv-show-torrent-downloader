@@ -6,7 +6,7 @@ var restify = require("restify"),
   Subscription = require("./../../database/subscription");
 
 /**
- * Handles reqests to GET /subscriptions/:subscriptionName.
+ * Handles requests to GET /subscriptions/:subscriptionName.
  */
 function getSubscriptionByName (req, res, next) {
   if (!req.subscription) {
@@ -19,7 +19,7 @@ function getSubscriptionByName (req, res, next) {
 }
 
 /**
- * Handles reqests to GET /subscriptions.
+ * Handles requests to GET /subscriptions.
  */
 function getAllSubscriptions (req, res, next) {
   var offset = parseInt(req.params.offset, 10) || 0,

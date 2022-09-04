@@ -13,7 +13,7 @@ function getGitRevision() {
 }
 
 /**
- * Handles reqests to GET /status/version.
+ * Handles requests to GET /status/version.
  */
 function getVersion(req, res, next) {
   var npmVersion = getNpmVersion(),
