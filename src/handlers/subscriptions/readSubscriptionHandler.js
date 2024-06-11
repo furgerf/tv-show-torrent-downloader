@@ -1,6 +1,6 @@
 'use strict';
 
-var restify = require("restify"),
+var errs = require('restify-errors'),
 
   utils = require("./../../common/utils"),
   Subscription = require("./../../database/subscription");
@@ -10,7 +10,7 @@ var restify = require("restify"),
  */
 function getSubscriptionByName (req, res, next) {
   if (!req.subscription) {
-    return next(new restify.BadRequestError('No subscription found with the given name.'));
+    return next(new errs.BadRequestError('No subscription found with the given name.'));
   }
 
   // sub with requested name found, return returnable

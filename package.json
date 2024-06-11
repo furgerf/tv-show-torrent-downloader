@@ -28,7 +28,7 @@
     "minimist": "*",
     "mongoose": "5.*",
     "q": "*",
-    "restify": "*"
+    "restify": "8.*"
   },
   "devDependencies": {
     "chai": "*",

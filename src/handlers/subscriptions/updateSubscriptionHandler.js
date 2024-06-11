@@ -49,19 +49,19 @@ function updateSubscriptionWithTorrent (req, res, next) {
   var body = parseRequestBody(req.body);
 
   if (!hasValidRequestBodyParameters(body)) {
-    return next(new restify.BadRequestError(
+    return next(new errs.BadRequestError(
       '`season`, `episode`, and `link` must be specified in the request body'));
   }
 
   if (!req.subscription) {
-    return next(new restify.BadRequestError('No subscription found with the given name.'));
+    return next(new errs.BadRequestError('No subscription found with the given name.'));
   }
 
   req.log.info('Requesting to download %s, %s',
     req.subscription.name, utils.formatEpisodeNumber(body.season, body.episode));
 
   if (!req.subscription.isSameOrNextEpisode(body.season, body.episode)) {
-    return next(new restify.BadRequestError(
+    return next(new errs.BadRequestError(
       'Episode %s of show %s cannot be downloaded when the current episode is %s',
       utils.formatEpisodeNumber(body.season, body.episode), req.subscription.name,
       utils.formatEpisodeNumber(req.subscription.lastSeason, req.subscription.lastEpisode)

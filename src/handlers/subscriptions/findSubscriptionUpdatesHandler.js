@@ -1,6 +1,6 @@
 'use strict';
 
-var restify = require('restify'),
+var errs = require('restify-errors'),
   Q = require('q'),
 
   utils = require('../../common/utils'),
@@ -62,7 +62,7 @@ function checkSubscriptionForUpdates(req, res, next) {
     hasStartedTorrents;
 
   if (!req.subscription) {
-    return next(new restify.BadRequestError('No subscription found with the given name.'));
+    return next(new errs.BadRequestError('No subscription found with the given name.'));
   }
 
   that.checkSubscriptionForUpdate(req.subscription, parameters.torrentSort,
@@ -78,14 +78,14 @@ function checkSubscriptionForUpdates(req, res, next) {
       return that.downloadEpisodesInSequence(data, req.subscription, req.log)
       .then (() => data)
       .fail(err =>
-        next(new restify.InternalServerError('Error while downloading torrents: ' + err)));
+        next(new errs.InternalServerError('Error while downloading torrents: ' + err)));
     })
     .then(function (data) {
       utils.sendOkResponse('Found ' + (hasStartedTorrents ? 'and started download of ' : '') +
         data.length + ' new torrents', data, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(
-      new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
+      new errs.InternalServerError('All known torrent sites appear to be unavailable.')));
 }
 
 /**
@@ -127,7 +127,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
       return Q.all(result.map(function (torrents) {
         return that.downloadEpisodesInSequence(torrents, torrents.subscription, req.log)
           .fail(err =>
-            next(new restify.InternalServerError('Error while downloading torrents: ' + err)));
+            next(new errs.InternalServerError('Error while downloading torrents: ' + err)));
       }))
       .then (() => result);
     })
@@ -146,7 +146,7 @@ function checkAllSubscriptionsForUpdates(req, res, next) {
           data, res, next, 'http://' + req.headers.host + req.url);
     })
     .fail(() => next(
-          new restify.InternalServerError('All known torrent sites appear to be unavailable.')));
+          new errs.InternalServerError('All known torrent sites appear to be unavailable.')));
 }
 
 

@@ -39,7 +39,7 @@ function addSubscription (req, res, next) {
   var body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
 
   if (!body || !body.name) {
-    return next(new restify.BadRequestError('Provide the name of the tv show to subscribe to.'));
+    return next(new errs.BadRequestError('Provide the name of the tv show to subscribe to.'));
   }
 
   createNewSubscriptionFromData(body).save()
@@ -58,7 +58,7 @@ function updateSubscription (req, res, next) {
     newSubscriptionCreated;
 
   if (body.name && body.name !== subscriptionName) {
-    return next(new restify.BadRequestError('Cannot change the name of a subscription'));
+    return next(new errs.BadRequestError('Cannot change the name of a subscription'));
   }
 
   // the body data is used to create the subscription, so set it to the name from the request params
@@ -90,7 +90,7 @@ function deleteSubscription (req, res, next) {
   Subscription.findSubscriptionByName(subscriptionName)
     .then(subscription => subscription
         ? subscription
-        : next(new restify.BadRequestError("No subscription named '" + subscriptionName + "'.")))
+        : next(new errs.BadRequestError("No subscription named '" + subscriptionName + "'.")))
     .then(subscription => subscription.remove())
     .then(() => utils.sendOkResponse("Removed subscription with name '" +
           subscriptionName + "'.", {}, res, next, 'http://' + req.headers.host + req.url));

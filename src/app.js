@@ -2,6 +2,7 @@
 
 // modules
 var restify = require('restify'),
+  errs = require('restify-errors'),
   join = require('path').join,
   fs = require('fs'),
 
@@ -70,7 +71,7 @@ function getServer(log, serveStaticFiles) {
   server.on('uncaughtException', function (req, res, route, error) {
     var routeName = route ? route.name : '<unknown route>';
     req.log.error(error, 'Uncaught exception while accessing %s', routeName);
-    res.send(new restify.InternalServerError('%s (%s)', error.name || '', error.message || error));
+    res.send(new errs.InternalServerError('%s (%s)', error.name || '', error.message || error));
   });
 
   // declare handlers: rather than directly mapping requests to the handler functions,
@@ -126,7 +127,7 @@ function getServer(log, serveStaticFiles) {
 
       stream.on('error', function (err) {
         req.log.error('Error while trying to access %s: %s', path, err);
-        return next(new restify.NotFoundError());
+        return next(new errs.NotFoundError());
       });
 
       req.log.debug('Accessing path %s', path);

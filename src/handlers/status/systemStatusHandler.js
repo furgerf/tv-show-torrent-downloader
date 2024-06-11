@@ -2,7 +2,7 @@
 
 var exec = require('child_process').exec,
 
-  restify = require('restify'),
+  errs = require('restify-errors'),
 
   utils = require('./../../common/utils');
 
@@ -35,7 +35,7 @@ function getSystemDiskUsage(req, res, next) {
   exec('df -x tmpfs -x devtmpfs | tail -n +2', function (err, stdout, stderr) {
     if (err || stderr) {
       req.log.error("Couldn't read disk usage (err: %s, stderr: %s)", err, stderr);
-      return next(new restify.InternalServerError('Error while running native command.'));
+      return next(new errs.InternalServerError('Error while running native command.'));
     }
 
     var data = stdout.split('\n').map(parseDiskInformation).filter(disk => disk);
