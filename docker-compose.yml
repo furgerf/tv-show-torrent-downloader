@@ -1,0 +1,50 @@
+---
+services:
+  tv-show-torrent-downloader:
+    build: .
+    image: tv-show-torrent-downloader
+    restart: always
+    expose:
+      - 8000
+    ports:
+      - 8080:8080
+    depends_on:
+      - mongo
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost:8000/healthcheck || exit 1"
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.25-alpine
+    restart: always
+    ports:
+      - 8000:80
+    volumes:
+      - type: bind
+        source: ./nginx.conf
+        target: /etc/nginx/nginx.conf
+      - ./public:/var/www/tv-show-torrent-downloader/public
+    depends_on:
+      - tv-show-torrent-downloader
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/nginx-health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:5.0
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    command: --quiet
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo-data:

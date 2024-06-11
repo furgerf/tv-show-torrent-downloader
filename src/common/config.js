@@ -36,12 +36,12 @@ function getProductionConfig() {
       port : 8000
     },
     {
-      host : 'localhost',
+      host : 'mongo',
       port: 27017
     },
     'qbittorrent',
     {
-      stdoutLoglevel: 'warn',
+      stdoutLoglevel: 'info',
       sourceLogging: false,
       logDirectory: '/var/log/tv-show-torrent-downloader',
       writeLogfile: true,
