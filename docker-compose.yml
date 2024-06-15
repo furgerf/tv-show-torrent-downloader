@@ -1,6 +1,6 @@
 ---
 services:
-  tv-show-torrent-downloader:
+  api:
     build: .
     image: tv-show-torrent-downloader
     restart: always
@@ -35,13 +35,13 @@ services:
       retries: 5
 
   mongo:
-    image: mongo:5.0
+    image: mongo:4.4
     restart: always
     volumes:
       - mongo-data:/data/db
     command: --quiet
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: echo 'db.runCommand("ping").ok' | mongo --quiet
       interval: 30s
       timeout: 5s
       retries: 5
