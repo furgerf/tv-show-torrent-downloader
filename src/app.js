@@ -41,7 +41,7 @@ function getServer(log, serveStaticFiles) {
 
   // hooks for connection logging and allowing CORS
   server.pre(function (req, res, next) {
-    req.log.warn({req: req}, 'New connection (%d)', connectionCount++);
+    req.log.info({req: req}, 'New connection (%d)', connectionCount++);
 
     requestStarts[req.id()] = new Date();
 
@@ -117,6 +117,13 @@ function getServer(log, serveStaticFiles) {
   server.get('/', function (req, res, next) {
     req.log.debug('Accessing root');
     res.redirect('/index.html', next);
+  });
+
+  // healthcheck
+  server.head('/healthcheck', function (req, res, next) {
+    res.statusCode = 200;
+    res.end();
+    next();
   });
 
   // serve static files if not in production
