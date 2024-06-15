@@ -9,6 +9,9 @@ RUN mkdir -p /var/www
 WORKDIR /var/www/tv-show-torrent-downloader
 COPY package.json package-lock.json /var/www/tv-show-torrent-downloader
 RUN npm install
+COPY .git /var/www/tv-show-torrent-downloader
+RUN git rev-parse HEAD | tee /var/www/tv-show-torrent-downloader/git-rev
+RUN rm -rf .git
 COPY *.sh server.js /var/www/tv-show-torrent-downloader
 COPY src /var/www/tv-show-torrent-downloader/src
 

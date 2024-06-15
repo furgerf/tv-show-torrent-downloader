@@ -1,6 +1,7 @@
 'use strict';
 
 var git = require('git-rev-sync'),
+  fs = require('fs'),
 
   utils = require('./../../common/utils');
 
@@ -9,7 +10,12 @@ function getNpmVersion() {
 }
 
 function getGitRevision() {
-  return git.long();
+  try {
+    return git.long();
+  }
+  catch (err) {
+    return fs.readFileSync('git-rev', 'utf8');
+  }
 }
 
 /**
